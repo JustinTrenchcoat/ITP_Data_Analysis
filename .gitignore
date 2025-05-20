@@ -1,3 +1,5 @@
 itm1data/
 itp_data/
 plots/
+*.nc
+*.pkl
