@@ -4,7 +4,7 @@ from itp.profile import Profile
 import argparse
 
 # set up file path
-path = r'D:\EOAS\ITP_package_try\itp_data\itp_final_2025_05_07.db'
+path = r'D:\EOAS\ITP_Data_Analysis\itp_data\itp_final_2025_05_07.db'
 
 
 
@@ -51,18 +51,6 @@ if __name__ == "__main__":
         default=1,
         help="ITP System Number, range from 1 to 132",
     )
-    # # longitude
-    # parser.add_argument(
-    #     "-log", "--longitude",
-    #     default=None,
-    #     help="longitude range for the data"
-    # )
-    # # latitude
-    # parser.add_argument(
-    #     "-lat", "--latitude",
-    #     default=None,
-    #     help="latitude range for the data"
-    # )
     # profile number
     parser.add_argument(
         "-p", "--profNum", type=int,
