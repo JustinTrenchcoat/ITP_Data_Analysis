@@ -1,23 +1,24 @@
 from mpl_toolkits.basemap import Basemap
 from itp.itp_query import ItpQuery
-import matplotlib.pyplot as plt
 from itp.profile import Profile
+import matplotlib.pyplot as plt
+import pickle
 from tqdm import tqdm
+from netCDF4 import Dataset
+import numpy as np
 
-
-global good_list
-good_list = []
-
-path = r'D:\EOAS\ITP_package_try\itp_data\itp_final_2025_05_07.db'
+path = r'D:\EOAS\ITP_Data_Analysis\itp_data\itp_final_2025_05_07.db'
 # query = ItpQuery(path, system=[1])
 # results = query.fetch()
+# Load saved file
+# with open("profiles.pkl", "rb") as f:
+#     profiles = pickle.load(f)
+# size = len(profiles)
+# for idx, p in tqdm(enumerate(profiles)):
+#     print(f"{idx}th profile's sample size  is: {type(Profile.depth(p))}")
+#     if idx == 10:
+#         break
 
-query = ItpQuery(path, latitude=[68, 81.5], longitude=[-170, -130])
-query.set_max_results(100000)
 
-results = query.fetch()
-print(len(results))
-for p in tqdm(results):
-    if max(Profile.depth(p))>=400:
-        good_list.append(p)
-print(len(good_list))
+with Dataset("profiles.nc", "w", format="NETCDF4") as ncfile:
+    print("latitudes =\n{}".format(latitudes[:]))

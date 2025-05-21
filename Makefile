@@ -9,3 +9,4 @@ plot:
 # clean
 clean: 
 		rm -rf plots/*
+		rm *.nc
