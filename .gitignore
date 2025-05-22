@@ -3,3 +3,5 @@ itp_data/
 plots/
 *.nc
 *.pkl
+*.zip
+__pycache__*

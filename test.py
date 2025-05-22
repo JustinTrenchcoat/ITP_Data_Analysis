@@ -18,7 +18,27 @@ path = r'D:\EOAS\ITP_Data_Analysis\itp_data\itp_final_2025_05_07.db'
 #     print(f"{idx}th profile's sample size  is: {type(Profile.depth(p))}")
 #     if idx == 10:
 #         break
+import xarray as xr
+import pandas as pd
+from helper import *
 
 
-with Dataset("profiles.nc", "w", format="NETCDF4") as ncfile:
-    print("latitudes =\n{}".format(latitudes[:]))
+# Load the file
+ds = xr.open_dataset("profiles.nc")
+
+# Convert relevant variables to DataFrame columns
+df = pd.DataFrame({
+    "prof_Num": ds.profile_number.values,
+    "sys_Num": ds.system_number.values,
+    "source": ds.source.values,
+    "date": ds.date_time.values,
+    "lat": ds.latitude.values,
+    "lon": ds.longitude.values,
+    "temp": ds.temperature.values,
+    "salinity": ds.salinity.values,
+    "depth": ds.depth.values,
+    "pressure": ds.pressure.values
+
+})
+
+print(get_data(df, 3, ["temp", "depth", "salinity"]))
