@@ -33,14 +33,18 @@ def smartPlot(plotType, sample, sysNum, profNum):
 
 
 def plotHelper(x,y, xlabel, ylabel, sysNum, profNum,time):
-        plt.plot(x, y, marker='o',linestyle='dashed',linewidth=2, markersize=12)
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-        plt.title(f"{xlabel} vs {ylabel}, System# {sysNum} Profile# {profNum}, Time {time}")
-        plt.grid(True)
-        plt.gca().invert_yaxis()
-        # Optional: Rotate date labels for clarity
-        plt.xticks(rotation=45)
+    # Filter y between 200 and 500
+    mask = (y >= 200) & (y <= 500)
+    x_filtered = x[mask]
+    y_filtered = y[mask]
+    plt.plot(x_filtered, y_filtered, marker='o',linestyle='dashed',linewidth=2, markersize=12)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(f"{xlabel} vs {ylabel}, System# {sysNum} Profile# {profNum}, Time {time}")
+    plt.grid(True)
+    plt.gca().invert_yaxis()
+    # Optional: Rotate date labels for clarity
+    plt.xticks(rotation=45)
 
 # set up possible arguments?
 if __name__ == "__main__":
