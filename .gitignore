@@ -5,3 +5,4 @@ plots/
 *.pkl
 *.zip
 __pycache__*
+*mat/
