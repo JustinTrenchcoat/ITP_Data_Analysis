@@ -1,6 +1,7 @@
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
+from helper import *
 
 # The data in these files are reported at the same temporal resolution as the Level 1 files, 
 # with NaNs filling gaps where bad data were removed. 
@@ -47,17 +48,19 @@ with h5py.File(file_path, 'r') as f:
     valid_mask = ~np.isnan(sa_cor) & ~np.isnan(pr_filt)
     sa_cor = sa_cor[valid_mask]
     pr_filt = pr_filt[valid_mask]
+    depth = height(pr_filt,lat)
 
 # Plot
 print(len(sa_cor))
-print(len(pr_filt))
+print(len(depth))
 plt.figure(figsize=(8, 6))
-plt.plot(sa_cor, pr_filt, '.', markersize=2, alpha=0.7)
+plt.plot(sa_cor, depth, '.', markersize=2, alpha=0.7)
 plt.gca().invert_yaxis()  # Pressure increases with depth
 plt.xlabel('Salinity (psu) [sa_cor]')
-plt.ylabel('Pressure (dbar) [pr_filt]')
+# plt.ylabel('Pressure (dbar) [pr_filt]')
+plt.ylabel('Depths')
 plt.title(f'Salinity vs. Pressure, lat:{lat}, Date:{date}, Time:{time}')
 plt.grid(True)
 plt.tight_layout()
-plt.savefig(f"plots/test_{lat}.png")
+# plt.savefig(f"plots/test_{lat}.png")
 plt.show()

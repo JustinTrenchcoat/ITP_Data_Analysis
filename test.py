@@ -64,14 +64,18 @@ for i in tqdm(range(1, 10)):
         print(f"Error reading {filename}: {e}")
 
     
+    print("Depth:")
+    print(height(pr_filt,lat)[0])
+    print("-----------------------")
+    print("has pressure of: ")
+    print(pr_filt[0])
+    print("________________________")
 
-    print(absolute_salinity(sa_cor, pr_filt, lon,lat))
+# # Print summary of each file
+# for fname, itp in itpnos:
+#     print(f"{fname}: ITP {itp}")
 
-# Print summary of each file
-for fname, itp in itpnos:
-    print(f"{fname}: ITP {itp}")
-
-# Print unique ITP numbers
-unique_itps = sorted(set(itp for _, itp in itpnos))
-print("\nUnique ITP numbers found:")
-print(unique_itps)
+# # Print unique ITP numbers
+# unique_itps = sorted(set(itp for _, itp in itpnos))
+# print("\nUnique ITP numbers found:")
+# print(unique_itps)

@@ -7,3 +7,4 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 - `test.py` and `matlabRead.py` have scripts that could read from .mat files. The next step is to filter them through our requirement. The question now is whether we need to convert them into .nc or other format after filtering through them
 - Since the dataset is totally different, we might not need the itp package?? Or we can write our own package
 - We should also read through the clustering method and figure out how it works.
+- in the `test.py`, we might need to pay attention to the data structure when unpacking the `.mat`file variables. the ordering is weird.

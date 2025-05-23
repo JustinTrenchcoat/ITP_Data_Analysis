@@ -15,6 +15,9 @@ def absolute_salinity(salinity, pressure, longitude, latitude):
 def decode_ascii(matlab_str):
     return ''.join([chr(c) for c in matlab_str])
 
+def height(pressure, latitude):
+        return -gsw.conversions.z_from_p(pressure, latitude)
+
 
 
 # this is the helper funcion collection for visualization.ipynb
