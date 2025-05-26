@@ -8,3 +8,6 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 - Since the dataset is totally different, we might not need the itp package?? Or we can write our own package
 - We should also read through the clustering method and figure out how it works.
 - in the `test.py`, we might need to pay attention to the data structure when unpacking the `.mat`file variables. the ordering is weird.
+------
+2025/05/26:
+- the dataset is done, and need to be filtered

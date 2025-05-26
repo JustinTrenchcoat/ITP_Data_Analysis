@@ -1,57 +1,54 @@
-# very sus ChatGPT code: do not use until fully figure out what it does and wait until fram is back and running. 
-# might be better to be done on a machine that doesnt get turned off that often.
+import h5py
+import numpy as np
+import matplotlib.pyplot as plt
+from helper import *
 
+# The data in these files are reported at the same temporal resolution as the Level 1 files, 
+# with NaNs filling gaps where bad data were removed. 
+# The variables included in the cor####.mat files are:
+#                                    
+# co_adj          conductivity (mmho) after lags and calibration adjustment          
+# co_cor          conductivity (mmho) after lags applied          
+# itpno            ITP number          
+# latitude        start latitude (N+) of profile          
+# longitude     start longitude (E+) of profile          
+# pr_filt           low pass filtered pressure (dbar)
+#           
+# psdate           profile UTC start date (mm/dd/yy)          
+# pstart            profile UTC start time (hh:mm:ss)  
+# pedate          profile UTC end date (mm/dd/yy)           
+# pstop            profile UTC stop time (hh:mm:ss)     
+#      
+# sa_adj          salinity after lags and calibration adjustment          
+# sa_cor          salinity after lags applied          
+# te_adj           temperature (C) in conductivity cell after lags          
+# te_cor           temperature (C) at thermistor after lags applied 
 
-import os
-import re
-import requests
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin
-from tqdm import tqdm
-from zipfile import ZipFile
+# Load the .mat file
+file_path = 'itp120cormat/cor0073.mat'
 
-# Base WHOI URL and local download folder
-base_url = 'https://scienceweb.whoi.edu/itp/data/'
-download_root = 'organized_cormat_data'
+# Decode ASCII arrays to strings
+def decode_ascii(matlab_str):
+    return ''.join([chr(c) for c in matlab_str])
 
-os.makedirs(download_root, exist_ok=True)
+# After reading the file:
+with h5py.File(file_path, 'r') as f:
+    def read_var(varname):
+        return np.array(f[varname]).squeeze()
 
-# Step 1: Get the main data page
-main_page = requests.get(base_url)
-soup = BeautifulSoup(main_page.text, 'html.parser')
+    sa_cor = read_var('sa_cor')
+    pr_filt = read_var('pr_filt')
 
-# Step 2: Find all itpsys* directories
-subdirs = [a['href'] for a in soup.find_all('a', href=True) if a['href'].startswith('itpsys')]
+    # Decode single string (e.g., one profile)
+    date = decode_ascii(read_var("psdate"))
+    time = decode_ascii(read_var("pstart"))
+    lat = read_var("latitude")  # Assuming this is a number
 
-# Step 3: Process each itpsys folder
-for subdir in tqdm(subdirs, desc='Scanning itpsys folders'):
-    subdir_url = urljoin(base_url, subdir)
-    local_subdir = os.path.join(download_root, subdir.strip('/'))
-    os.makedirs(local_subdir, exist_ok=True)
+    # Optional: filter out NaNs or bad values
+    valid_mask = ~np.isnan(sa_cor) & ~np.isnan(pr_filt)
+    sa_cor = sa_cor[valid_mask]
+    pr_filt = pr_filt[valid_mask]
+    depth = height(pr_filt,lat)
 
-    sub_resp = requests.get(subdir_url)
-    sub_soup = BeautifulSoup(sub_resp.text, 'html.parser')
-
-    for link in sub_soup.find_all('a', href=True):
-        href = link['href']
-        if 'cormat.zip' in href:
-            zip_url = urljoin(subdir_url, href)
-            local_zip_path = os.path.join(local_subdir, href)
-
-            # Skip download if file already exists
-            if not os.path.exists(local_zip_path):
-                print(f'Downloading {zip_url}')
-                r = requests.get(zip_url, stream=True)
-                with open(local_zip_path, 'wb') as f:
-                    for chunk in r.iter_content(chunk_size=8192):
-                        f.write(chunk)
-
-            # Extract only .mat files
-            print(f'Extracting {local_zip_path}')
-            with ZipFile(local_zip_path, 'r') as zip_ref:
-                for file in zip_ref.namelist():
-                    if file.endswith('.mat'):
-                        zip_ref.extract(file, local_subdir)
-
-            # Optional: remove the .zip file to save space
-            # os.remove(local_zip_path)
+# Plot
+print(max(depth))
