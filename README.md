@@ -29,4 +29,4 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
         - `number_check.py` changed to `03_checkData.py`
         - `matlabRead.py` changed to `02_cleanData.py`
 
-- 
+- we need to look into the delta z of each profile. Maybe we need to make a constant resolution.

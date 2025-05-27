@@ -1,7 +1,5 @@
-from itp.itp_query import ItpQuery
 import matplotlib.pyplot as plt
 import numpy as np
-from itp.profile import Profile
 import argparse
 import h5py
 from helper import *
