@@ -11,3 +11,22 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 ------
 2025/05/26:
 - the dataset is done, and need to be filtered
+--------
+2025/05/27:
+- the cleaned dataset is done. There are in total of 32557 profiles, slightly less than the number of observations from 1-db measurement dataset (they have 35135 profiles)
+- There are few code pieces need to be changed to accomodate the new data format:
+    - These code pieces need to be deleted or changed as their functioaliy is replaced by other scripts.
+        - `convert.py` deleted
+        - `filter.py` deleted.
+        - `read.py` deleted.
+        - `unpack_matlab.py` renamed to `singleProfileReader.py` to test new functions on single profile.
+    - There scripts need to be modified. Their functionality is still important.
+        - `helper.py` remained same. Will add more helper functions.
+        - `omniPlot.py` renamed to `04_Plot.py`, changed functionality
+    - These are kept unchanged for now, but maybe a better name:
+        - `pull.py` changed to `01_pullData.py`
+        - `test.py` changed to `00_testField.py`
+        - `number_check.py` changed to `03_checkData.py`
+        - `matlabRead.py` changed to `02_cleanData.py`
+
+- 

@@ -25,11 +25,7 @@ from helper import *
 # te_cor           temperature (C) at thermistor after lags applied 
 
 # Load the .mat file
-file_path = 'itp120cormat/cor0073.mat'
-
-# Decode ASCII arrays to strings
-def decode_ascii(matlab_str):
-    return ''.join([chr(c) for c in matlab_str])
+file_path = r'D:\EOAS\ITP_Data_Analysis\datasets\itp112cormat\cor0001.mat'
 
 # After reading the file:
 with h5py.File(file_path, 'r') as f:
