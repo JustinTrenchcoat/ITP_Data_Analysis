@@ -69,7 +69,7 @@ try:
         depth = height(pr_filt, lat)
         plotHelper(sa_cor,depth, "Salinity", "Depth", 112, 1,time)
 except Exception:
-    print("Error 发生！")
+    print("Error Reading Data!")
 
 
 # set up possible arguments?
