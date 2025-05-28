@@ -30,3 +30,6 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
         - `matlabRead.py` changed to `02_cleanData.py`
 
 - we need to look into the delta z of each profile. Maybe we need to make a constant resolution.
+------------------------
+2025/05/28:
+- We need to get the dz values for each profile, summarize it into a histogram. This would be done in a new script called `05_analyze.py`
