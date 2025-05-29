@@ -33,3 +33,11 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 ------------------------
 2025/05/28:
 - We need to get the dz values for each profile, summarize it into a histogram. This would be done in a new script called `05_analyze.py`
+--------------------------
+2025/05/29:
+- The histogram is out, and 0.25 grid sounds like a reasonable resolution.
+- Need to look into what had caused the drastic depth difference in the data. 
+- from the experiment in testfield, the data structure is indeed weird: each measurement in one profile is not strictly arranged in time:
+    - take `D:\EOAS\ITP_Data_Analysis\datasets\itp41cormat\cor1391.mat` for example, the first entry in its depth is 412.52 instead of 200
+    - sort() does the work
+- Task: refilter the dataset to get the "golden standard" data: find the AW temp max and go deeper than that. 

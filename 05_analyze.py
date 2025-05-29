@@ -1,35 +1,78 @@
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
+import h5py
+import os
+import traceback
+from tqdm import tqdm
+from helper import *
 
-# Load the depth differences
-with open("depth_differences.pkl", "rb") as f:
-    all_depth_differences = pickle.load(f)
+# Path to datasets folder
+datasets_dir = 'datasets'
 
-# Convert to NumPy array in case it's a list
-all_depth_differences = np.array(all_depth_differences)
+all_diff = []
+max_all = []
+weird_list=[]
+weird_value=[]
 
-# Basic statistics
-print("Statistical Summary of Depth Differences:")
-print(f"Count         : {len(all_depth_differences)}")
-print(f"Min           : {np.min(all_depth_differences)}")
-print(f"Max           : {np.max(all_depth_differences)}")
-print(f"Mean          : {np.mean(all_depth_differences)}")
-print(f"Median        : {np.median(all_depth_differences)}")
-print(f"Std Dev       : {np.std(all_depth_differences)}")
-print(f"Variance      : {np.var(all_depth_differences)}")
-print(f"25th Percentile (Q1): {np.percentile(all_depth_differences, 25)}")
-print(f"75th Percentile (Q3): {np.percentile(all_depth_differences, 75)}")
-print(f"IQR           : {np.percentile(all_depth_differences, 75) - np.percentile(all_depth_differences, 25)}")
+# Loop over every itp*cormat folder
+for folder_name in sorted(os.listdir(datasets_dir)):
+    folder_path = os.path.join(datasets_dir, folder_name)
+    if not os.path.isdir(folder_path):
+        continue  # skip non-folders
 
+    print(f"\nProcessing folder: {folder_name}")
 
+    # Get all .mat files
+    all_mat_files = sorted([f for f in os.listdir(folder_path) if f.endswith('.mat')])
 
-# Plot the histogram
-plt.figure(figsize=(10, 6))
-plt.hist(all_depth_differences, bins=500, range=(0,6), edgecolor='black')  # adjust bin count or bin edges here
-plt.title("Histogram of Depth Differences Between Consecutive Data Points")
-plt.xlabel("Depth Difference")
-plt.ylabel("Frequency")
-plt.grid(True)
-plt.tight_layout()
-plt.show()
+    for filename in tqdm(all_mat_files, desc=f"Filtering {folder_name}", leave=False):
+        full_path = os.path.join(folder_path, filename)
+
+        try:
+            with h5py.File(full_path, 'r') as f:
+                def read_var(varname):
+                    return np.array(f[varname]).reshape(-1)
+
+                pr_filt = read_var('pr_filt')
+                lat = read_var("latitude")
+
+                valid_mask = ~np.isnan(pr_filt)
+                pr_filt = pr_filt[valid_mask]
+
+                depth = height(pr_filt, lat)
+
+                # Filter depth to only between 600 and 200
+                in_range_mask = (depth >= 200) & (depth <= 600)
+
+                depth_in_range = depth[in_range_mask]
+
+                # Only calculate difference if we have enough points
+                if len(depth_in_range) > 1:
+                    # depth_in_range = np.sort(depth_in_range)
+                    depth_diff = np.diff(depth_in_range)
+                    max_depth = max(depth_diff)
+                    if max_depth > 1:
+                        weird_list.append(full_path)
+                        weird_value.append(max_depth)
+                    max_all.append(max_depth)
+                    all_diff.extend(depth_diff)
+
+        # Inside your for-loop where the exception occurs:
+        except Exception as e:
+            print(f"Error processing file: {filename}")
+            traceback.print_exc()
+
+# Convert to numpy array and save to pickle
+all_diff = np.array(all_diff)
+
+import pickle
+
+with open("depth_differences.pkl", "wb") as f:
+    pickle.dump(all_diff, f)
+
+print("Saved depth differences to 'depth_differences.pkl'")
+print("Max of Max depth difference in range:", max(max_all))
+print("List of files with abnormal depth difference")
+for i in range(len(weird_list)):
+    print(f"File {weird_list[i]} has value of {weird_value[i]}")
