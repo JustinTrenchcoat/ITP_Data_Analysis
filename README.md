@@ -41,3 +41,9 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
     - take `D:\EOAS\ITP_Data_Analysis\datasets\itp41cormat\cor1391.mat` for example, the first entry in its depth is 412.52 instead of 200
     - sort() does the work
 - Task: refilter the dataset to get the "golden standard" data: find the AW temp max and go deeper than that. 
+---------------------------
+2025/05/30:
+- The golden standard dataset is out: we have in total of 23366 profiles.
+- Max depth difference in range of 200 to 600 meters below the sea is 88m. It is due to a measurement
+- Most (99%) of the abnormal depth difference occurs in ITP# 41. `05_analyze.py` looks into the dataset and would produce a summary.
+- 
