@@ -14,7 +14,7 @@ datasets_dir = os.path.join(base_dir, "datasets")
 os.makedirs(datasets_dir, exist_ok=True)
 
 # Loop over ITP numbers
-for itp_num in tqdm(range(7, 144), desc="Downloading"):
+for itp_num in tqdm(range(1, 144), desc="Downloading"):
     url = base_url.format(itp_num)
     zip_filename = f"itp{itp_num}cormat.zip"
     zip_path = os.path.join(base_dir, zip_filename)

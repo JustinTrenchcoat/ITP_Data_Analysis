@@ -26,9 +26,6 @@ import gsw
 from tqdm import tqdm
 from helper import *
 
-def decode_ascii(matlab_str):
-    return ''.join([chr(c) for c in matlab_str])
-
 # Path to datasets folder
 datasets_dir = 'datasets'
 
@@ -52,12 +49,11 @@ for folder_name in sorted(os.listdir(datasets_dir)):
         try:
             with h5py.File(full_path, 'r') as f:
                 def read_var(varname):
-                    return np.array(f[varname]).squeeze()
+                    return np.array(f[varname]).reshape(-1)
 
-                # sa_cor = read_var('sa_cor')
+                # read variables from single file for later reference.
                 pr_filt = read_var('pr_filt')
-                date = decode_ascii(read_var("psdate"))
-                time = decode_ascii(read_var("pstart"))
+                te_cor = read_var('te_cor')
                 lat = read_var("latitude")
                 lon = read_var("longitude")
 
@@ -66,11 +62,20 @@ for folder_name in sorted(os.listdir(datasets_dir)):
                 valid_mask = ~np.isnan(pr_filt)
                 # sa_cor = sa_cor[valid_mask]
                 pr_filt = pr_filt[valid_mask]
+                te_cor  = te_cor[valid_mask]
 
+                # calculate depth
                 depth = height(pr_filt, lat)
                 dep_max = max(depth)
 
-                if (dep_max >= 400) and (73 <= lat <= 81) and (-160 <= lon <= -130):
+                # depth_index has all indeces of depth array who's value is above 200m
+                depth_index = np.where(depth >= 200)[0]
+                # temp_max_idx is the index of max value of all te_cor values within the range of depth_index
+                temp_max_idx = np.argmax(te_cor[depth_index])
+                # temp_max_depth is the value of depth at the max value of te_cor values that are under 200m
+                temp_max_depth = depth[temp_max_idx]
+                # if the depth of temp_max beyond 200m, then it is good profile:
+                if ((dep_max >= (temp_max_depth+2)) and (73 <= lat <= 81) and (-160 <= lon <= -130)):
                     good_profile.append(filename)
                 else:
                     bad_profile.append(filename)

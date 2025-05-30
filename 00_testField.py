@@ -96,39 +96,47 @@ def statHelper(all_depth_differences):
 
 
 try:
-    with h5py.File(full_path, 'r') as f:
+   with h5py.File(full_path, 'r') as f:
         def read_var(varname):
             return np.array(f[varname]).reshape(-1)
 
+        # read variables from single file for later reference.
         pr_filt = read_var('pr_filt')
-        sa_cor = read_var('sa_cor')
+        te_cor = read_var('te_cor')
         lat = read_var("latitude")
+        lon = read_var("longitude")
 
+        # Filter out NaNs
+        # valid_mask = ~np.isnan(sa_cor) & ~np.isnan(pr_filt)
         valid_mask = ~np.isnan(pr_filt)
-        invalid_mask = np.isnan(pr_filt)
-        for val in invalid_mask:
-            if val:
-                print("Has NaN value!")
+        # sa_cor = sa_cor[valid_mask]
         pr_filt = pr_filt[valid_mask]
+        te_cor  = te_cor[valid_mask]
 
+        # calculate depth
         depth = height(pr_filt, lat)
+        dep_max = max(depth)
 
-        # Filter depth to only between 600 and 200
-        in_range_mask = (depth >= 200) & (depth <= 600)
+        # depth_index has all indeces of depth array who's value is above 200m
+        depth_index = np.where(depth >= 200)[0]
+        # temp_max_val is the max value of all te_cor values within the range of depth_index
+        temp_max_val = np.max(te_cor[depth_index])
+        # temp_max_idx is the index of max value of all te_cor values within the range of depth_index
+        temp_max_idx = np.argmax(te_cor[depth_index])
 
-        depth = depth[in_range_mask]
-        print(in_range_mask)
-        sa_cor = sa_cor[in_range_mask]
+        temp_max_depth = depth[temp_max_idx]
+        if temp_max_idx <0:
+            print("test?")
 
-        depth_sort = np.sort(depth)
-        print(depth_sort[1528])
-        print(depth_sort[1529])
-        depth_diff = np.diff(depth)
-        statHelper(depth_diff)
-        plt.plot(sa_cor, depth, marker='o',linestyle='dashed',linewidth=2, markersize=5)
-        plt.grid(True)
-        plt.gca().invert_yaxis()
-        plt.show()
+        # depth_sort = np.sort(depth)
+        # print(depth_sort[1528])
+        # print(depth_sort[1529])
+        # depth_diff = np.diff(depth)
+        # statHelper(depth_diff)
+        # plt.plot(sa_cor, depth, marker='o',linestyle='dashed',linewidth=2, markersize=5)
+        # plt.grid(True)
+        # plt.gca().invert_yaxis()
+        # plt.show()
         # plotHelper(sa_cor,depth, "Salinity", "Depth", 112, 1,"made up time")
 except Exception:
     print("Error Reading Data!")
