@@ -13,7 +13,8 @@ datasets_dir = 'datasets'
 all_diff = []
 max_all = []
 weird_list=[]
-weird_value=[]
+weird_max=[]
+weird_min = []
 
 # Loop over every itp*cormat folder
 for folder_name in sorted(os.listdir(datasets_dir)):
@@ -49,12 +50,14 @@ for folder_name in sorted(os.listdir(datasets_dir)):
 
                 # Only calculate difference if we have enough points
                 if len(depth_in_range) > 1:
-                    # depth_in_range = np.sort(depth_in_range)
+                    depth_in_range = np.sort(depth_in_range)
                     depth_diff = np.diff(depth_in_range)
                     max_depth = max(depth_diff)
-                    if max_depth > 1:
+                    min_depth = min(depth_diff)
+                    if (max_depth > 1) or (min_depth <0):
                         weird_list.append(full_path)
-                        weird_value.append(max_depth)
+                        weird_max.append(max_depth)
+                        weird_min.append(min_depth)
                     max_all.append(max_depth)
                     all_diff.extend(depth_diff)
 
@@ -75,4 +78,4 @@ print("Saved depth differences to 'depth_differences.pkl'")
 print("Max of Max depth difference in range:", max(max_all))
 print("List of files with abnormal depth difference")
 for i in range(len(weird_list)):
-    print(f"File {weird_list[i]} has value of {weird_value[i]}")
+    print(f"File {weird_list[i]} has max value of {weird_max[i]}, min value of {weird_min[i]}")
