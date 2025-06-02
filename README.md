@@ -46,4 +46,6 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 - The golden standard dataset is out: we have in total of 23366 profiles.
 - Max depth difference in range of 200 to 600 meters below the sea is 88m. It is due to a measurement
 - Most (99%) of the abnormal depth difference occurs in ITP# 41. `05_analyze.py` looks into the dataset and would produce a summary.
-- 
+----------------------------
+2025/06/02:
+- `06_gridMaker.py` will interpolate on a 0.25 meter grid, and save everything in a different folder called "gridData"

@@ -4,3 +4,4 @@ plots/
 *.zip
 __pycache__*
 datasets/
+gridData/

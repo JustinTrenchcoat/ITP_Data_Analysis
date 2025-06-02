@@ -6,7 +6,7 @@ import traceback
 import gsw
 
 # set up file path
-full_path = r'D:\EOAS\ITP_Data_Analysis\datasets\itp41cormat\cor0101.mat'
+full_path = r'D:\EOAS\ITP_Data_Analysis\datasets\itp112cormat\cor0002.mat'
 
 def statHelper(all_depth_differences):
     print("Statistical Summary of Depth Differences:")
@@ -71,15 +71,14 @@ try:
             return np.array(f[varname]).reshape(-1)
 
         pr_filt = read_var('pr_filt')
-        sa_cor = read_var('sa_cor')
         lat = read_var("latitude")
+        te_cor = read_var("te_cor")
+        sa_adj = read_var("sa_adj")
 
         valid_mask = ~np.isnan(pr_filt)
-        invalid_mask = np.isnan(pr_filt)
-        for val in invalid_mask:
-            if val:
-                print("Has NaN value!")
         pr_filt = pr_filt[valid_mask]
+        te_cor = te_cor[valid_mask]
+        sa_adj = sa_adj[valid_mask]
 
         depth = height(pr_filt, lat)
 
@@ -88,16 +87,8 @@ try:
 
         depth = depth[in_range_mask]
         print(in_range_mask)
-        sa_cor = sa_cor[in_range_mask]
-
-        depth_sort = np.sort(depth)
-        print(depth_sort[-2])
-        print(depth_sort[-1])
-        depth_diff = np.diff(depth_sort)
-        # print(f"The depth around max diff is at {depth_sort[3815:3820]}")
-        print(depth_diff[2435])
-        statHelper(depth_diff)
-        plt.plot(sa_cor, depth, marker='o',linestyle='dashed',linewidth=2, markersize=5)
+        te_cor = te_cor[in_range_mask]
+        plt.plot(te_cor, depth, marker='o',linestyle='dashed',linewidth=2, markersize=5)
         plt.grid(True)
         plt.gca().invert_yaxis()
         plt.show()
