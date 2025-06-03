@@ -8,9 +8,10 @@ from tqdm import tqdm
 # Base URL pattern
 base_url = "https://scienceweb.whoi.edu/itp/data/itpsys{0}/itp{0}cormat.zip"
 
+failList = []
 # Base directory and datasets directory
 base_dir = os.getcwd()
-datasets_dir = os.path.join(base_dir, "datasets")
+datasets_dir = os.path.join(base_dir, "rawData")
 os.makedirs(datasets_dir, exist_ok=True)
 
 # Loop over ITP numbers
@@ -42,6 +43,11 @@ for itp_num in tqdm(range(1, 144), desc="Downloading"):
 
         else:
             print(f"Not found or failed to download: {url}")
+            failList.append(f"Not found or failed to download: {url}")
+
 
     except Exception as e:
         print(f"Error processing ITP {itp_num}: {e}")
+
+
+print(failList)
