@@ -15,7 +15,7 @@ def height(pressure, latitude):
 def checkField():
         # Directory and target variables
     datasets_dir = "datasets"
-    target_vars = ["sa_adj", "te_cor", "co_adj", "pr_filt"]
+    target_vars = ["sa_adj", "te_adj", "co_adj", "pr_filt"]
 
     # Output files
     with open("good_data.txt", "w") as good_file, open("bad_list.txt", "w") as bad_file:

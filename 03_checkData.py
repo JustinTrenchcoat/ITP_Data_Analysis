@@ -2,7 +2,7 @@ import os
 import shutil
 
 # Path to the datasets directory
-datasets_dir = "datasets"
+datasets_dir = "goldData"
 
 # Initialize counter
 total_profiles = 0

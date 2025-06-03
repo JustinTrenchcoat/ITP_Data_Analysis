@@ -19,21 +19,43 @@
 # te_adj           temperature (C) in conductivity cell after lags          
 # te_cor           temperature (C) at thermistor after lags applied 
 
+'''
+This script will go through the rawData folder created by 01_pullData.py and extract data that satisfies out requirement. 
+In this case, the requirement would be:
+1. The data is collected in the Beaufort Gyre (Start latitude between 73N to 81N, start longitude between 160 W to 130W)
+2. The data has measurement of depth that is at least 2 meters deeper than the AW Temperature Maximum(200m below water)
+
+The new dataset would be stored in the goldData folder, organized by itp number.
+
+for each profile, there will be NaN values for the salinity and other measurements, made to replace the bad values.
+This script will not delete it, but hoping that later scripts are able to omit the NaN values
+
+Similarly, some profiles would contain NaN as end dates and times.
+
+
+'''
+
+
 import h5py
 import numpy as np
 import os
-import gsw
 from tqdm import tqdm
 from helper import *
 
 # Path to datasets folder
 datasets_dir = 'datasets'
+golden_dir = 'goldData'
+
+
+def read_var(f, varname):
+        data = np.array(f[varname])
+        if data.dtype == "uint16":
+            return data.tobytes().decode('utf-16-le')
+        return data.reshape(-1)
 
 # Loop over every itp*cormat folder
 for folder_name in sorted(os.listdir(datasets_dir)):
     folder_path = os.path.join(datasets_dir, folder_name)
-    if not os.path.isdir(folder_path):
-        continue  # skip non-folders
 
     print(f"\nProcessing folder: {folder_name}")
 
@@ -48,21 +70,18 @@ for folder_name in sorted(os.listdir(datasets_dir)):
 
         try:
             with h5py.File(full_path, 'r') as f:
-                def read_var(varname):
-                    return np.array(f[varname]).reshape(-1)
-
                 # read variables from single file for later reference.
-                pr_filt = read_var('pr_filt')
-                te_cor = read_var('te_cor')
-                lat = read_var("latitude")
-                lon = read_var("longitude")
+                pr_filt = read_var(f, 'pr_filt')
+                te_adj = read_var(f, 'te_adj')
+                lat = read_var(f, "latitude")
+                lon = read_var(f, "longitude")
 
                 # Filter out NaNs
                 # valid_mask = ~np.isnan(sa_cor) & ~np.isnan(pr_filt)
                 valid_mask = ~np.isnan(pr_filt)
                 # sa_cor = sa_cor[valid_mask]
                 pr_filt = pr_filt[valid_mask]
-                te_cor  = te_cor[valid_mask]
+                te_adj  = te_adj[valid_mask]
 
                 # calculate depth
                 depth = height(pr_filt, lat)
@@ -71,7 +90,7 @@ for folder_name in sorted(os.listdir(datasets_dir)):
                 # depth_index has all indeces of depth array who's value is above 200m
                 depth_index = np.where(depth >= 200)[0]
                 # temp_max_idx is the index of max value of all te_cor values within the range of depth_index
-                temp_max_idx = np.argmax(te_cor[depth_index])
+                temp_max_idx = np.argmax(te_adj[depth_index])
                 # temp_max_depth is the value of depth at the max value of te_cor values that are under 200m
                 temp_max_depth = depth[temp_max_idx]
                 # if the depth of temp_max beyond 200m, then it is good profile:
