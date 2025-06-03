@@ -1,109 +1,76 @@
 import matplotlib.pyplot as plt
 from itp.profile import Profile
 import gsw
+from tqdm import tqdm
+import os
+import h5py
+import numpy as np
 
-# this is the helper for maniulating the .mat files:
-def absolute_salinity(salinity, pressure, longitude, latitude):
-    return gsw.conversions.SA_from_SP(
-        salinity,
-        pressure,
-        longitude,
-        latitude
-    )
-
-# Decode ASCII arrays to strings
-def decode_ascii(matlab_str):
-    return ''.join([chr(c) for c in matlab_str])
-
+# convert pressure to height
 def height(pressure, latitude):
         return -gsw.conversions.z_from_p(pressure, latitude)
 
-def decode_ascii(matlab_str):
-    return ''.join([chr(c) for c in matlab_str])
 
-# this is the helper funcion collection for visualization.ipynb
+# check missing variable fields 
+def checkField():
+        # Directory and target variables
+    datasets_dir = "datasets"
+    target_vars = ["sa_adj", "te_cor", "co_adj", "pr_filt"]
 
-def get_data(df, row_num):
-    value  = df.loc[row_num]
-    return value
+    # Output files
+    with open("good_data.txt", "w") as good_file, open("bad_list.txt", "w") as bad_file:
+        folders = sorted([
+            f for f in os.listdir(datasets_dir)
+            if os.path.isdir(os.path.join(datasets_dir, f)) and f.startswith("itp") and f.endswith("cormat")
+        ])
 
+        for folder_name in tqdm(folders, desc="Processing folders", unit="folder"):
+            folder_path = os.path.join(datasets_dir, folder_name)
+            mat_files = sorted([
+                f for f in os.listdir(folder_path)
+                if f.endswith(".mat")
+            ])
 
-# def smartPlot(plotType, sample):
-#     if plotType == "tvd":
-#         depth = sample["depth"]
-#         temp = sample["temp"]
-#         time = sample["date"]
-#         sysNum = sample["sys_Num"]
-#         profNum = sample["prof_Num"]
+            for file_name in tqdm(mat_files, desc=f"{folder_name}", unit="file", leave=False):
+                file_path = os.path.join(folder_path, file_name)
 
+                try:
+                    with h5py.File(file_path, 'r') as f:
+                        all_vars = list(f.keys())
+                        missing_vars = [var for var in target_vars if var not in all_vars]
 
-#         plotHelper(temp, depth, "Temperature", "Depth", sysNum,profNum,time)
-
-#         # plt.savefig(f"plots/temp_vs_depth_sys_{sysNum}_prof_{profNum}.png")
-#         plt.show()
-#     elif plotType == "svd":
-#         depth = sample["depth"]
-#         salinity = sample["salinity"]
-#         time = sample["date"]
-#         sysNum = sample["sys_Num"]
-#         profNum = sample["prof_Num"]
-
-#         plotHelper(salinity, depth, "Salinity", "Depth", sysNum,profNum,time)
-#         # plt.savefig(f"plots/sal_vs_depth_sys_{sysNum}_prof_{profNum}.png")
-#         plt.show()
- 
-
-
-# def plotHelper(x,y, xlabel, ylabel, sysNum, profNum,time):
-#     # Filter y between 200 and 500
-#     mask = (y >= 200) & (y <= 500)
-#     x_filtered = x[mask]
-#     y_filtered = y[mask]
-#     plt.plot(x_filtered, y_filtered, marker='o',linestyle='dashed',linewidth=2, markersize=12)
-#     plt.xlabel(xlabel)
-#     plt.ylabel(ylabel)
-#     plt.title(f"{xlabel} vs {ylabel}, System# {sysNum} Profile# {profNum}, Time {time}")
-#     plt.grid(True)
-#     plt.gca().invert_yaxis()
-#     # Optional: Rotate date labels for clarity
-#     plt.xticks(rotation=45)
+                        if not missing_vars:
+                            good_file.write(f"{folder_name}/{file_name}\n")
+                        else:
+                            bad_file.write(
+                                f"{folder_name}/{file_name} | Missing: {', '.join(missing_vars)} | Found: {', '.join(all_vars)}\n"
+                            )
+                except Exception as e:
+                    bad_file.write(f"{folder_name}/{file_name} | Error: {str(e)}\n")
 
 
+# filter through all files in dataset
+def traverse_datasets(datasets_dir, func):
+    """
+    Traverse through the dataset folders and apply the given function 'func' to each .mat file.
 
-# # Load saved file
-# with open("df.pkl", "rb") as f:
-#     df = pickle.load(f)
-# # stair case at around depth , temp 
-# # sample = get_data(df, )
-# # staircase at around depth 280-400, temp 06-09
-# # sample = get_data(df, 4000)
-# # stair case at around depth 280-400, temp 04-08
-# # sample = get_data(df, 4500)
-# # stair case at around depth 340-420, temp 0.6-0.75
-# # sample = get_data(df, 24500)
-# # stair case at around depth 240-360 , temp .3-.9
-# # sample = get_data(df, 124)
-# # stair case at around depth 300-440, temp .45-.75
-# # sample = get_data(df, 22000)
-# # stair case at around depth 260-380, temp .3-.95
-# # sample = get_data(df, 23)
-# # stair case at around depth 360-440, temp .5-.8
-# # sample = get_data(df, 14000)
-# # stair case at around depth 300-450, temp .2-.8
-# # sample = get_data(df, 13000)
-# # stair case at around depth 250-375, temp .15-.8
-# # sample = get_data(df, 6000)
-# # stair case at around depth 260-380, temp .2-.7
-# # sample = get_data(df, 3000)
-# # stair case at around depth 360-385, temp .3-.9
-# # sample = get_data(df, 25)
-# # sample = get_data(df,14500)
-# #--------------------------------------------------
-# # terrible example 
-# # sample = get_data(df, 26170)
-# sample = get_data(df, 30000)
-# # sample = get_data(df, 15000)
-# # sample = get_data(df, 16000)
+    Parameters:
+    - datasets_dir: str, path to the main datasets folder
+    - func: callable, function to apply on each .mat file
+            signature should be func(folder_name, file_name, file_path)
+    """
+    folders = sorted([
+        f for f in os.listdir(datasets_dir)
+        if os.path.isdir(os.path.join(datasets_dir, f)) and f.startswith("itp") and f.endswith("cormat")
+    ])
 
+    for folder_name in tqdm(folders, desc="Processing folders", unit="folder"):
+        folder_path = os.path.join(datasets_dir, folder_name)
+        mat_files = sorted([f for f in os.listdir(folder_path) if f.endswith(".mat")])
 
-# smartPlot("tvd", sample)
+        for file_name in tqdm(mat_files, desc=f"{folder_name}", unit="file", leave=False):
+            file_path = os.path.join(folder_path, file_name)
+            try:
+                func(folder_name, file_name, file_path)
+            except Exception as e:
+                print(f"Error processing {folder_name}/{file_name}: {e}")
