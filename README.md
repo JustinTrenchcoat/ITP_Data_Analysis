@@ -49,3 +49,6 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 ----------------------------
 2025/06/02:
 - `06_gridMaker.py` will interpolate on a 0.25 meter grid, and save everything in a different folder called "gridData"
+------------------------------
+2025/06/03:
+- `02_cleanData.py` mostly fixed, still need to find out a way to make it write into another folder.

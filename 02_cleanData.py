@@ -85,14 +85,16 @@ for folder_name in sorted(os.listdir(datasets_dir)):
 
                 # calculate depth
                 depth = height(pr_filt, lat)
-                dep_max = max(depth)
+                dep_max = np.max(depth)
 
                 # depth_index has all indeces of depth array who's value is above 200m
                 depth_index = np.where(depth >= 200)[0]
-                # temp_max_idx is the index of max value of all te_cor values within the range of depth_index
-                temp_max_idx = np.argmax(te_adj[depth_index])
+                # temp_idx_max is the index of max value of all te_cor values within the range of depth_index
+                temp_idx_max = np.argmax(te_adj[depth_index])
+
+                temp_max_depth_idx = depth_index[temp_idx_max]
                 # temp_max_depth is the value of depth at the max value of te_cor values that are under 200m
-                temp_max_depth = depth[temp_max_idx]
+                temp_max_depth = depth[temp_max_depth_idx]
                 # if the depth of temp_max beyond 200m, then it is good profile:
                 if ((dep_max >= (temp_max_depth+2)) and (73 <= lat <= 81) and (-160 <= lon <= -130)):
                     good_profile.append(filename)
