@@ -18,7 +18,7 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 
 ## Development Log:
 2025/05/22:
-[\[Here\]](https://scienceweb.whoi.edu/itp/data/) contains all data needed for the project. Below is a list of dataset folders that we did not use and why:  
+- [\[Here\]](https://scienceweb.whoi.edu/itp/data/) contains all data needed for the project. Below is a list of dataset folders that we did not use and why:  
 
 | ITP System Number                          | Reason                                                   |
 |------------------------------------------- |----------------------------------------------------------|
