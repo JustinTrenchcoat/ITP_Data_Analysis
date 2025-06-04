@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-from itp.profile import Profile
 import gsw
 from tqdm import tqdm
 import os
@@ -11,13 +10,18 @@ def height(pressure, latitude):
         return -gsw.conversions.z_from_p(pressure, latitude)
 
 
-# check missing variable fields 
-def checkField():
-        # Directory and target variables
-    datasets_dir = "datasets"
-    target_vars = ["sa_adj", "te_adj", "co_adj", "pr_filt"]
+def read_var(f, varname):
+        data = np.array(f[varname])
+        if data.dtype == "uint16":
+            return data.tobytes().decode('utf-16-le')
+        return data.reshape(-1)
 
-    # Output files
+
+# check missing variable fields 
+def checkField(datasets_dir):
+    # datasets_dir = "datasets"
+    target_vars = ["sa_adj", "te_adj", "pr_filt"]
+
     with open("good_data.txt", "w") as good_file, open("bad_list.txt", "w") as bad_file:
         folders = sorted([
             f for f in os.listdir(datasets_dir)

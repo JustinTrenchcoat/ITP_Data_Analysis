@@ -39,19 +39,13 @@ Similarly, some profiles would contain NaN as end dates and times.
 import h5py
 import numpy as np
 import os
+import shutil
 from tqdm import tqdm
-from helper import *
+from helper import height, checkField, read_var
 
 # Path to datasets folder
 datasets_dir = 'datasets'
 golden_dir = 'goldData'
-
-
-def read_var(f, varname):
-        data = np.array(f[varname])
-        if data.dtype == "uint16":
-            return data.tobytes().decode('utf-16-le')
-        return data.reshape(-1)
 
 # Loop over every itp*cormat folder
 for folder_name in sorted(os.listdir(datasets_dir)):
@@ -77,9 +71,7 @@ for folder_name in sorted(os.listdir(datasets_dir)):
                 lon = read_var(f, "longitude")
 
                 # Filter out NaNs
-                # valid_mask = ~np.isnan(sa_cor) & ~np.isnan(pr_filt)
-                valid_mask = ~np.isnan(pr_filt)
-                # sa_cor = sa_cor[valid_mask]
+                valid_mask = ~np.isnan(te_adj) & ~np.isnan(pr_filt)
                 pr_filt = pr_filt[valid_mask]
                 te_adj  = te_adj[valid_mask]
 
@@ -89,25 +81,26 @@ for folder_name in sorted(os.listdir(datasets_dir)):
 
                 # depth_index has all indeces of depth array who's value is above 200m
                 depth_index = np.where(depth >= 200)[0]
-                # temp_idx_max is the index of max value of all te_cor values within the range of depth_index
+                # temp_idx_max is the index of max value of all te_cor values measured below 200 m
                 temp_idx_max = np.argmax(te_adj[depth_index])
-
+                # temp_max_depth_idx is the index value of depth, for the depth with max temperature below 200 m
                 temp_max_depth_idx = depth_index[temp_idx_max]
                 # temp_max_depth is the value of depth at the max value of te_cor values that are under 200m
                 temp_max_depth = depth[temp_max_depth_idx]
                 # if the depth of temp_max beyond 200m, then it is good profile:
                 if ((dep_max >= (temp_max_depth+2)) and (73 <= lat <= 81) and (-160 <= lon <= -130)):
-                    good_profile.append(filename)
+                    # --- COPY GOOD FILE TO goldData ---
+                    dest_folder = os.path.join(golden_dir, folder_name)
+                    os.makedirs(dest_folder, exist_ok=True)
+
+                    dest_path = os.path.join(dest_folder, filename)
+                    shutil.copy2(full_path, dest_path)
                 else:
                     bad_profile.append(filename)
 
         except Exception:
             bad_profile.append(filename)
 
-    # Delete bad profiles
-    for filename in bad_profile:
-        try:
-            os.remove(os.path.join(folder_path, filename))
-            print(f"Deleted: {filename}")
-        except Exception as e:
-            print(f"Failed to delete {filename}: {e}")
+    # Count bad profiles
+print(f"there are in total {len(bad_profile)} bad profiles")
+checkField(golden_dir)

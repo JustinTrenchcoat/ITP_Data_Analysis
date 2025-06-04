@@ -32,8 +32,6 @@ for folder_name in sorted(os.listdir(datasets_dir)):
 
         try:
             with h5py.File(full_path, 'r') as f:
-                def read_var(varname):
-                    return np.array(f[varname]).reshape(-1)
 
                 pr_filt = read_var('pr_filt')
                 lat = read_var("latitude")

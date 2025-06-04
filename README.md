@@ -2,8 +2,32 @@
 
 This is my experiment field for ITP data analysis project from UBC WLIURA 2025 Summer. This project is under the research project `S25 WLIURA - Undergraduate Research Asst Arctic Oceanography` with Dr. Stephanie Waterman as the supervisor. 
 
+## List of scripts and their funcionalities:
+| Script Name          | Functionalities |
+| -----------          | --------------- |
+| `00_testField.py`    | test field for new functions|
+| `01_pullData.py`     | download and unzip the cormat files into the folder `datasets`, organize the files in ITP system number|
+| `02_cleanData.py`    | Comb through every profile in `datasets` folder. Save profiles that matches the "gold standard" into another folder named `goldData`|
+| `03_checkData.py`    | Check number of profiles left in the `goldData` folder. (Will be deprecated in the future or kept as a function in helper scripts )|
+| `04_Plot.py`         | Has all kinds of plotting functions|
+| `05_analyze.py`      | Calculate the depth difference in all profiles, summarize it and store the result into `depth_differences.pkl`.|
+| `06_gridMaker.py`    | Take profiles from `goldData`, interpolate the data into a 0.25 m regular grided dataset, stores them in folder named `gridData`|
+| `07_singleReader.py` | Tool for checking individual profile when something goes wrong.|
+| `helper.py`          | Place for all helper functions|
+ 
+
 ## Development Log:
-- we have figured out that the  [\[here\]](https://scienceweb.whoi.edu/itp/data/) contains all data we need. We should look for the `itp####cormat` files. 
+2025/05/22:
+- [\[Here\]](https://scienceweb.whoi.edu/itp/data/) contains all data needed for the project. Below is a list of dataset folders that we did not use and why:
+| ITP System Numer                           | Reason |
+| --------                                   | ------- |
+| 31, 40                                     | Mission in Antarctica    |
+| 96,106,124,133,135,137,138,139,141,142,143 | Still active|
+| 39,45,46                                   | LMP Misstions(in lakes)    |
+| 134                                        | Device not deployed yet|
+|136, 140                                    | has only oxygen and bio sensor|
+|20, 67, 71, 44, 50, 66                      | Received no profiles due to technical difficulties on the hardware|
+
 - `test.py` and `matlabRead.py` have scripts that could read from .mat files. The next step is to filter them through our requirement. The question now is whether we need to convert them into .nc or other format after filtering through them
 - Since the dataset is totally different, we might not need the itp package?? Or we can write our own package
 - We should also read through the clustering method and figure out how it works.
@@ -40,11 +64,13 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 - from the experiment in testfield, the data structure is indeed weird: each measurement in one profile is not strictly arranged in time:
     - take `D:\EOAS\ITP_Data_Analysis\datasets\itp41cormat\cor1391.mat` for example, the first entry in its depth is 412.52 instead of 200
     - sort() does the work
-- Task: refilter the dataset to get the "golden standard" data: find the AW temp max and go deeper than that. 
+- Task: refilter the dataset to get the "golden standard" data:
+    - Profile taken in the beaufort Gyre
+    - Deepest measurement is taken at least 2m deeper than where the AW temperature max appear.
 ---------------------------
 2025/05/30:
 - The golden standard dataset is out: we have in total of 23366 profiles.
-- Max depth difference in range of 200 to 600 meters below the sea is 88m. It is due to a measurement
+- Max depth difference in range of 200 to 600 meters below the sea is 88m.
 - Most (99%) of the abnormal depth difference occurs in ITP# 41. `05_analyze.py` looks into the dataset and would produce a summary.
 ----------------------------
 2025/06/02:
@@ -52,3 +78,6 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 ------------------------------
 2025/06/03:
 - `02_cleanData.py` mostly fixed, still need to find out a way to make it write into another folder.
+--------------------------------
+2025/06/04:
+- `02_cleanData.py` done, new dataset would be collected and cleaned once the WHOI database has confirmed that ITP#93 has profiles.

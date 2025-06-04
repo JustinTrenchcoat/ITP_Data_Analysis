@@ -4,7 +4,7 @@ import h5py
 import traceback
 import os
 from scipy.interpolate import interp1d
-from helper import height
+from helper import height, read_var
 from tqdm import tqdm
 import pandas as pd
 
@@ -47,11 +47,6 @@ for folder_name in sorted(os.listdir(datasets_dir)):
 
         try:
             with h5py.File(full_path, 'r') as f:
-                def read_var(varname):
-                    data = np.array(f[varname])
-                    if data.dtype == 'uint16': 
-                        return data.tobytes().decode('utf-16-le')
-                    return data.reshape(-1)
 
                 pr_filt = read_var('pr_filt')
                 lat = read_var("latitude")
@@ -61,19 +56,19 @@ for folder_name in sorted(os.listdir(datasets_dir)):
                 pedate = read_var("pedate")
                 pstop = read_var("pstop")
 
-                te_cor = read_var("te_cor")
+                te_adj = read_var("te_adj")
                 sa_adj = read_var("sa_adj")
 
-                valid_mask = ~np.isnan(pr_filt)
+                valid_mask = ~np.isnan(te_adj) & ~np.isnan(pr_filt) & ~np.isnan(sa_adj)
                 pr_filt = pr_filt[valid_mask]
-                te_cor = te_cor[valid_mask]
+                te_adj = te_adj[valid_mask]
                 sa_adj = sa_adj[valid_mask]
 
                 # Step 1: Sort by depth
                 depth = height(pr_filt, lat)
                 sorted_indices = np.argsort(depth)
                 depths_sorted = depth[sorted_indices]
-                temperatures_sorted = te_cor[sorted_indices]
+                temperatures_sorted = te_adj[sorted_indices]
                 salinity_sorted = sa_adj[sorted_indices]
 
                 # Step 2: Create regular depth grid (every 0.25 m)

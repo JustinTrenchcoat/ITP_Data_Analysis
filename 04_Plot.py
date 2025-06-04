@@ -8,27 +8,7 @@ from helper import *
 # set up file path
 full_path = r'D:\EOAS\ITP_Data_Analysis\datasets\itp112cormat\cor0001.mat'
 
-def smartPlot(plotType, sample, sysNum, profNum):
-    if plotType == "tvd":
-        depth = Profile.depth(sample)
-        temp = Profile.potential_temperature(sample)
-        time = Profile.python_datetime(sample)
-        time = time.strftime("%Y-%m-%d %H:%M:%S")
 
-        plotHelper(temp, depth, "Temperature", "Depth", sysNum,profNum,time)
-
-        plt.savefig(f"plots/temp_vs_depth_sys_{sysNum}_prof_{profNum}.png")
-        plt.show()
-    elif plotType == "svd":
-        depth = Profile.depth(sample)
-        salinity = Profile.absolute_salinity(sample)
-        time = Profile.python_datetime(sample)
-        time = time.strftime("%Y-%m-%d %H:%M:%S")
-
-        plotHelper(salinity, depth, "Salinity", "Depth", sysNum,profNum,time)
-        plt.savefig(f"plots/sal_vs_depth_sys_{sysNum}_prof_{profNum}.png")
-        plt.show()
- 
 
 
 def plotHelper(x,y, xlabel, ylabel, sysNum, profNum,time):

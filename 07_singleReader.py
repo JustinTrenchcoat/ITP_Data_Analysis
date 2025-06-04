@@ -33,9 +33,15 @@ try:
 
         # Filter out NaNs
         valid_mask = ~np.isnan(sa_adj) & ~np.isnan(pr_filt) & ~np.isnan(te_adj)
+        test_mask =  ~np.isnan(pr_filt)
+        print(f"valid_mask length:{len(valid_mask)}")
         # sa_cor = sa_cor[valid_mask]
         pr_filt = pr_filt[valid_mask]
         te_adj  = te_adj[valid_mask]
+
+        
+
+        print(f"test_mask length: {len(test_mask)}")
 
 
 
