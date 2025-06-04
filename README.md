@@ -18,15 +18,18 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 
 ## Development Log:
 2025/05/22:
-- [\[Here\]](https://scienceweb.whoi.edu/itp/data/) contains all data needed for the project. Below is a list of dataset folders that we did not use and why:
-| ITP System Numer                           | Reason |
-| --------                                   | ------- |
-| 31, 40                                     | Mission in Antarctica    |
-| 96,106,124,133,135,137,138,139,141,142,143 | Still active|
-| 39,45,46                                   | LMP Misstions(in lakes)    |
-| 134                                        | Device not deployed yet|
-|136, 140                                    | has only oxygen and bio sensor|
-|20, 67, 71, 44, 50, 66                      | Received no profiles due to technical difficulties on the hardware|
+[\[Here\]](https://scienceweb.whoi.edu/itp/data/) contains all data needed for the project. Below is a list of dataset folders that we did not use and why:  
+
+| ITP System Number                          | Reason                                                   |
+|------------------------------------------- |----------------------------------------------------------|
+| 31, 40                                     | Mission in Antarctica                                    |
+| 96,106,124,133,135,137,138,139,141,142,143 | Still active                                             |
+| 39,45,46                                   | LMP Missions (in lakes)                                  |
+| 134                                        | Device not deployed yet                                  |
+| 136, 140                                   | Has only oxygen and bio sensor                           |
+| 20, 67, 71, 44, 50, 66                     | Received no profiles due to technical difficulties       |
+
+
 
 - `test.py` and `matlabRead.py` have scripts that could read from .mat files. The next step is to filter them through our requirement. The question now is whether we need to convert them into .nc or other format after filtering through them
 - Since the dataset is totally different, we might not need the itp package?? Or we can write our own package
