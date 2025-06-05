@@ -86,4 +86,4 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 ---------------------------------
 2025/06/05:
 - `03_checkData.py` has been deprecated. 
-- 
+- In the staricase detection algorithm, the `te_adj` and `sa_adj` were further converted with gsw functions, do we really need that?
