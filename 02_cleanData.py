@@ -41,7 +41,7 @@ import numpy as np
 import os
 import shutil
 from tqdm import tqdm
-from helper import height, checkField, read_var
+from helper import *
 
 # Path to datasets folder
 datasets_dir = 'datasets'
@@ -104,3 +104,4 @@ for folder_name in sorted(os.listdir(datasets_dir)):
     # Count bad profiles
 print(f"there are in total {len(bad_profile)} bad profiles")
 checkField(golden_dir)
+countData(golden_dir)

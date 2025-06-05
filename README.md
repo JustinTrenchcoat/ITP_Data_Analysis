@@ -8,7 +8,6 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 | `00_testField.py`    | test field for new functions|
 | `01_pullData.py`     | download and unzip the cormat files into the folder `datasets`, organize the files in ITP system number|
 | `02_cleanData.py`    | Comb through every profile in `datasets` folder. Save profiles that matches the "gold standard" into another folder named `goldData`|
-| `03_checkData.py`    | Check number of profiles left in the `goldData` folder. (Will be deprecated in the future or kept as a function in helper scripts )|
 | `04_Plot.py`         | Has all kinds of plotting functions|
 | `05_analyze.py`      | Calculate the depth difference in all profiles, summarize it and store the result into `depth_differences.pkl`.|
 | `06_gridMaker.py`    | Take profiles from `goldData`, interpolate the data into a 0.25 m regular grided dataset, stores them in folder named `gridData`|
@@ -84,3 +83,7 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 --------------------------------
 2025/06/04:
 - `02_cleanData.py` done, new dataset would be collected and cleaned once the WHOI database has confirmed that ITP#93 has profiles.
+---------------------------------
+2025/06/05:
+- `03_checkData.py` has been deprecated. 
+- 
