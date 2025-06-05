@@ -25,8 +25,9 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 | 96,106,124,133,135,137,138,139,141,142,143 | Still active                                             |
 | 39,45,46                                   | LMP Missions (in lakes)                                  |
 | 134                                        | Device not deployed yet                                  |
-| 136, 140                                   | Has only oxygen and bio sensor                           |
+| 136, 140                                   | Not been retreived yet?                                  |
 | 20, 67, 71, 44, 50, 66                     | Received no profiles due to technical difficulties       |
+| 93                                         | Directory error, deployed in irrelevant area             |
 
 
 
