@@ -44,7 +44,7 @@ from tqdm import tqdm
 from helper import *
 
 # Path to datasets folder
-datasets_dir = 'datasets'
+datasets_dir = 'rawData'
 golden_dir = 'goldData'
 
 # Loop over every itp*cormat folder

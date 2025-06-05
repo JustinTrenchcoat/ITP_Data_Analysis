@@ -30,7 +30,7 @@ for itp_num in tqdm(range(1, 144), desc="Downloading"):
                         f.write(chunk)
             print(f"Downloaded: {zip_filename}")
 
-            # Extract into datasets/itp*cormat/
+            # Extract into rawData/itp*cormat/
             extract_folder = os.path.join(datasets_dir, f"itp{itp_num}cormat")
             os.makedirs(extract_folder, exist_ok=True)
 

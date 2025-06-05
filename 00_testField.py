@@ -38,7 +38,7 @@ try:
         # Initial scatter plot of filtered data
         plt.scatter(combined[:, 1], combined[:, 0])
         plt.gca().invert_yaxis()
-        plt.title("Filtered Depth-Temperature Data (200–600 m)")
+        plt.title("Filtered Depth-Temperature Data (200-400 m)")
         plt.xlabel("Temperature (°C)")
         plt.ylabel("Depth (m)")
         plt.show()
@@ -90,7 +90,7 @@ try:
         plt.gca().invert_yaxis()
         plt.xlabel("Temperature (°C)")
         plt.ylabel("Depth (m)")
-        plt.title("SOM Clusters with Centroids (200–600 m)")
+        plt.title("SOM Clusters with Centroids (200-400 m)")
         plt.legend()
         plt.show()
 
