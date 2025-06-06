@@ -1,10 +1,11 @@
-import matplotlib.pyplot as plt
 import gsw
 from tqdm import tqdm
 import os
-import h5py
 import numpy as np
 import shutil
+import traceback
+import h5py
+
 
 # convert pressure to height
 def height(pressure, latitude):
@@ -64,21 +65,27 @@ def traverse_datasets(datasets_dir, func):
     - func: callable, function to apply on each .mat file
             signature should be func(folder_name, file_name, file_path)
     """
-    folders = sorted([
-        f for f in os.listdir(datasets_dir)
-        if os.path.isdir(os.path.join(datasets_dir, f)) and f.startswith("itp") and f.endswith("cormat")
-    ])
-
-    for folder_name in tqdm(folders, desc="Processing folders", unit="folder"):
+    for folder_name in sorted(os.listdir(datasets_dir)):
         folder_path = os.path.join(datasets_dir, folder_name)
-        mat_files = sorted([f for f in os.listdir(folder_path) if f.endswith(".mat")])
+        if not os.path.isdir(folder_path):
+            continue  # skip non-folders
 
-        for file_name in tqdm(mat_files, desc=f"{folder_name}", unit="file", leave=False):
-            file_path = os.path.join(folder_path, file_name)
+        print(f"\nProcessing folder: {folder_name}")
+
+        # Get all .mat files
+        all_mat_files = sorted([f for f in os.listdir(folder_path) if f.endswith('.mat')])
+
+        for file_name in tqdm(all_mat_files, desc=f"Filtering {folder_name}", leave=False):
+            full_path = os.path.join(folder_path, file_name)
+
             try:
-                func(folder_name, file_name, file_path)
+                func(full_path, file_name, folder_name)
+
+        # Inside your for-loop where the exception occurs:
             except Exception as e:
-                print(f"Error processing {folder_name}/{file_name}: {e}")
+                print(f"Error processing file: {file_name}")
+                traceback.print_exc()
+
 
 
 def countData(datasets_dir):

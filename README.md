@@ -88,3 +88,8 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 2025/06/05:
 - `03_checkData.py` has been deprecated. 
 - In the staricase detection algorithm, the `te_adj` and `sa_adj` were further converted with gsw functions, do we really need that?
+---------------------------------
+2025/06/06:
+- `06_gridMaker` successfully transforms .mat into 0.25m gridded dataframe. 
+- reorganized `05_analyze.py` and `06_gridMaker.py` with helper function
+- Minor changes made to `Makefile`, `02_cleanData.py` and `helper.py`

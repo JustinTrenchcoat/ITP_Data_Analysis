@@ -15,54 +15,35 @@ weird_list=[]
 weird_max=[]
 weird_min = []
 
-# Loop over every itp*cormat folder
-for folder_name in sorted(os.listdir(datasets_dir)):
-    folder_path = os.path.join(datasets_dir, folder_name)
-    if not os.path.isdir(folder_path):
-        continue  # skip non-folders
+def analyze_depth(full_path, file_name, folder_name):
+    with h5py.File(full_path, 'r') as f:
+        pr_filt = read_var(f, 'pr_filt')
+        lat = read_var(f, "latitude")
 
-    print(f"\nProcessing folder: {folder_name}")
+        valid_mask = ~np.isnan(pr_filt)
+        pr_filt = pr_filt[valid_mask]
 
-    # Get all .mat files
-    all_mat_files = sorted([f for f in os.listdir(folder_path) if f.endswith('.mat')])
+        depth = height(pr_filt, lat)
 
-    for filename in tqdm(all_mat_files, desc=f"Filtering {folder_name}", leave=False):
-        full_path = os.path.join(folder_path, filename)
+        # Filter depth to only between 600 and 200
+        in_range_mask = (depth >= 200) & (depth <= 600)
 
-        try:
-            with h5py.File(full_path, 'r') as f:
+        depth_in_range = depth[in_range_mask]
 
-                pr_filt = read_var(f, 'pr_filt')
-                lat = read_var(f, "latitude")
+        # Only calculate difference if we have enough points
+        if len(depth_in_range) > 1:
+            depth_in_range = np.sort(depth_in_range)
+            depth_diff = np.diff(depth_in_range)
+            max_depth = max(depth_diff)
+            min_depth = min(depth_diff)
+            if (max_depth > 1) or (min_depth <0):
+                weird_list.append(full_path)
+                weird_max.append(max_depth)
+                weird_min.append(min_depth)
+            max_all.append(max_depth)
+            all_diff.extend(depth_diff)
 
-                valid_mask = ~np.isnan(pr_filt)
-                pr_filt = pr_filt[valid_mask]
-
-                depth = height(pr_filt, lat)
-
-                # Filter depth to only between 600 and 200
-                in_range_mask = (depth >= 200) & (depth <= 600)
-
-                depth_in_range = depth[in_range_mask]
-
-                # Only calculate difference if we have enough points
-                if len(depth_in_range) > 1:
-                    depth_in_range = np.sort(depth_in_range)
-                    depth_diff = np.diff(depth_in_range)
-                    max_depth = max(depth_diff)
-                    min_depth = min(depth_diff)
-                    if (max_depth > 1) or (min_depth <0):
-                        weird_list.append(full_path)
-                        weird_max.append(max_depth)
-                        weird_min.append(min_depth)
-                    max_all.append(max_depth)
-                    all_diff.extend(depth_diff)
-
-        # Inside your for-loop where the exception occurs:
-        except Exception as e:
-            print(f"Error processing file: {filename}")
-            traceback.print_exc()
-
+traverse_datasets(datasets_dir, analyze_depth)
 # Convert to numpy array and save to pickle
 all_diff = np.array(all_diff)
 

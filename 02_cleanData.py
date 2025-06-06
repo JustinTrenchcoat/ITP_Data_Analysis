@@ -47,14 +47,16 @@ from helper import *
 datasets_dir = 'rawData'
 golden_dir = 'goldData'
 
+
+
+good_profile = []
+bad_profile = []
+
 # Loop over every itp*cormat folder
 for folder_name in sorted(os.listdir(datasets_dir)):
     folder_path = os.path.join(datasets_dir, folder_name)
 
     print(f"\nProcessing folder: {folder_name}")
-
-    good_profile = []
-    bad_profile = []
 
     # Get all .mat files
     all_mat_files = sorted([f for f in os.listdir(folder_path) if f.endswith('.mat')])
