@@ -7,6 +7,8 @@ from scipy.interpolate import interp1d
 from helper import height, read_var
 from tqdm import tqdm
 import pandas as pd
+import re
+
 
 
 # co_adj          conductivity (mmho) after lags and calibration adjustment          
@@ -27,7 +29,7 @@ import pandas as pd
 # te_cor           temperature (C) at thermistor after lags applied 
 
 # Path to datasets folder
-datasets_dir = 'datasets'
+datasets_dir = 'goldData'
 new_dir = 'gridData'
 
 # Loop over every itp*cormat folder in datasets
@@ -48,16 +50,17 @@ for folder_name in sorted(os.listdir(datasets_dir)):
         try:
             with h5py.File(full_path, 'r') as f:
 
-                pr_filt = read_var('pr_filt')
-                lat = read_var("latitude")
-                lon = read_var("longitude")
-                psdate = read_var("psdate")
-                pstart = read_var("pstart")
-                pedate = read_var("pedate")
-                pstop = read_var("pstop")
+                pr_filt = read_var(f, 'pr_filt')
+                lat = read_var(f, "latitude")
+                lon = read_var(f, "longitude")
 
-                te_adj = read_var("te_adj")
-                sa_adj = read_var("sa_adj")
+                psdate = read_var(f, "psdate")
+                pstart = read_var(f, "pstart")
+                pedate = read_var(f, "pedate")
+                pstop = read_var(f, "pstop")
+
+                te_adj = read_var(f, "te_adj")
+                sa_adj = read_var(f, "sa_adj")
 
                 valid_mask = ~np.isnan(te_adj) & ~np.isnan(pr_filt) & ~np.isnan(sa_adj)
                 pr_filt = pr_filt[valid_mask]
@@ -94,8 +97,6 @@ for folder_name in sorted(os.listdir(datasets_dir)):
                 output_subfolder = os.path.join(new_dir, folder_name)
                 os.makedirs(output_subfolder, exist_ok=True)
 
-                # Clean filename components
-                import re
 
                 def clean(x):
                     # Convert to string

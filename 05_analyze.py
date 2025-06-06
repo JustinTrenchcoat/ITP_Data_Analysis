@@ -7,7 +7,7 @@ from tqdm import tqdm
 from helper import *
 
 # Path to datasets folder
-datasets_dir = 'datasets'
+datasets_dir = 'goldData'
 
 all_diff = []
 max_all = []
@@ -32,8 +32,8 @@ for folder_name in sorted(os.listdir(datasets_dir)):
         try:
             with h5py.File(full_path, 'r') as f:
 
-                pr_filt = read_var('pr_filt')
-                lat = read_var("latitude")
+                pr_filt = read_var(f, 'pr_filt')
+                lat = read_var(f, "latitude")
 
                 valid_mask = ~np.isnan(pr_filt)
                 pr_filt = pr_filt[valid_mask]

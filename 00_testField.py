@@ -4,102 +4,90 @@ import matplotlib.pyplot as plt
 import h5py
 import traceback
 from sklearn.preprocessing import MinMaxScaler
-from helper import height, read_var, checkField
+from helper import *
+from scipy.interpolate import interp1d
+import os
+import pandas as pd
+import re
 
+full_path = r'D:\EOAS\ITP_Data_Analysis\goldData\itp1cormat\cor0001.mat'
+new_dir = 'gridData'
+folder_name = 'testFolder'
+filename = 'testFile'
 
-dir = "datasets"
+try:
+            with h5py.File(full_path, 'r') as f:
 
-checkField(dir)
+                pr_filt = read_var(f,'pr_filt')
+                lat = read_var(f,"latitude")
+                lon = read_var(f, "longitude")
+                psdate = read_var(f, "psdate")
+                pstart = read_var(f, "pstart")
+                pedate = read_var(f, "pedate")
+                pstop = read_var(f, "pstop")
 
+                te_adj = read_var(f, "te_adj")
+                sa_adj = read_var(f, "sa_adj")
 
-# # Path to .mat file
-# full_path = r'D:\EOAS\ITP_Data_Analysis\datasets\itp1cormat\cor0002.mat'
+                valid_mask = ~np.isnan(te_adj) & ~np.isnan(pr_filt) & ~np.isnan(sa_adj)
+                pr_filt = pr_filt[valid_mask]
+                te_adj = te_adj[valid_mask]
+                sa_adj = sa_adj[valid_mask]
 
-# try:
-#     with h5py.File(full_path, 'r') as f:
-#         print("Keys: %s" % f.keys())
+                # Step 1: Sort by depth
+                depth = height(pr_filt, lat)
+                sorted_indices = np.argsort(depth)
+                depths_sorted = depth[sorted_indices]
+                temperatures_sorted = te_adj[sorted_indices]
+                salinity_sorted = sa_adj[sorted_indices]
 
-#         # Read variables
-#         pr_filt = read_var(f, 'pr_filt')
-#         sa_adj = read_var(f, "sa_adj")
-#         te_adj = read_var(f, 'te_adj')
-#         lat = read_var(f, "latitude")
+                # Step 2: Create regular depth grid (every 0.25 m)
+                regular_depths = np.arange(depths_sorted.min(), depths_sorted.max(), 0.25)
 
-#         # Filter out NaNs
-#         valid_mask = ~np.isnan(sa_adj) & ~np.isnan(pr_filt) & ~np.isnan(te_adj)
-#         pr_filt = pr_filt[valid_mask]
-#         te_adj = te_adj[valid_mask]
+                # Step 3: Interpolate each variable
+                temp_interp = interp1d(depths_sorted, temperatures_sorted, kind='linear', bounds_error=False, fill_value='extrapolate')
+                sal_interp = interp1d(depths_sorted, salinity_sorted, kind='linear', bounds_error=False, fill_value='extrapolate')
+                interpolated_temperatures = temp_interp(regular_depths)
+                interpolated_salinity = sal_interp(regular_depths)
+                
+                if not (len(regular_depths) == len(interpolated_temperatures) == len(interpolated_salinity)):
+                    raise ValueError(f"Length mismatch in interpolated arrays in file: {full_path}")
 
-#         # Compute depth and apply range filter
-#         depth = height(pr_filt, lat)
-#         depth_mask = (depth >= 200) & (depth <= 400)
-#         depth = depth[depth_mask]
-#         te_adj = te_adj[depth_mask]
+                # Create DataFrame
+                df = pd.DataFrame({
+                    'Depth': regular_depths,
+                    'Temperature': interpolated_temperatures,
+                    'Salinity': interpolated_salinity
+                })
 
-#         # Combine and scale features
-#         combined = np.column_stack((depth, te_adj))
-#         scaler = MinMaxScaler()
-#         combined_scaled = scaler.fit_transform(combined)
+                # Create matching subfolder in gridData
+                output_subfolder = os.path.join(new_dir, folder_name)
+                os.makedirs(output_subfolder, exist_ok=True)
 
-#         # Initial scatter plot of filtered data
-#         plt.scatter(combined[:, 1], combined[:, 0])
-#         plt.gca().invert_yaxis()
-#         plt.title("Filtered Depth-Temperature Data (200-400 m)")
-#         plt.xlabel("Temperature (°C)")
-#         plt.ylabel("Depth (m)")
-#         plt.show()
+                def clean(x):
+                    # Convert to string
+                    x_str = str(x)
+                    # Remove brackets, whitespace
+                    x_str = x_str.strip("[] ").replace(" ", "")
+                    # Replace any non-alphanumeric or underscore/dash/dot characters with underscore
+                    x_str = re.sub(r'[^\w\-.]', '_', x_str)
+                    return x_str
 
-#         # Train SOM
-#         som = MiniSom(10, 10, combined_scaled.shape[1], sigma=1, learning_rate=0.5,
-#                       neighborhood_function='triangle', random_seed=10)
-#         som.train(combined_scaled, 100, random_order=False, verbose=True)
+                lon_str = clean(lon)
+                lat_str = clean(lat)
+                psdate_str = clean(psdate)
+                pstart_str = clean(pstart)
+                pedate_str = clean(pedate)
+                pstop_str = clean(pstop)
 
-#         # # Optional: error tracking
-#         # max_iter = 1000
-#         # q_error = []
-#         # t_error = []
-#         # for i in range(max_iter):
-#         #     rand_i = np.random.randint(len(combined_scaled))
-#         #     som.update(combined_scaled[rand_i], som.winner(combined_scaled[rand_i]), i, max_iter)
-#         #     q_error.append(som.quantization_error(combined_scaled))
-#         #     t_error.append(som.topographic_error(combined_scaled))
+                # Output path
+                output_filename = f"{filename.rstrip('.mat')}_{lon_str}_{lat_str}_{psdate_str}_{pstart_str}_{pedate_str}_{pstop_str}.csv"
+                output_path = os.path.join(output_subfolder, output_filename)
 
-#         # plt.plot(np.arange(max_iter), q_error, label='quantization error')
-#         # plt.plot(np.arange(max_iter), t_error, label='topographic error')
-#         # plt.xlabel('Iteration')
-#         # plt.ylabel('Error')
-#         # plt.legend()
-#         # plt.title("SOM Training Errors")
-#         # plt.show()
+                # Save to CSV
+                df.to_csv(output_path, index=False)
 
-#         # Get cluster assignments
-#         som_shape = som.get_weights().shape[:2]
-#         winner_coordinates = np.array([som.winner(x) for x in combined_scaled]).T
-#         cluster_index = np.ravel_multi_index(winner_coordinates, som_shape)
-
-#         # Plot clusters
-#         plt.figure(figsize=(10, 8))
-#         for c in np.unique(cluster_index):
-#             points = combined[cluster_index == c]
-#             plt.scatter(points[:, 1], points[:, 0], label=f'cluster={c}', alpha=0.7)
-
-#         # Plot centroids that actually have data points
-#         weights = som.get_weights().reshape(-1, combined_scaled.shape[1])
-#         weights_clipped = np.clip(weights, 0, 1)
-#         centroids_unscaled = scaler.inverse_transform(weights_clipped)
-
-#         unique_clusters = np.unique(cluster_index)
-#         for i, centroid in enumerate(centroids_unscaled):
-#             if i in unique_clusters:
-#                 plt.scatter(centroid[1], centroid[0], marker='x', s=80, color='k')
-
-#         plt.gca().invert_yaxis()
-#         plt.xlabel("Temperature (°C)")
-#         plt.ylabel("Depth (m)")
-#         plt.title("SOM Clusters with Centroids (200-400 m)")
-#         plt.legend()
-#         plt.show()
-
-# except Exception as e:
-#     print(f"Error processing file: {full_path}")
-#     traceback.print_exc()
+                
+except Exception as e:
+            print(f"Error processing file: {full_path}")
+            traceback.print_exc()
