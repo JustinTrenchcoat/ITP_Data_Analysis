@@ -13,7 +13,7 @@ from scipy.io import savemat
 
 # set up file path
 # full_path = r'D:\EOAS\ITP_Data_Analysis\datasets\itp62cormat\cor0008.mat'
-full_path = r'D:\EOAS\ITP_Data_Analysis\goldData\itp121cormat\cor0604.mat'
+full_path = r'D:\EOAS\ITP_Data_Analysis\gridDataMat\itp1cormat\cor0001.mat'
 
 new_dir = "testData"
 folder_name = "test"
