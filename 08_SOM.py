@@ -33,9 +33,9 @@ try:
         sa_adj = sa_adj[depth_mask]
 
         # Combine and scale features
-        # combined = np.column_stack((depth, te_adj, sa_adj))
+        combined = np.column_stack((depth, te_adj, sa_adj))
         # print(combined[0])
-        combined = np.column_stack((depth, te_adj))
+        # combined = np.column_stack((depth, te_adj))
         scaler = MinMaxScaler()
         combined_scaled = scaler.fit_transform(combined)
 
