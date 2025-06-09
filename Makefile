@@ -10,3 +10,5 @@ plot:
 clean: 
 		rm -rf plots/*
 		rm *.txt
+		rm -rf gridDataMat/*
+		rm -rf gridData/*

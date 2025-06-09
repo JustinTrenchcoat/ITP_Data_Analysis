@@ -5,6 +5,7 @@ import os
 from scipy.interpolate import interp1d
 import pandas as pd
 import re
+from scipy.io import savemat
 
 
 
@@ -28,6 +29,7 @@ import re
 # Path to datasets folder
 datasets_dir = 'goldData'
 new_dir = 'gridData'
+new_matDir = 'gridDataMat'
 
 
 def clean(x):
@@ -42,7 +44,6 @@ def clean(x):
 
 def makeGrid(full_path, file_name, folder_name):
     with h5py.File(full_path, 'r') as f:
-
         pr_filt = read_var(f, 'pr_filt')
         lat = read_var(f, "latitude")
         lon = read_var(f, "longitude")
@@ -102,5 +103,67 @@ def makeGrid(full_path, file_name, folder_name):
 
         # Save to CSV
         df.to_csv(output_path, index=False)
+def makeMatGrid(full_path, file_name, folder_name):
+    with h5py.File(full_path, 'r') as f:
+        pr_filt = read_var(f, 'pr_filt')
+        lat = read_var(f, "latitude")
+        lon = read_var(f, "longitude")
+        psdate = read_var(f, "psdate")
+        pstart = read_var(f, "pstart")
+        pedate = read_var(f, "pedate")
+        pstop = read_var(f, "pstop")
+        te_adj = read_var(f, "te_adj")
+        sa_adj = read_var(f, "sa_adj")
+        
+        valid_mask = ~np.isnan(te_adj) & ~np.isnan(pr_filt) & ~np.isnan(sa_adj)
+        pr_filt = pr_filt[valid_mask]
+        te_adj = te_adj[valid_mask]
+        sa_adj = sa_adj[valid_mask]
+        
+        # Step 1: Sort by depth
+        depth = height(pr_filt, lat)
+        sorted_indices = np.argsort(depth)
+        depths_sorted = depth[sorted_indices]
+        temperatures_sorted = te_adj[sorted_indices]
+        salinity_sorted = sa_adj[sorted_indices]
 
-traverse_datasets(datasets_dir, makeGrid)
+        # # add checks for possible empty depth files
+        # if depths_sorted.size == 0:
+        #      print(f'File {full_path} has empty depth')
+
+        # Step 2: Create regular depth grid (every 0.25 m)
+        regular_depths = np.arange(depths_sorted.min(), depths_sorted.max(), 0.25)
+
+        # # check 2 for encoutnering zero
+        # if len(regular_depths) < 2:
+        #     print(f"Skipping interpolation for {full_path}: not enough valid points.")
+
+        # # add check 3 for interpolation error:
+        # unique_vals, counts = np.unique(depths_sorted, return_counts=True)
+        # duplicates = unique_vals[counts > 1]
+        # if duplicates.size > 0:
+        #     print(f"Duplicates found for file{full_path}")
+
+        # Step 3: Interpolate each variable
+        temp_interp = interp1d(depths_sorted, temperatures_sorted, kind='linear', bounds_error=False, fill_value='extrapolate')
+        sal_interp = interp1d(depths_sorted, salinity_sorted, kind='linear', bounds_error=False, fill_value='extrapolate')
+        interpolated_temperatures = temp_interp(regular_depths)
+        interpolated_salinity = sal_interp(regular_depths)
+        
+        if not (len(regular_depths) == len(interpolated_temperatures) == len(interpolated_salinity)):
+              raise ValueError(f"Length mismatch in interpolated arrays in file: {full_path}")
+
+        mdic = {"Depth":regular_depths, "Temperature":interpolated_temperatures, "Salinity":interpolated_salinity, "lat":lat,
+                 "lon":lon, "startDate":psdate, "startTime":pstart, "endDate":pedate, "endTime":pstop}
+        
+        output_subfolder = os.path.join(new_matDir, folder_name)
+        os.makedirs(output_subfolder, exist_ok=True)
+        output_filename = file_name
+        output_path = os.path.join(output_subfolder, output_filename)
+        
+        savemat(output_path, mdic)
+
+
+
+# traverse_datasets(datasets_dir, makeGrid)
+traverse_datasets(datasets_dir, makeMatGrid)

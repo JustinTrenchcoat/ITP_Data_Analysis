@@ -69,13 +69,21 @@ for folder_name in sorted(os.listdir(datasets_dir)):
                 # read variables from single file for later reference.
                 pr_filt = read_var(f, 'pr_filt')
                 te_adj = read_var(f, 'te_adj')
+                sa_adj = read_var(f, "sa_adj")
                 lat = read_var(f, "latitude")
                 lon = read_var(f, "longitude")
 
                 # Filter out NaNs
-                valid_mask = ~np.isnan(te_adj) & ~np.isnan(pr_filt)
+                valid_mask = ~np.isnan(te_adj) & ~np.isnan(pr_filt) & ~np.isnan(sa_adj)
                 pr_filt = pr_filt[valid_mask]
                 te_adj  = te_adj[valid_mask]
+                
+
+                # check for empty values
+                if (pr_filt.size == 0) or (te_adj.size == 0):
+                    bad_profile.append(filename)
+                    continue
+
 
                 # calculate depth
                 depth = height(pr_filt, lat)

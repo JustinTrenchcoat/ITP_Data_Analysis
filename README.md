@@ -93,3 +93,8 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 - `06_gridMaker` successfully transforms .mat into 0.25m gridded dataframe. 
 - reorganized `05_analyze.py` and `06_gridMaker.py` with helper function
 - Minor changes made to `Makefile`, `02_cleanData.py` and `helper.py`
+---------------------------------
+2025/06/09:
+- `08_SOM.py` is on the way to implement Self-organizing Map to cluster single profile for assessing the quality of clustering
+- considering adding a function for `06_gridMaker.py` so that it also produces `.mat` format files for easier matlab process
+- few issue occured when experimenting file format converting, modified `02_cleanData.py` to address the issue.
