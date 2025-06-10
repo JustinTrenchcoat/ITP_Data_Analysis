@@ -98,3 +98,5 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 - `08_SOM.py` is on the way to implement Self-organizing Map to cluster single profile for assessing the quality of clustering
 - considering adding a function for `06_gridMaker.py` so that it also produces `.mat` format files for easier matlab process. Note: it does not convert to v7.3 MATLAB files.
 - few issue occured when experimenting file format converting, modified `02_cleanData.py` to address the issue.
+- will fix more tomorrow, check 121/0604
+-------------------------
