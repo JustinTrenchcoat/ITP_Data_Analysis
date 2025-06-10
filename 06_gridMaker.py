@@ -78,14 +78,12 @@ def makeGrid(full_path, file_name, folder_name):
         # temp_max_depth_idx is the index value of depth, for the depth with max temperature below 200 m
         temp_max_depth_idx = deep_index[temp_idx_max]
         T_Max_Depth = depths_sorted[temp_max_depth_idx]
-        print(temp_max_depth_idx)
-
 
         # look up from T_Max, find the T_min between (100, T_Max_depth)
+        # select only from Tmin (above 400m?)to 5+Tmax for interpolation:
         # surface_index is all indeces of depth array who's above T_Max and below 100m 
         surface_index = np.where((100 <= depths_sorted) & (depths_sorted <= T_Max_Depth))[0]
-        surface_temp_min_idx = np.argmin(temperatures_sorted[surface_index])
-        temp_min_idx = surface_index[surface_temp_min_idx]
+        temp_min_idx = np.argmin(temperatures_sorted[surface_index])
         temp_min_depth_idx = surface_index[temp_min_idx]
         
         # select only from Tmin to 20+Tmax for interpolation:
@@ -118,6 +116,7 @@ def makeGrid(full_path, file_name, folder_name):
         
         if not (len(regular_depths) == len(interpolated_temperatures) == len(interpolated_salinity)):
               raise ValueError(f"Length mismatch in interpolated arrays in file: {full_path}")
+        
         # Create DataFrame
         df = pd.DataFrame({
             'Depth': regular_depths,
@@ -143,6 +142,8 @@ def makeGrid(full_path, file_name, folder_name):
 
         # Save to CSV
         df.to_csv(output_path, index=False)
+
+mat_error_list = []
 def makeMatGrid(full_path, file_name, folder_name):
     with h5py.File(full_path, 'r') as f:
         pr_filt = read_var(f, 'pr_filt')
@@ -166,41 +167,49 @@ def makeMatGrid(full_path, file_name, folder_name):
         depths_sorted = depth[sorted_indices]
         temperatures_sorted = te_adj[sorted_indices]
         salinity_sorted = sa_adj[sorted_indices]
+        if depth.max() > 800:
+            mat_error_list.append(f'{full_path}: abnormal depth')
+            raise ValueError(f'Abnormal Depth of {depth.max()}! Please check profile {full_path}')
 
         # add checks for possible empty depth files
-        if depths_sorted.size == 0:
-             print(f'File {full_path} has empty depth')
+        if (depths_sorted.size == 0) or (temperatures_sorted.size == 0):
+             mat_error_list.append(f'{full_path}: empty entries')
+             raise ValueError(f'File {full_path} has empty entries')
 
+        # Find T_Max first:
+        # deep_index has all indeces of depth array who's value is above 200m
+        deep_index = np.where(depths_sorted >= 200)[0]
+        # temp_max_idx is the index of max value of all temperature values measured below 200 m, also the index for depth
+        temp_max_idx = np.argmax(temperatures_sorted[deep_index])
+        # temp_max_depth_idx is the index value of depth, for the depth with max temperature below 200 m
+        temp_max_depth_idx = deep_index[temp_max_idx]
+        T_Max_Depth = depths_sorted[temp_max_depth_idx]
+
+        # look up from T_Max, find the T_min between (100, T_Max_depth)
         # select only from Tmin (above 400m?)to 5+Tmax for interpolation:
-        # surface_index is all indeces of depth array who's less than 400m
-        surface_index = np.where(depths_sorted <= 400)[0]
+        # surface_index is all indeces of depth array who's above T_Max and below 100m 
+        surface_index = np.where((100 <= depths_sorted) & (depths_sorted <= T_Max_Depth))[0]
         temp_min_idx = np.argmin(temperatures_sorted[surface_index])
         temp_min_depth_idx = surface_index[temp_min_idx]
 
-
-        # deep_index has all indeces of depth array who's value is above 200m
-        deep_index = np.where(depths_sorted >= 200)[0]
-        # temp_idx_max is the index of max value of all temperature values measured below 200 m, also the index for depth
-        temp_idx_max = np.argmax(temperatures_sorted[deep_index])
-        # temp_max_depth_idx is the index value of depth, for the depth with max temperature below 200 m
-        temp_max_depth_idx = deep_index[temp_idx_max]
-        filter_mask = np.arange(temp_min_depth_idx, temp_max_depth_idx + 9)
-
+        filter_mask = np.arange(temp_min_depth_idx, temp_max_depth_idx + 20)
         depth_filtered = depths_sorted[filter_mask]
         temp_filtered = temperatures_sorted[filter_mask]
         sal_filtered = salinity_sorted[filter_mask]
 
         # Step 2: Create regular depth grid (every 0.25 m)
         regular_depths = np.arange(depth_filtered.min(), depth_filtered.max(), 0.25)
-
+        
         # check 2 for encoutnering zero
         if len(regular_depths) < 2:
-            print(f"{full_path} does not enough valid points.")
+            mat_error_list.append(f'{full_path}: lack enough points')
+            raise ValueError(f"{full_path} does not enough valid points.")
 
         # add check 3 for interpolation error:
         unique_vals, counts = np.unique(depth_filtered, return_counts=True)
         duplicates = unique_vals[counts > 1]
         if duplicates.size > 0:
+            mat_error_list.append(f'{full_path}: replicate value')
             print(f"Duplicates found for file{full_path}")
 
         # Step 3: Interpolate each variable
@@ -210,6 +219,7 @@ def makeMatGrid(full_path, file_name, folder_name):
         interpolated_salinity = sal_interp(regular_depths)
         
         if not (len(regular_depths) == len(interpolated_temperatures) == len(interpolated_salinity)):
+              mat_error_list.append(f'{full_path}: mismatch length')
               raise ValueError(f"Length mismatch in interpolated arrays in file: {full_path}")
 
         mdic = {"Depth":regular_depths, "Temperature":interpolated_temperatures, "Salinity":interpolated_salinity, "lat":lat,
@@ -222,7 +232,8 @@ def makeMatGrid(full_path, file_name, folder_name):
         
         savemat(output_path, mdic)
 
-
-
 # traverse_datasets(datasets_dir, makeGrid)
 traverse_datasets(datasets_dir, makeMatGrid)
+with open("mat_error.txt", "w") as bad_file:
+    for file in mat_error_list:
+        bad_file.write(f"{file}\n")

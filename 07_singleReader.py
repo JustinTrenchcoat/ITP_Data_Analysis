@@ -13,7 +13,7 @@ from scipy.io import savemat
 
 # set up file path
 # full_path = r'D:\EOAS\ITP_Data_Analysis\datasets\itp62cormat\cor0008.mat'
-full_path = r'D:\EOAS\ITP_Data_Analysis\goldData\itp65cormat\cor0811.mat'
+full_path = r'D:\EOAS\ITP_Data_Analysis\goldData\itp114cormat\cor3783.mat'
 
 new_dir = "testData"
 folder_name = "test"
@@ -66,8 +66,9 @@ try:
         depths_sorted = depth[sorted_indices]
         temperatures_sorted = te_adj[sorted_indices]
         salinity_sorted = sa_adj[sorted_indices]
+        if depth.max() > 800:
+            raise ValueError(f'Abnormal Depth of {depth.max()} Please check profile {full_path}')
         
-
         # add checks for possible empty depth files
         if (depths_sorted.size == 0) or (temperatures_sorted.size == 0):
              print(f'File {full_path} has empty entries')
@@ -77,10 +78,10 @@ try:
         # Find T_Max first:
         # deep_index has all indeces of depth array who's value is above 200m
         deep_index = np.where(depths_sorted >= 200)[0]
-        # temp_idx_max is the index of max value of all temperature values measured below 200 m, also the index for depth
-        temp_idx_max = np.argmax(temperatures_sorted[deep_index])
+        # temp_max_idx is the index of max value of all temperature values measured below 200 m, also the index for depth
+        temp_max_idx = np.argmax(temperatures_sorted[deep_index])
         # temp_max_depth_idx is the index value of depth, for the depth with max temperature below 200 m
-        temp_max_depth_idx = deep_index[temp_idx_max]
+        temp_max_depth_idx = deep_index[temp_max_idx]
         T_Max = temperatures_sorted[temp_max_depth_idx]
         T_Max_Depth = depths_sorted[temp_max_depth_idx]
         print(temp_max_depth_idx)
@@ -88,20 +89,15 @@ try:
         print(f'T_Max_Depth = {T_Max_Depth}')
 
         # look up from T_Max, find the T_min between (100, T_Max_depth)
-
         # select only from Tmin (above 400m?)to 5+Tmax for interpolation:
         # surface_index is all indeces of depth array who's above T_Max and below 100m 
         surface_index = np.where((100 <= depths_sorted) & (depths_sorted <= T_Max_Depth))[0]
-        surface_temp_min_idx = np.argmin(temperatures_sorted[surface_index])
-        temp_min_idx = surface_index[surface_temp_min_idx]
-        print(f"temp_min is : {temperatures_sorted[temp_min_idx]}")
+        temp_min_idx = np.argmin(temperatures_sorted[surface_index])
         temp_min_depth_idx = surface_index[temp_min_idx]
+        print(f"temp_min is : {temperatures_sorted[temp_min_depth_idx]}")
         print(f'Tmin depth is: {depths_sorted[temp_min_depth_idx]}')
-        
-
 
         filter_mask = np.arange(temp_min_depth_idx, temp_max_depth_idx + 20)
-
         depth_filtered = depths_sorted[filter_mask]
         temp_filtered = temperatures_sorted[filter_mask]
         sal_filtered = salinity_sorted[filter_mask]

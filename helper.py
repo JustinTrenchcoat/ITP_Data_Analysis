@@ -25,7 +25,7 @@ def checkField(datasets_dir):
     # datasets_dir = "datasets"
     target_vars = ["sa_adj", "te_adj", "pr_filt"]
 
-    with open("good_data.txt", "w") as good_file, open("bad_list.txt", "w") as bad_file:
+    with open("bad_list.txt", "w") as bad_file:
         folders = sorted([
             f for f in os.listdir(datasets_dir)
             if os.path.isdir(os.path.join(datasets_dir, f)) and f.startswith("itp") and f.endswith("cormat")
@@ -46,9 +46,7 @@ def checkField(datasets_dir):
                         all_vars = list(f.keys())
                         missing_vars = [var for var in target_vars if var not in all_vars]
 
-                        if not missing_vars:
-                            good_file.write(f"{folder_name}/{file_name}\n")
-                        else:
+                        if missing_vars:
                             bad_file.write(
                                 f"{folder_name}/{file_name} | Missing: {', '.join(missing_vars)} | Found: {', '.join(all_vars)}\n"
                             )
