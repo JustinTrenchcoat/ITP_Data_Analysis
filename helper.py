@@ -79,6 +79,8 @@ def traverse_datasets(datasets_dir, func):
 
             try:
                 func(full_path, file_name, folder_name)
+                if not os.path.isdir(folder_path):
+                    continue  # skip non-folders
 
         # Inside your for-loop where the exception occurs:
             except Exception as e:

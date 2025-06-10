@@ -103,3 +103,27 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 2025/06/10:
 - fix `06_gridMaker.py` wrong logic
 - fixed `02_cleanData.py`: improved filtering logic. 
+- debug log shows that these profiles are having issues. These profiles are not included in the gridded dataset:
+
+| ITP Number \ Profile Number                                  | Reason                                         |
+|--------------------------------------------------------------|------------------------------------------------|
+| itp114cormat\cor3783                                         | Abnormal profile measurement around 450 m      |
+| itp115cormat\cor0327                                         | Contains only measurement from 575 m to 750 m |
+| itp115cormat\cor0534,0564,0582,0589,0593                     | Abnormal depth measurement                     |
+| itp32cormat\cor0063                                          | Abnormal depth measurement                     |
+| itp1cormat\cor1802                                           | Contains only measurement at around 700 m      |
+| itp21cormat\cor0420                                          | Contains only measurement from 500 m to 750 m  |
+| itp21cormat\cor0536                                          | Contains only measurement from 400 m to 450 m  |
+| itp21cormat\cor0544                                          | Contains only measurement from 582.5 m to 602.5 m |
+| itp21cormat\cor0700                                          | Contains only measurement from 387.5 m to 407.5 m |
+| itp3cormat\cor1523                                           | Contains only measurement from 675 m to 710 m  |
+| itp3cormat\cor1525                                           | Contains only measurement from 580 m to 680 m  |
+| itp3cormat\cor1526                                           | Contains only measurement from 640 m to 740 m  |
+| itp5cormat\cor0975                                           | Contains only measurement from 450 m to 750 m  |
+| itp5cormat\cor0976                                           | Contains only measurement from 575 m to 750 m  |
+| itp8cormat\cor0779                                           | Contains only measurement from 600 m to 700 m  |
+| itp8cormat\cor0780                                           | Contains only measurement from 640 m to 710 m  |
+| itp8cormat\cor0850                                           | Contains only measurement from 680 m to 750 m  |
+
+
+

@@ -13,7 +13,7 @@ from scipy.io import savemat
 
 # set up file path
 # full_path = r'D:\EOAS\ITP_Data_Analysis\datasets\itp62cormat\cor0008.mat'
-full_path = r'D:\EOAS\ITP_Data_Analysis\goldData\itp114cormat\cor3783.mat'
+full_path = r'D:\EOAS\ITP_Data_Analysis\goldData\itp115cormat\cor0534.mat'
 
 new_dir = "testData"
 folder_name = "test"
@@ -54,6 +54,8 @@ try:
         pstop = read_var(f, "pstop")
         te_adj = read_var(f, "te_adj")
         sa_adj = read_var(f, "sa_adj")
+
+        helPlot(te_adj, pr_filt)
         
         valid_mask = ~np.isnan(te_adj) & ~np.isnan(pr_filt) & ~np.isnan(sa_adj)
         pr_filt = pr_filt[valid_mask]
