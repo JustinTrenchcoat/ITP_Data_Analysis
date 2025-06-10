@@ -81,25 +81,42 @@ for folder_name in sorted(os.listdir(datasets_dir)):
                     bad_profile.append(filename)
                     continue
 
-
                 # calculate depth
                 depth = height(pr_filt, lat)
                 dep_max = np.max(depth)
+                # filter out profiles that only gets to 200m max.
+                if dep_max <= 200:
+                    bad_profile.append(filename)
+                    continue
 
-                # depth_index has all indeces of depth array who's value is above 200m
+                # criteria for gold standard dataset:
+                # 1. Collected in Beaufort Gyre
+                # 2. The T_Max occured 300m below the sea surface
+                # 3. There are measurements below the T_Max for at least 10m
+
+                # Crit.1:
+                is_Beaufort = (73 <= lat <= 81) and (-160 <= lon <= -130)
+
+                # Crit 2:
+                # depth_index has all indeces of depth array who's below 200m
                 depth_index = np.where(depth >= 200)[0]
-                # temp_idx_max is the index of max value of all te_cor values measured below 200 m
-                temp_idx_max = np.argmax(te_adj[depth_index])
+                # temp_idx_max is the index of max value of all te_adj values measured below 200 m
+                depth_index_temp_max_idx = np.argmax(te_adj[depth_index])
                 # temp_max_depth_idx is the index value of depth, for the depth with max temperature below 200 m
-                temp_max_depth_idx = depth_index[temp_idx_max]
+                temp_max_depth_idx = depth_index[depth_index_temp_max_idx]
                 # temp_max_depth is the value of depth at the max value of te_cor values that are under 200m
                 temp_max_depth = depth[temp_max_depth_idx]
+                max_deep = (temp_max_depth >= 250)
+
+                # Crit 3:
+                # the greatest depth measurement has to be 10 m deeper than temp_max_depth
+                deep_enough = (dep_max >= temp_max_depth+10)
+
                 # if the depth of temp_max beyond 200m, then it is good profile:
-                if ((dep_max >= (temp_max_depth+2)) and (73 <= lat <= 81) and (-160 <= lon <= -130)):
+                if (deep_enough and is_Beaufort and max_deep):
                     # --- COPY GOOD FILE TO goldData ---
                     dest_folder = os.path.join(golden_dir, folder_name)
                     os.makedirs(dest_folder, exist_ok=True)
-
                     dest_path = os.path.join(dest_folder, filename)
                     shutil.copy2(full_path, dest_path)
                 else:

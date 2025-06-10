@@ -100,3 +100,6 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 - few issue occured when experimenting file format converting, modified `02_cleanData.py` to address the issue.
 - will fix more tomorrow, check 121/0604
 -------------------------
+2025/06/10:
+- fix `06_gridMaker.py` wrong logic
+- fixed `02_cleanData.py`: improved filtering logic. 

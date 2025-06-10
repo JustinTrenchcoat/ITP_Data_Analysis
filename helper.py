@@ -5,6 +5,7 @@ import numpy as np
 import shutil
 import traceback
 import h5py
+import matplotlib.pyplot as plt
 
 
 # convert pressure to height
@@ -110,3 +111,15 @@ def countData(datasets_dir):
 
     # Print total
     print(f"\nTotal number of remaining profiles: {total_profiles}")
+
+
+def helPlot(x, y):
+    plt.plot(x, y, marker='o',linestyle='dashed',linewidth=2, markersize=12)
+    plt.xlabel("test x")
+    plt.ylabel("test y")
+    plt.title("test Plot")
+    plt.grid(True)
+    plt.gca().invert_yaxis()
+    # Optional: Rotate date labels for clarity
+    plt.xticks(rotation=45)
+    plt.show()

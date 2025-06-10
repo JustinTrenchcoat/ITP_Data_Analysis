@@ -9,6 +9,6 @@ plot:
 # clean
 clean: 
 		rm -rf plots/*
-		rm *.txt
 		rm -rf gridDataMat/*
 		rm -rf gridData/*
+		rm -rf goldData/*
