@@ -47,9 +47,6 @@ from helper import *
 datasets_dir = 'rawData'
 golden_dir = 'goldData'
 
-
-
-good_profile = []
 bad_profile = []
 
 # Loop over every itp*cormat folder

@@ -127,26 +127,43 @@ def makeMatGrid(full_path, file_name, folder_name):
         temperatures_sorted = te_adj[sorted_indices]
         salinity_sorted = sa_adj[sorted_indices]
 
-        # # add checks for possible empty depth files
-        # if depths_sorted.size == 0:
-        #      print(f'File {full_path} has empty depth')
+        # add checks for possible empty depth files
+        if depths_sorted.size == 0:
+             print(f'File {full_path} has empty depth')
+
+        # select only from Tmin to 5+Tmax for interpolation:
+        depth_min_idx = np.argmin(depths_sorted)
+        # depth_index has all indeces of depth array who's value is above 200m
+        depth_index = np.where(depth >= 200)[0]
+        # temp_idx_max is the index of max value of all te_cor values measured below 200 m
+        temp_idx_max = np.argmax(te_adj[depth_index])
+        # temp_max_depth_idx is the index value of depth, for the depth with max temperature below 200 m
+        temp_max_depth_idx = depth_index[temp_idx_max]
+        filter_mask = np.arange(depth_min_idx, temp_max_depth_idx + 1)
+
+
+        depth_filtered = depths_sorted[filter_mask]
+        temp_filtered = temperatures_sorted[filter_mask]
+        sal_filtered = salinity_sorted[filter_mask]
+
+
 
         # Step 2: Create regular depth grid (every 0.25 m)
-        regular_depths = np.arange(depths_sorted.min(), depths_sorted.max(), 0.25)
+        regular_depths = np.arange(depth_filtered.min(), depth_filtered.max(), 0.25)
 
-        # # check 2 for encoutnering zero
-        # if len(regular_depths) < 2:
-        #     print(f"Skipping interpolation for {full_path}: not enough valid points.")
+        # check 2 for encoutnering zero
+        if len(regular_depths) < 2:
+            print(f"Skipping interpolation for {full_path}: not enough valid points.")
 
-        # # add check 3 for interpolation error:
-        # unique_vals, counts = np.unique(depths_sorted, return_counts=True)
-        # duplicates = unique_vals[counts > 1]
-        # if duplicates.size > 0:
-        #     print(f"Duplicates found for file{full_path}")
+        # add check 3 for interpolation error:
+        unique_vals, counts = np.unique(depth_filtered, return_counts=True)
+        duplicates = unique_vals[counts > 1]
+        if duplicates.size > 0:
+            print(f"Duplicates found for file{full_path}")
 
         # Step 3: Interpolate each variable
-        temp_interp = interp1d(depths_sorted, temperatures_sorted, kind='linear', bounds_error=False, fill_value='extrapolate')
-        sal_interp = interp1d(depths_sorted, salinity_sorted, kind='linear', bounds_error=False, fill_value='extrapolate')
+        temp_interp = interp1d(depth_filtered, temp_filtered, kind='linear', bounds_error=False, fill_value='extrapolate')
+        sal_interp = interp1d(depth_filtered, sal_filtered, kind='linear', bounds_error=False, fill_value='extrapolate')
         interpolated_temperatures = temp_interp(regular_depths)
         interpolated_salinity = sal_interp(regular_depths)
         
