@@ -124,6 +124,8 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 | itp8cormat\cor0779                                           | Contains only measurement from 600 m to 700 m  |
 | itp8cormat\cor0780                                           | Contains only measurement from 640 m to 710 m  |
 | itp8cormat\cor0850                                           | Contains only measurement from 680 m to 750 m  |
-
+----------------------------
+2025/06/12:
+- added `StaircaseAlgorithm.py` for reference. Will start toy analysis algorithm
 
 
