@@ -235,10 +235,10 @@ def makeMatGrid(full_path, file_name, folder_name):
         
         savemat(output_path, mdic)
 
-traverse_datasets(datasets_dir, makeGrid)
-with open("errorDF.txt", "w") as bad_file:
-    for file in error_list:
-        bad_file.write(f"{file}\n")
+# traverse_datasets(datasets_dir, makeGrid)
+# with open("errorDF.txt", "w") as bad_file:
+#     for file in error_list:
+#         bad_file.write(f"{file}\n")
 # traverse_datasets(datasets_dir, makeMatGrid)
 # with open("mat_error.txt", "w") as bad_file:
 #     for file in mat_error_list:

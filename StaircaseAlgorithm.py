@@ -62,20 +62,26 @@ time_dim = ds.sizes["time"]
 # Store selected depth ranges for each profile
 selected_depth_ranges = {}
 
+# for every profile:
 for t in range(time_dim):
+    # extract temp and salinity
     temp_profile = temperature[:, t]
     depth_profile = depth[:, t]
 
     try:
+        # grab index for max temp
         max_temp_index = np.nanargmax(temp_profile)
+        # grab depth value at max temp
         max_temp_depth = depth_profile[max_temp_index]
     except:
         max_temp_depth = 400  # fallback if entire profile is NaN
 
+    # this is the upper limit for depth
     upper_depth_limit = max_temp_depth - 200
     if upper_depth_limit < 0:
         upper_depth_limit = 0
 
+    #t-th depth range would be from upper to max temp depth
     selected_depth_ranges[t] = (upper_depth_limit, max_temp_depth)
 
 # print how many profiles have been selected
@@ -88,6 +94,7 @@ print(f"Number of profiles with selected depth ranges: {num_selected_profiles}")
 
 # Function to detect mixed layers and interfaces within the selected depth range
 def detect_mixed_layers(depth, temperature, salinity, mixed_layer_threshold=0.0002, interface_threshold=0.005): # 0.0005, 0.005
+    # list of temp vs depth gradients
     temp_gradient = np.gradient(temperature, depth)
 
     mixed_layers = []
@@ -100,6 +107,11 @@ def detect_mixed_layers(depth, temperature, salinity, mixed_layer_threshold=0.00
         slope_prev = (temperature[i] - temperature[i - 1]) / (depth[i] - depth[i - 1])
 
         # Mixed layer detection
+        # if the gradient at point i is below the threshold:
+        # if in-mixed_layer is true, skip i-th point, if in_mixed_layer is false:
+        # set start_depth at i-th point
+        # check slope with prev point: if slope below threshold, start_depth reset to i-1 th point.
+        # set in_mixed_layer to true.
         if abs(temp_gradient[i]) < mixed_layer_threshold:
             if not in_mixed_layer:
                 start_depth = depth[i]
@@ -107,6 +119,9 @@ def detect_mixed_layers(depth, temperature, salinity, mixed_layer_threshold=0.00
                     start_depth = depth[i - 1]
                 in_mixed_layer = True
         else:
+            # if gradient >= to threshold;
+            # set new variable end_depth to ith point
+            # check if prev slope is below threshold. if still above, then directly append the set (start, end) to set of mixedlayers, reset mixed_layer to false
             if in_mixed_layer:
                 end_depth = depth[i]
                 if slope_prev is not None and abs(slope_prev) < mixed_layer_threshold:
