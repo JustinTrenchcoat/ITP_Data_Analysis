@@ -193,7 +193,7 @@ ax.invert_yaxis()
 ax.set_xlabel("Temperature (°C)")
 ax.set_ylabel("Depth (m)")
 ax.set_title(f"Profile {profile_idx}: Mixed Layers and Interfaces")
-ax.plot(temp, depth, 'k', alpha=0.5, label="Temperature Profile")
+ax.plot(temp, depth, 'k', alpha=0.5, label="Temperature Profile", marker=".")
 
 # Flags to ensure only one legend entry per category
 mixed_layer_plotted = False
