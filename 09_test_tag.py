@@ -6,9 +6,6 @@ from helper import *
 from scipy.io import loadmat
 
 
-
-
-
 # load dataset
 # just load one profile and see what happens
 full_path  = r'gridDataMat\itp1cormat\cor0001.mat'
@@ -26,9 +23,15 @@ depth = data['Depth'].T.flatten()
 max_temp_index = np.nanargmax(temp)
 max_temp_depth = depth[max_temp_index]
 
-upper_depth_limit = max_temp_depth - 200
-
-selected_depth_ranges = (upper_depth_limit, max_temp_depth)
+# Create DataFrame for tagging
+df = pd.DataFrame({
+    'Depth': depth,
+    'Temperature': temp,
+    'Salinity': salinity,
+    'mixed': None,
+    'interface': None,
+    'staircase_type': None
+    })
 
 def detect_mixed_layers(depth, temperature, salinity, mixed_layer_threshold=0.0002,
                         interface_threshold=0.005):
@@ -98,6 +101,22 @@ mixed_layers, interfaces = detect_mixed_layers(depth, temp, salinity)
 
 all_mixed_layers[0] = mixed_layers
 all_interfaces[0] = interfaces
+
+# Function to check overlap between two ranges
+def ranges_overlap(a, b):
+    return a[0] < b[1] and b[0] < a[1]  # True if ranges intersect
+
+# Loop to find overlaps
+overlaps = []
+for i, d1 in enumerate(mixed_layers):
+    for j, d2 in enumerate(interfaces):
+        if ranges_overlap(d1, d2):
+            overlaps.append((i, j, d1, d2))
+
+# Display
+for i, j, d1, d2 in overlaps:
+    print(f"depth[{i}] {d1} overlaps with depth_2[{j}] {d2}")
+
         
 # Number of profiles used for analysis
 num_profiles_used = len(all_mixed_layers)
@@ -148,11 +167,25 @@ for profile_idx in all_mixed_layers:
         "super_mushy": super_mushy_transition_indices,
     }
 
+
 # Example: Get sharp transition depths for a profile
 profile_idx = 0
 sharp_transitions = staircase_profiles.get(profile_idx, {}).get("sharp", [])
+mushy_transitions = staircase_profiles.get(profile_idx, {}).get("mushy", [])
+smushy_transitions = staircase_profiles.get(profile_idx, {}).get("super_mushy", [])
+
 sharp_depths = [float(depth[i]) for i in sharp_transitions if i < len(depth)]
-# print(f"Profile {profile_idx} sharp transitions at depths: {sharp_depths}")
+sharp_temp = [float(temp[i]) for i in sharp_transitions if i < len(temp)]
+mushy_depths = [float(depth[i]) for i in mushy_transitions if i < len(depth)]
+mushy_temp = [float(temp[i]) for i in mushy_transitions if i < len(temp)]
+
+smushy_depths = [float(depth[i]) for i in smushy_transitions if i < len(depth)]
+smushy_temp = [float(temp[i]) for i in smushy_transitions if i < len(temp)]
+
+print(f"Profile {profile_idx} sharp transitions at depths: {sharp_depths}")
+print(f"Profile {profile_idx} mushy transitions at depths: {mushy_depths}")
+print(f"Profile {profile_idx} super mushy transitions at depths: {smushy_depths}")
+
 
 # Plot desired profile
 fig, ax = plt.subplots(figsize=(5, 7))
@@ -191,4 +224,21 @@ for (start, end) in all_interfaces.get(profile_idx, []):
         ax.plot(temp[start_idx:end_idx], depth[start_idx:end_idx], 'r', lw=2)
 
 ax.legend()
+for i in range(len(mushy_depths)):
+    plt.annotate("Mushy Ones", (mushy_temp[i], mushy_depths[i]), 
+                 textcoords="data", color='blue',xytext=(mushy_temp[i]+0.002, mushy_depths[i]+0.002), 
+                 arrowprops=dict(
+                        facecolor='blue',         
+                        edgecolor='black',       
+                        arrowstyle='->',        
+                        lw=2))
+for i in range(len(smushy_depths)):
+    plt.annotate("Super Mushy Ones", (smushy_temp[i], smushy_depths[i]), 
+                 textcoords="data", color='red',xytext=(smushy_temp[i]+0.002, smushy_depths[i]+0.002), 
+                 arrowprops=dict(
+                        facecolor='red',         
+                        edgecolor='black',       
+                        arrowstyle='->',        
+                        lw=2))
+
 plt.show()
