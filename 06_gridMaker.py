@@ -126,6 +126,13 @@ def makeGrid(full_path, file_name, folder_name):
             'Temperature': interpolated_temperatures,
             'Salinity': interpolated_salinity
             })
+        
+        df['latitude'] = lat[0].round(2)
+        df['longitude'] = lon[0].round(2)
+        startDate = pd.to_datetime(psdate, format="%m/%d/%y").date()
+        df['startDate'] = startDate
+        endDate = pd.to_datetime(pedate, format="%m/%d/%y").date()
+        df['endDate'] = endDate
 
         # Create matching subfolder in gridData
         output_subfolder = os.path.join(new_dir, folder_name)
@@ -135,12 +142,10 @@ def makeGrid(full_path, file_name, folder_name):
         lon_str = clean(lon)
         lat_str = clean(lat)
         psdate_str = clean(psdate)
-        pstart_str = clean(pstart)
         pedate_str = clean(pedate)
-        pstop_str = clean(pstop)
 
         # Output path
-        output_filename = f"{file_name.rstrip('.mat')}_{lon_str}_{lat_str}_{psdate_str}_{pstart_str}_{pedate_str}_{pstop_str}.csv"
+        output_filename = f"{file_name.rstrip('.mat')}_{lon_str}_{lat_str}_{psdate_str}_{pedate_str}.csv"
         output_path = os.path.join(output_subfolder, output_filename)
 
         # Save to CSV
@@ -235,10 +240,10 @@ def makeMatGrid(full_path, file_name, folder_name):
         
         savemat(output_path, mdic)
 
-# traverse_datasets(datasets_dir, makeGrid)
-# with open("errorDF.txt", "w") as bad_file:
-#     for file in error_list:
-#         bad_file.write(f"{file}\n")
+traverse_datasets(datasets_dir, makeGrid)
+with open("errorDF.txt", "w") as bad_file:
+    for file in error_list:
+        bad_file.write(f"{file}\n")
 # traverse_datasets(datasets_dir, makeMatGrid)
 # with open("mat_error.txt", "w") as bad_file:
 #     for file in mat_error_list:

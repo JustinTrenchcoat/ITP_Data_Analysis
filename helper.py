@@ -12,6 +12,9 @@ import matplotlib.pyplot as plt
 def height(pressure, latitude):
         return -gsw.conversions.z_from_p(pressure, latitude)
 
+def pressure(height, latitude):
+    height = -height
+    return gsw.conversions.p_from_z(height, latitude)
 
 def read_var(f, varname):
         data = np.array(f[varname])
@@ -78,11 +81,10 @@ def traverse_datasets(datasets_dir, func):
             full_path = os.path.join(folder_path, file_name)
 
             try:
+                if not os.path.isdir(full_path):
+                    continue
                 func(full_path, file_name, folder_name)
-                if not os.path.isdir(folder_path):
-                    continue  # skip non-folders
 
-        # Inside your for-loop where the exception occurs:
             except Exception as e:
                 print(f"Error processing file: {file_name}")
                 traceback.print_exc()
