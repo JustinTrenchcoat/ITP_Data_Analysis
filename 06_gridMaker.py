@@ -31,26 +31,15 @@ datasets_dir = 'goldData'
 new_dir = 'gridData'
 new_matDir = 'gridDataMat'
 
-
-def clean(x):
-    # Convert to string
-    x_str = str(x)
-    # Remove brackets, whitespace
-    x_str = x_str.strip("[] ").replace(" ", "")
-    # Replace any non-alphanumeric or underscore/dash/dot characters with underscore
-    x_str = re.sub(r'[^\w\-.]', '_', x_str)
-    return x_str
-
 error_list=[]
+
 def makeGrid(full_path, file_name, folder_name):
     with h5py.File(full_path, 'r') as f:
         pr_filt = read_var(f, 'pr_filt')
         lat = read_var(f, "latitude")
         lon = read_var(f, "longitude")
         psdate = read_var(f, "psdate")
-        pstart = read_var(f, "pstart")
         pedate = read_var(f, "pedate")
-        pstop = read_var(f, "pstop")
         te_adj = read_var(f, "te_adj")
         sa_adj = read_var(f, "sa_adj")
         
@@ -129,23 +118,21 @@ def makeGrid(full_path, file_name, folder_name):
         
         df['latitude'] = lat[0].round(2)
         df['longitude'] = lon[0].round(2)
-        startDate = pd.to_datetime(psdate, format="%m/%d/%y").date()
-        df['startDate'] = startDate
-        endDate = pd.to_datetime(pedate, format="%m/%d/%y").date()
-        df['endDate'] = endDate
-
+        # some files have empty start/end dates
+        hasStart = isinstance(psdate, str)
+        if hasStart:
+            startDate = pd.to_datetime(psdate, format="%m/%d/%y").date()
+            df['startDate'] = startDate
+        hasEnd = isinstance(pedate, str)
+        if hasEnd:
+            endDate = pd.to_datetime(pedate, format="%m/%d/%y").date()
+            df['endDate'] = endDate        
         # Create matching subfolder in gridData
         output_subfolder = os.path.join(new_dir, folder_name)
         os.makedirs(output_subfolder, exist_ok=True)
 
-
-        lon_str = clean(lon)
-        lat_str = clean(lat)
-        psdate_str = clean(psdate)
-        pedate_str = clean(pedate)
-
         # Output path
-        output_filename = f"{file_name.rstrip('.mat')}_{lon_str}_{lat_str}_{psdate_str}_{pedate_str}.csv"
+        output_filename = f"{file_name.rstrip('.mat')}.csv"
         output_path = os.path.join(output_subfolder, output_filename)
 
         # Save to CSV
@@ -239,6 +226,9 @@ def makeMatGrid(full_path, file_name, folder_name):
         output_path = os.path.join(output_subfolder, output_filename)
         
         savemat(output_path, mdic)
+
+
+
 
 traverse_datasets(datasets_dir, makeGrid)
 with open("errorDF.txt", "w") as bad_file:

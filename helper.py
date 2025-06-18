@@ -81,8 +81,6 @@ def traverse_datasets(datasets_dir, func):
             full_path = os.path.join(folder_path, file_name)
 
             try:
-                if not os.path.isdir(full_path):
-                    continue
                 func(full_path, file_name, folder_name)
 
             except Exception as e:
