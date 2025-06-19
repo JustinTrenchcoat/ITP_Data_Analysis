@@ -54,6 +54,11 @@ target = ["StaircaseType"]
 
 # Read in the data:
 
+
+
+
+
+
 data_dir = 'stairs'
 ocean_df = pd.DataFrame()
 # read data and put everything into ocean_df
@@ -64,7 +69,8 @@ def read_data(full_path, file_name, folder_name):
 traverse_datasets(data_dir, read_data)
 # Now ocean_df should have everything
 
-
+# we now sort the dataframe in order of time:
+ocean_sorted_df = ocean_df.sort_values(by='startDate')
 
 
 

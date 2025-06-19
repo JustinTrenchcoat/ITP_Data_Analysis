@@ -103,7 +103,7 @@ def countData(datasets_dir):
 
             if profile_count == 0:
             # Delete empty folder
-                shutil.rmtree(folder_path)
+                # shutil.rmtree(folder_path)
                 print(f"Deleted empty folder: {folder_name}")
             else:
                 total_profiles += profile_count
@@ -111,7 +111,7 @@ def countData(datasets_dir):
 
     # Print total
     print(f"\nTotal number of remaining profiles: {total_profiles}")
-
+# countData('gridDataMat')
 
 def helPlot(x, y):
     plt.plot(x, y, marker='o',linestyle='dashed',linewidth=2, markersize=12)
