@@ -2,16 +2,33 @@ import matplotlib.pyplot as plt
 import netCDF4 as nc
 import numpy as np
 import xarray as xr
+import pandas as pd
 
 # Configuration
 file_path = 'itp65cormat.nc'  # Update with your NetCDF file path
+# this has shape of 189, 8000
+# meaning that each first dimension row is a profile, with 8000 measurements
+# 
 ds = nc.Dataset(file_path)
-print(ds.dimensions)
-print(ds.variables)
+# print(ds.dimensions)
+# print(ds.variables)
 
 
 with ds as dataset:
+    # extract variables:
+    profN = dataset.variables['prof'][:]
+    depth = dataset.variables['pressure'][:]
+    temp = dataset.variables["ct"][:]
     connect_layer_mask = dataset.variables['mask_cl']
+
+# how to store such that every entry is an array for depth, a dictionary? for temp
+ocean_df = pd.DataFrame({
+    "profile_number" : profN,
+    'depth': [depth] * temp.shape[0],
+    'temp' : [t for t in temp]
+})
+print(ocean_df.shape)
+print(ocean_df.head())
 # itp = 'ITP65'  # Update with your ITP name if needed
 
 # prof_no = 492              # Profile index to plot

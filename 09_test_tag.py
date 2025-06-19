@@ -8,6 +8,12 @@ It has to be ordered in time so that time series analysis would work.
 
 
 
+thermal expansion coef: alpha
+
+haline contraction coef: beta
+
+Nsquared
+
 
 Numerical features:
 Depth
