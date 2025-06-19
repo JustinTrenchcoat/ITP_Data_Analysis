@@ -5,7 +5,7 @@ import xarray as xr
 import pandas as pd
 
 # Configuration
-file_path = 'itp65cormat.nc'  # Update with your NetCDF file path
+file_path = 'itp100cormat.nc' 
 # this has shape of 189, 8000
 # meaning that each first dimension row is a profile, with 8000 measurements
 # 
@@ -16,19 +16,30 @@ ds = nc.Dataset(file_path)
 
 with ds as dataset:
     # extract variables:
-    profN = dataset.variables['prof'][:]
+    # the prof is not profile number, but index. FloatID true profile number from each ITP system
+    # this would not be used as an input variable
+    profN = dataset.variables['FloatID'][:]
+    # the nc file mistakenly wrote pressure instead of depth
     depth = dataset.variables['pressure'][:]
     temp = dataset.variables["ct"][:]
-    connect_layer_mask = dataset.variables['mask_cl']
+    connect_layer_mask = dataset.variables['mask_cl'][:]
+    dates = dataset.variables["dates"][:]
+date = pd.to_datetime(dates, unit = 's')
 
 # how to store such that every entry is an array for depth, a dictionary? for temp
 ocean_df = pd.DataFrame({
     "profile_number" : profN,
-    'depth': [depth] * temp.shape[0],
-    'temp' : [t for t in temp]
+    'depth' : [d for d in depth],
+    'temp' : [t for t in temp],
+    'date' : date.date
 })
-print(ocean_df.shape)
-print(ocean_df.head())
+
+test_frame = ocean_df.loc[0]['temp']
+
+
+# we now sort the dataframe in order of time:
+ocean_sorted_df = ocean_df.sort_values(by='date')
+print(ocean_sorted_df)
 # itp = 'ITP65'  # Update with your ITP name if needed
 
 # prof_no = 492              # Profile index to plot

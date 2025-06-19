@@ -1,5 +1,9 @@
 import pandas as pd
 from helper import *
+import matplotlib.pyplot as plt
+import netCDF4 as nc
+import numpy as np
+import xarray as xr
 
 '''
 In the dataset:
@@ -61,7 +65,40 @@ target = ["StaircaseType"]
 # Read in the data:
 
 
+# Configuration
+file_path = 'itp100cormat.nc' 
+# this has shape of 189, 8000
+# meaning that each first dimension row is a profile, with 8000 measurements
+# 
+ds = nc.Dataset(file_path)
+# print(ds.dimensions)
+# print(ds.variables)
 
+
+with ds as dataset:
+    # extract variables:
+    # the prof is not profile number, but index. FloatID true profile number from each ITP system
+    # this would not be used as an input variable
+    profN = dataset.variables['FloatID'][:]
+    # the nc file mistakenly wrote pressure instead of depth
+    depth = dataset.variables['pressure'][:]
+    temp = dataset.variables["ct"][:]
+    connect_layer_mask = dataset.variables['mask_cl'][:]
+    dates = dataset.variables["dates"][:]
+date = pd.to_datetime(dates, unit = 's')
+
+# how to store such that every entry is an array for depth, a dictionary? for temp
+ocean_df = pd.DataFrame({
+    "profile_number" : profN,
+    'depth' : [d for d in depth],
+    'temp' : [t for t in temp],
+    'date' : date.date
+})
+print(ocean_df.shape)
+print(ocean_df.loc[0:10])
+test_frame = ocean_df.loc[0]['temp']
+print(len(test_frame))
+print(len(ocean_df.loc[0]['depth']))
 
 
 

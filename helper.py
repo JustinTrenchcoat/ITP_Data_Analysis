@@ -91,12 +91,14 @@ def traverse_datasets(datasets_dir, func):
 
 def countData(datasets_dir):
     total_profiles = 0
+    total_itps = 0
 
     # Loop over all itp*cormat folders
     for folder_name in os.listdir(datasets_dir):
         folder_path = os.path.join(datasets_dir, folder_name)
 
         if os.path.isdir(folder_path) and folder_name.startswith("itp") and folder_name.endswith("cormat"):
+            
         # Get all .mat files
             mat_files = [f for f in os.listdir(folder_path) if f.endswith(".mat")]
             profile_count = len(mat_files)
@@ -108,10 +110,12 @@ def countData(datasets_dir):
             else:
                 total_profiles += profile_count
                 print(f"{folder_name}: {profile_count} profiles")
+        total_itps +=1
 
     # Print total
     print(f"\nTotal number of remaining profiles: {total_profiles}")
-# countData('gridDataMat')
+    print(f"\nTotal number of ITP systems: {total_itps}")
+countData('gridDataMat')
 
 def helPlot(x, y):
     plt.plot(x, y, marker='o',linestyle='dashed',linewidth=2, markersize=12)
