@@ -115,7 +115,6 @@ def countData(datasets_dir):
     # Print total
     print(f"\nTotal number of remaining profiles: {total_profiles}")
     print(f"\nTotal number of ITP systems: {total_itps}")
-countData('gridDataMat')
 
 def helPlot(x, y):
     plt.plot(x, y, marker='o',linestyle='dashed',linewidth=2, markersize=12)

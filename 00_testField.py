@@ -3,17 +3,16 @@ import netCDF4 as nc
 import numpy as np
 import xarray as xr
 import pandas as pd
+from helper import *
 
 # Configuration
 file_path = 'itp100cormat.nc' 
-# this has shape of 189, 8000
-# meaning that each first dimension row is a profile, with 8000 measurements
 # 
 ds = nc.Dataset(file_path)
 # print(ds.dimensions)
 # print(ds.variables)
 
-
+ocean_df = pd.DataFrame()
 with ds as dataset:
     # extract variables:
     # the prof is not profile number, but index. FloatID true profile number from each ITP system
@@ -22,24 +21,48 @@ with ds as dataset:
     # the nc file mistakenly wrote pressure instead of depth
     depth = dataset.variables['pressure'][:]
     temp = dataset.variables["ct"][:]
+    salinity = dataset.variables["sa"][:]
     connect_layer_mask = dataset.variables['mask_cl'][:]
+    interface_layer_mask = dataset.variables['mask_int'][:]
+    mixed_layer_mask = dataset.variables["mask_ml"][:]
+    staircase_mask = dataset.variables["mask_sc"][:]
     dates = dataset.variables["dates"][:]
-date = pd.to_datetime(dates, unit = 's')
+    lon = dataset.variables["lon"][:]
+    lat = dataset.variables["lat"][:]
+    date = pd.to_datetime(dates, unit = 's')
+    date = date.date
+    for i in range(2):
+        mask_cl = connect_layer_mask[i]
+        mask_int = interface_layer_mask[i]
+        mask_ml = mixed_layer_mask[i]
+        mask_sc = staircase_mask[i]
+        new_df = pd.DataFrame({
+            "profileNumber" : profN[i],
+            "depth" : depth[i],
+            'temp' : temp[i],
+            'date' : date[i],
+            "salinity" : salinity[i],
+            'mask_cl' : mask_cl,
+            'mask_int' : mask_int,
+            'mask_ml' : mask_ml,
+            "mask_sc" : mask_sc,
+            "lon" : lon[i],
+            "lat" : lat[i]
+        })
+        ocean_df = pd.concat([ocean_df, new_df])
+        print(f"test dataframe shape: \n{ocean_df.shape}")
+        print(f'test dateframe: \n{new_df.head()}')
+        # helPlot(new_df["temp"], new_df["depth"])
 
+    
 # how to store such that every entry is an array for depth, a dictionary? for temp
-ocean_df = pd.DataFrame({
-    "profile_number" : profN,
-    'depth' : [d for d in depth],
-    'temp' : [t for t in temp],
-    'date' : date.date
-})
-
-test_frame = ocean_df.loc[0]['temp']
 
 
 # we now sort the dataframe in order of time:
 ocean_sorted_df = ocean_df.sort_values(by='date')
-print(ocean_sorted_df)
+print(f'sorted DF: \n{ocean_sorted_df.head()}')
+
+
 # itp = 'ITP65'  # Update with your ITP name if needed
 
 # prof_no = 492              # Profile index to plot
