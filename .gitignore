@@ -9,4 +9,5 @@ gridData/
 rawData/
 goldData/
 gridDataMat/
-testDir/*
+testDir/
+tagData/
