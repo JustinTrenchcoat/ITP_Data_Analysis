@@ -3,8 +3,8 @@ from helper import *
 import matplotlib.pyplot as plt
 import netCDF4 as nc
 import numpy as np
-import xarray as xr
-
+import re
+import gsw
 '''
 In the dataset:
 every row is one observation from one profile.
@@ -65,13 +65,10 @@ target = ["StaircaseType"]
 # Read in the data:
 # Configuration
 
-file_path = 'tagData/itp100cormat.nc' 
-# 
-ds = nc.Dataset(file_path)
 # print(ds.dimensions)
 # print(ds.variables)
 ocean_df = pd.DataFrame()
-def readNC(full_path,ls):
+def readNC(full_path, ls, itp_num):
     ds = nc.Dataset(full_path)
     with ds as dataset:
         # extract variables:
@@ -91,7 +88,7 @@ def readNC(full_path,ls):
         lat = dataset.variables["lat"][:]
         date = pd.to_datetime(dates, unit = 's')
         date = date.date
-        for i in range(len(date)):
+        for i in range(len(profN)):
             mask_cl = connect_layer_mask[i]
             mask_int = interface_layer_mask[i]
             mask_ml = mixed_layer_mask[i]
@@ -109,37 +106,59 @@ def readNC(full_path,ls):
                 "lon" : lon[i],
                 "lat" : lat[i]
             })
+            new_df['pressure'] = pressure(depth[i],lat[i])
+            new_df['itpNum'] = itp_num
+
+            # background infos, do it here because we calculate it per-profile:
+            # N Sqaured:
+            n_sq = gsw.Nsquared(salinity[i], temp[i], new_df['pressure'], lat[i])[0]
+            # padding for last value as the function returns only N-1 values
+            n_sq_padded = np.append(n_sq, np.nan)
+            new_df['n_sq'] = n_sq_padded
+            # turner angle and R_rho
+            [turner_angle, R_rho,p_mid] = gsw.Turner_Rsubrho(salinity[i], temp[i], new_df['pressure'])
+            new_df['turner_angle'] = np.append(turner_angle,np.nan)
+            new_df['R_rho'] = np.append(R_rho,np.nan)
+            ####################
             ls.append(new_df)
     return ls
 
-# we now sort the dataframe in order of time:
-tagData_dir = 'tagData'
-df_list = []
-for fileName in tqdm(sorted(os.listdir(tagData_dir)), desc="Processing files"):
-    full_path = os.path.join(tagData_dir, fileName)
-    df_list = readNC(full_path, df_list)
+#######################################################
+# Read Data and save, Only run once                   #
+#######################################################
+# tagData_dir = 'tagData'
+# df_list = []
+# for fileName in tqdm(sorted(os.listdir(tagData_dir)), desc="Processing files"):
+#     match = re.search(r'itp(\d+)cormat\.nc', fileName)
+#     if match:
+#             itp_num = int(match.group(1))
+#             full_path = os.path.join(tagData_dir, fileName)
+#             df_list = readNC(full_path, df_list, itp_num)
+#             final_df = pd.concat(df_list, ignore_index=True)
+#             final_df.to_pickle("final.pkl")
+#######################################################
+#                                                     #
+#######################################################
 
 
-final_df = pd.concat(df_list, ignore_index=True)
-# add a save to pickle?
+final_df = pd.read_pickle("final.pkl")
+print(final_df.shape)
 print(final_df.head())
-filtered_df = final_df[final_df['mask_cl'].notna()]
-print(filtered_df)
-ocean_sorted_df = final_df.sort_values(by='date')
-print(f'sorted DF: \n{ocean_sorted_df.head()}')
 
 
-# data_dir = 'stairs'
-# ocean_df = pd.DataFrame()
-# # read data and put everything into ocean_df
-# def read_data(full_path, file_name, folder_name):
-#     profile_df = pd.read_csv(full_path)
-#     ocean_df= pd.concat([ocean_df, profile_df], ignore_index=True)
 
-# traverse_datasets(data_dir, readNC)
-# # Now ocean_df should have everything
+# filtered_df = final_df[final_df['mask_cl'].notna()]
+# print(filtered_df)
 
-# # we now sort the dataframe in order of time:
+
+
+
+# ocean_sorted_df = final_df.sort_values(by='profileNumber')
+# print(f'sorted DF: \n{ocean_sorted_df.tail()}')
+
+# Now ocean_df should have everything
+
+# we now sort the dataframe in order of time:
 # ocean_sorted_df = ocean_df.sort_values(by='startDate')
 
 

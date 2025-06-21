@@ -58,7 +58,10 @@ try:
         # helPlot(te_adj, pr_filt)
 
         depth = height(pr_filt, lat)
+        print(f'pressure: {pr_filt}')
         pressure_cal = pressure(depth, lat)
+        print(f'function check:{pressure_cal}')
+
         lat = lat[0]
         print(lat)
         print(type(lat))
