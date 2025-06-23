@@ -60,4 +60,4 @@ def histogramFrequency():
     plt.show()
 
 
-histogramFrequency()
+# histogramFrequency()

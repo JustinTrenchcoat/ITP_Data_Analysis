@@ -138,5 +138,8 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 ----------------------------
 2025/06/18:
 - `09_test_tag.py` will now make a dataframe for time series analysis
+------------------------------
+2025/06/23:
+- `09_test_tag.py` makes transect plot for specific values, but unclear on how to skip nan value (How does nan get in there??)
 
 
