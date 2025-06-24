@@ -5,6 +5,7 @@ import netCDF4 as nc
 import numpy as np
 import gsw
 import datetime
+import re
 import seaborn as sns
 from matplotlib.colors import SymLogNorm
 
@@ -129,7 +130,7 @@ def readNC(full_path, ls, itp_num):
 #######################################################
 # Read Data and save, Only run once                   #
 #######################################################
-# tagData_dir = 'tagData'
+# tagData_dir = 'prod_files'
 # df_list = []
 # for fileName in tqdm(sorted(os.listdir(tagData_dir)), desc="Processing files"):
 #     match = re.search(r'itp(\d+)cormat\.nc', fileName)
@@ -145,14 +146,15 @@ def readNC(full_path, ls, itp_num):
 
 
 final_df = pd.read_pickle("final.pkl")
-print(final_df.shape)
+# print(final_df.shape)
 # print(final_df.head())
 
 
 test_df = final_df[final_df['itpNum'] == 100].copy()
 print(test_df.shape)
-test_df = test_df[test_df['mask_cl'].notna()]
-print(test_df.shape)
+num_unique = test_df['profileNumber'].nunique()
+print(f"Number of unique profNum values: {num_unique}")
+
 
 depth_col = test_df['depth']
 n_sq_col = test_df['n_sq']
@@ -169,14 +171,14 @@ def printBasicStat(column):
     print(f"25th Percentile (Q1): {np.percentile(column, 25)}")
     print(f"75th Percentile (Q3): {np.percentile(column, 75)}")
     print(f"IQR           : {np.percentile(column, 75) - np.percentile(column, 25)}")
-printBasicStat(depth_col)
-printBasicStat(n_sq_col)
+# printBasicStat(depth_col)
+# printBasicStat(n_sq_col)
 
 depth_index = np.where(np.isnan(depth_col))[0]
 print(depth_index)
 
 n_sq_index = np.where(np.isnan(n_sq_col))[0]
-print(n_sq_index)
+print(len(n_sq_index))
 
 
 # # print(test_df['n_sq'].min(), test_df['n_sq'].max(), test_df['n_sq'].describe())
@@ -269,93 +271,76 @@ import matplotlib.colors as colors
 
 
 # testing phase
-# import numpy as np
-# import pandas as pd
-# import matplotlib.pyplot as plt
-# import matplotlib.dates as mdates
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from matplotlib.colors import Normalize
+import pandas as pd
 
-# def transectPlot(df):
-#     # Bin depth to 1 m to reduce resolution
-#     df = df.copy()
-#     # df = df.dropna(subset=['depth'])
-#     # df = df[np.isfinite(df['depth'])]
-#     # df['depth_bin'] = (df['depth'] // 1).astype(int)
+def contour_transect_plot(df):
+    df = df.copy()
+    df = df.dropna(subset=['depth', 'date', 'n_sq'])
+    df['date'] = pd.to_datetime(df['date'])  # ensure proper datetime
 
-    
-#     # Pivot to get 2D grid: depth x date, with mean N²
-#     pivot_df = df.pivot_table(
-#         index='depth',
-#         columns='date',
-#         values='n_sq',
-#         aggfunc='mean'
-#     )
-    
-#     # Prepare data for plotting
-#     X, Y = np.meshgrid(
-#         pivot_df.columns,
-#         pivot_df.index
-#     )
-#     Z = pivot_df.values
-    
-#     # Plot using pcolormesh for better control
-#     plt.figure(figsize=(14, 6))
-    
-#     # Use quantiles to clip color scale, for better contrast
-#     vmin = np.nanquantile(Z, 0.01)
-#     vmax = np.nanquantile(Z, 0.99)
-#     print(f'vmin is {vmin}')
-#     print(f'vmax is {vmax}')
-    
-#     bounds = np.linspace(vmin, vmax, 100)
+    # Bin depth to 1 m to reduce noise
+    df['depth_bin'] = df['depth'].round()
 
-#     norm = colors.BoundaryNorm(boundaries=bounds, ncolors=256)
+    # Pivot: depth vs date
+    pivot = df.pivot_table(index='depth_bin', columns='date', values='n_sq', aggfunc='mean')
+    pivot = pivot.sort_index()
 
-#     pcm = plt.pcolormesh(
-#         X, Y, Z,
-#         shading='auto',
-#         cmap='viridis',
-#         norm=norm
-#     )
-    
-#     plt.colorbar(pcm, label=r'$N^2$ (s$^{-2}$)')
-    
-#     plt.gca().invert_yaxis()
-#     plt.xlabel('Date')
-#     plt.ylabel('Depth (m)')
-#     plt.title('Transect View of $N^2$ over Time and Depth in ITP 100')
-    
-#     plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=3))
-#     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
-#     plt.xticks(rotation=45)
-    
-#     plt.tight_layout()
-#     plt.show()
+    # Prepare grid
+    Z = pivot.values
+    Y = pivot.index.values  # depth
+    X = mdates.date2num(pivot.columns)  # convert dates to float
 
-# # Usage
-# transectPlot(test_df)
+    # Meshgrid (but now with proper shape for contourf)
+    X_grid, Y_grid = np.meshgrid(X, Y)
+
+    # Mask invalids
+    Z_masked = np.ma.masked_invalid(Z)
+
+    # Plot
+    fig, ax = plt.subplots(figsize=(14, 6))
+
+    # Use Normalize if you don't want log scale
+    norm = Normalize(vmin=np.nanquantile(Z, 0.01), vmax=np.nanquantile(Z, 0.99))
+
+    cp = ax.contourf(X_grid, Y_grid, Z_masked, levels=100, cmap='viridis', norm=norm)
+
+    # Format x-axis
+    ax.xaxis_date()
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+    plt.xticks(rotation=45)
+
+    # Labels and title
+    plt.colorbar(cp, label=r'$N^2$ (s$^{-2}$)')
+    ax.invert_yaxis()
+    plt.xlabel('Date')
+    plt.ylabel('Depth (m)')
+    plt.title('Transect View: $N^2$ over Time and Depth in ITP 100')
+    plt.tight_layout()
+    plt.show()
+
+
+contour_transect_plot(test_df)
+
+# # print(test_df.head())
+# # print(test_df.shape)
+# # filtered_df = final_df[final_df['mask_cl'].notna()]
+# # print(filtered_df)
 
 
 
 
+# # ocean_sorted_df = final_df.sort_values(by='profileNumber')
+# # print(f'sorted DF: \n{ocean_sorted_df.tail()}')
 
+# # Now ocean_df should have everything
 
-
-
-# print(test_df.head())
-# print(test_df.shape)
-# filtered_df = final_df[final_df['mask_cl'].notna()]
-# print(filtered_df)
-
-
-
-
-# ocean_sorted_df = final_df.sort_values(by='profileNumber')
-# print(f'sorted DF: \n{ocean_sorted_df.tail()}')
-
-# Now ocean_df should have everything
-
-# we now sort the dataframe in order of time:
-# ocean_sorted_df = ocean_df.sort_values(by='startDate')
+# # we now sort the dataframe in order of time:
+# # ocean_sorted_df = ocean_df.sort_values(by='startDate')
 
 
 

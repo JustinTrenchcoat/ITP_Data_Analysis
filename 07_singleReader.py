@@ -13,7 +13,7 @@ from scipy.io import savemat
 
 # set up file path
 # full_path = r'D:\EOAS\ITP_Data_Analysis\datasets\itp62cormat\cor0008.mat'
-full_path = r'D:\EOAS\ITP_Data_Analysis\goldData\itp100cormat\cor0001.mat'
+full_path = r'D:\EOAS\ITP_Data_Analysis\gridDataMat\itp1cormat\cor0001.mat'
 
 new_dir = "testData"
 folder_name = "test"
@@ -45,9 +45,9 @@ def plot(x, y):
 
 try:
     with h5py.File(full_path, 'r') as f:
-        pr_filt = read_var(f, 'pr_filt')
-        lat = read_var(f, "latitude")
-        lon = read_var(f, "longitude")
+        depth = read_var(f, 'Depth')
+        lat = read_var(f, "lat")
+        lon = read_var(f, "lon")
         psdate = read_var(f, "psdate")
         pstart = read_var(f, "pstart")
         pedate = read_var(f, "pedate")
