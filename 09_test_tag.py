@@ -139,8 +139,8 @@ final_df = pd.read_pickle("final.pkl")
 # print(final_df.head())
 
 test_df = final_df[final_df['itpNum'] == 100].copy()
-print(test_df.columns)
-print(test_df.head())
+# print(test_df.columns)
+# print(test_df.head())
 
 
 ############################################################
@@ -192,6 +192,7 @@ def transectScatter(df, value, window_size):
     vmax = new_df[value].quantile(0.99)
     bounds = np.linspace(vmin, vmax, 100)
     norm = colors.BoundaryNorm(boundaries=bounds, ncolors=256)
+    print(len(new_df[value]))
 
     # Scatter plot (raw data)
     sc = plt.scatter(
@@ -212,7 +213,90 @@ def transectScatter(df, value, window_size):
     plt.xticks(rotation=45) 
     plt.tight_layout()
     plt.show()
-transectScatter(test_df, 'smooth_R_rho', 30)
+# transectScatter(test_df, 'smooth_R_rho', 30)
+
+from scipy.ndimage import uniform_filter1d
+#########################################################
+def transView(df, values, window_size):
+    ls = []
+    # test if the loop for every profile works
+    unique_profNum = df['profileNumber'].unique()
+    for i in unique_profNum:
+        df_on_fly = df[df['profileNumber'] == i].copy()
+        temp_smooth = uniform_filter1d(df_on_fly['temp'], size=window_size, mode='nearest')
+        salt_smooth = uniform_filter1d(df_on_fly['salinity'], size=window_size, mode='nearest')
+        pres_smooth = uniform_filter1d(df_on_fly['pressure'], size=window_size, mode='nearest')
+        depth = df_on_fly['depth']
+        # add new cols:
+        df_on_fly['dT/dZ'] = np.gradient(temp_smooth, depth)
+        n_sq = gsw.Nsquared(salt_smooth, temp_smooth, pres_smooth, df_on_fly['lat'])[0]
+        # padding for last value as the function returns only N-1 values
+        n_sq_padded = np.append(n_sq, np.nan)
+        df_on_fly['smooth_n_sq'] = n_sq_padded
+        # turner angle and R_rho
+        [turner_angle, R_rho,p_mid] = gsw.Turner_Rsubrho(salt_smooth, temp_smooth, pres_smooth)
+        df_on_fly['smooth_turner_angle'] = np.append(turner_angle,np.nan)
+        df_on_fly['smooth_R_rho'] = np.append(R_rho,np.nan)
+        ls.append(df_on_fly)
+    fin_df = pd.concat(ls, ignore_index=True)
+
+    fig, axs = plt.subplots(1, len(values), figsize=(5 * len(values), 5))  # 1 row, multiple columns
+
+    for i, value in enumerate(values):
+        ax = axs[i] if len(values) > 1 else axs  # handle case with 1 subplot
+
+        mask = np.isfinite(fin_df[value]) & (fin_df[value] != 0)
+        masked_data = fin_df[value][mask]
+        logged_value = np.log10(np.abs(masked_data))
+
+        # Compute vmin and vmax for color scaling, ignoring outliers
+        vmin = np.quantile(logged_value, 0.01)
+        vmax = np.quantile(logged_value, 0.99)
+        bounds = np.linspace(vmin, vmax, 100)
+        norm = colors.BoundaryNorm(boundaries=bounds, ncolors=256)
+
+        sc = ax.scatter(
+            fin_df['date'][mask], fin_df['depth'][mask],
+            c=logged_value,  # or fin_df[value][mask] if not logging
+            cmap='viridis',
+            norm=norm,
+            s=10, alpha=0.8, marker=(4, 0, 45)
+        )
+        fig.colorbar(sc, ax=ax, label=f'log {value}')
+
+        ax.set_title(f'Logged {value}, ITP 100, window size: {window_size}')
+        ax.set_xlabel('Date')
+        ax.set_ylabel('Depth (m)')
+        ax.invert_yaxis()
+
+        ax.xaxis.set_major_locator(mdates.DayLocator(interval=10))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+        plt.setp(ax.get_xticklabels(), rotation=45)  # rotate date labels
+
+    plt.tight_layout()
+    plt.show()
+ 
+transView(test_df, ["dT/dZ", 'smooth_n_sq'], 5)
+
+
+# t_smooth = test_df['temp']
+# depth = test_df['depth']
+
+# dt_dp = np.gradient(t_smooth, depth)
+
+# # Taking the log of absolute gradient
+# dT_dp_abs_log = np.log10(np.clip(np.abs(dT_dp), 1e-6, None))
+
+# plt.figure(figsize=(12, 6))
+# extent = [time[0], time[-1], np.nanmin(p), np.nanmax(p)]
+# plt.imshow(dT_dp_abs_log, aspect='auto', cmap='viridis', origin='lower', extent=extent)
+# plt.colorbar(label=r'$\log_{10}$(|∂T/∂p|) (°C/dbar)')
+# plt.gca().invert_yaxis()
+# plt.ylabel('Depth (m)')
+# plt.xlabel('Time')
+# plt.title('Smoothed Vertical Temperature Gradient (profile-by-profile)')
+# plt.tight_layout()
+# plt.show()
 
 ####################################################################################
 
