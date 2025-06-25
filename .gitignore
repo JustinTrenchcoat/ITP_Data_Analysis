@@ -12,3 +12,4 @@ gridDataMat/
 testDir/
 tagData/
 prod_files/
+*.png
