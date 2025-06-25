@@ -8,49 +8,35 @@ import datetime
 import re
 import seaborn as sns
 from matplotlib.colors import SymLogNorm
-
+import matplotlib.colors as colors
+import matplotlib.dates as mdates
+from matplotlib.colors import Normalize
 '''
 In the dataset:
 every row is one observation from one profile.
 It has to be ordered in time so that time series analysis would work.
-
-
-
+----------------------------------------------------------------------------
 thermal expansion coef: alpha
-
 haline contraction coef: beta
-
-Nsquared
-
-
+-------------------------------------------------------
 Numerical features:
 Depth
 Temperature
 Salinity
-
-
+N^2
+--------------------------------------------------------
 Categorical features:
 Mixed layer
 interface layer
-
-
+--------------------------------------------------------------------
 Target?
 Staircase types: Sharp Mushy SuperMushy
-
-
+----------------------------------------------------------------------
 Time analysis variable:
 Date
-(I doubt if the exact time would be a variable??)
+I doubt if the exact time would be a variable
 ##############################################
-background features equations:
-
-density:
-density stratification (N2)
-desnity gradient ratio (R_rho)
-
-
 '''
-
 numeric_features = [
     "Temp",
     "Salinity",
@@ -67,8 +53,6 @@ time_feature = ["Date"]
 target = ["StaircaseType"]
 
 # Read in the data:
-# Configuration
-
 # print(ds.dimensions)
 # print(ds.variables)
 ocean_df = pd.DataFrame()
@@ -112,15 +96,20 @@ def readNC(full_path, ls, itp_num):
             })
             new_df['pressure'] = pressure(depth[i],lat[i])
             new_df['itpNum'] = itp_num
-
+            #############################################################################
             # background infos, do it here because we calculate it per-profile:
             # N Sqaured:
-            n_sq = gsw.Nsquared(salinity[i], temp[i], new_df['pressure'], lat[i])[0]
+            # Apply centered rolling window smoothing (you can adjust window size)
+            temp_smooth = pd.Series(temp[i]).rolling(window=5, center=True).mean().to_numpy()
+            salt_smooth = pd.Series(salinity[i]).rolling(window=5, center=True).mean().to_numpy()
+            temp_smooth = pd.Series(temp_smooth).bfill().ffill().to_numpy()
+            salt_smooth = pd.Series(salt_smooth).bfill().ffill().to_numpy()
+            n_sq = gsw.Nsquared(salt_smooth, temp_smooth, new_df['pressure'], lat[i])[0]
             # padding for last value as the function returns only N-1 values
             n_sq_padded = np.append(n_sq, np.nan)
             new_df['n_sq'] = n_sq_padded
             # turner angle and R_rho
-            [turner_angle, R_rho,p_mid] = gsw.Turner_Rsubrho(salinity[i], temp[i], new_df['pressure'])
+            [turner_angle, R_rho,p_mid] = gsw.Turner_Rsubrho(salt_smooth, temp_smooth, new_df['pressure'])
             new_df['turner_angle'] = np.append(turner_angle,np.nan)
             new_df['R_rho'] = np.append(R_rho,np.nan)
             ####################
@@ -149,200 +138,96 @@ final_df = pd.read_pickle("final.pkl")
 # print(final_df.shape)
 # print(final_df.head())
 
-
 test_df = final_df[final_df['itpNum'] == 100].copy()
-print(test_df.shape)
-num_unique = test_df['profileNumber'].nunique()
-print(f"Number of unique profNum values: {num_unique}")
+print(test_df.columns)
+print(test_df.head())
 
 
-depth_col = test_df['depth']
-n_sq_col = test_df['n_sq']
-def printBasicStat(column):
-    # Basic statistics
-    print("Statistical Summary of Depth Differences:")
-    print(f"Count         : {len(column)}")
-    print(f"Min           : {np.min(column)}")
-    print(f"Max           : {np.max(column)}")
-    print(f"Mean          : {np.mean(column)}")
-    print(f"Median        : {np.median(column)}")
-    print(f"Std Dev       : {np.std(column)}")
-    print(f"Variance      : {np.var(column)}")
-    print(f"25th Percentile (Q1): {np.percentile(column, 25)}")
-    print(f"75th Percentile (Q3): {np.percentile(column, 75)}")
-    print(f"IQR           : {np.percentile(column, 75) - np.percentile(column, 25)}")
+############################################################
+# file checks:
+# print(test_df.shape)
+# num_unique = test_df['profileNumber'].nunique()
+# print(f"Number of unique profNum values: {num_unique}")
+
+# check_df = test_df[test_df['profileNumber'] == 20].copy()
+# checkDepth = check_df['depth']
+# checkTemp = check_df['temp']
+# helPlot(checkTemp, checkDepth)
+
+# depth_col = test_df['depth']
+# n_sq_col = test_df['n_sq']
+
 # printBasicStat(depth_col)
 # printBasicStat(n_sq_col)
 
-depth_index = np.where(np.isnan(depth_col))[0]
-print(depth_index)
+# depth_index = np.where(np.isnan(depth_col))[0]
+# print(depth_index)
 
-n_sq_index = np.where(np.isnan(n_sq_col))[0]
-print(len(n_sq_index))
+# n_sq_index = np.where(np.isnan(n_sq_col))[0]
+# print(len(n_sq_index))
 
+# print(test_df['n_sq'].min(), test_df['n_sq'].max(), test_df['n_sq'].describe())
+#############################################################
+def transectScatter(df, value, window_size):
+    new_df = df.copy()
+    #prepareation:
+    # Apply centered rolling window smoothing (you can adjust window size)
+    temp_smooth = pd.Series(new_df['temp']).rolling(window=window_size, center=True).mean().to_numpy()
+    salt_smooth = pd.Series(new_df['salinity']).rolling(window=window_size, center=True).mean().to_numpy()
+    pres_smooth = pd.Series(new_df['pressure']).rolling(window=window_size, center=True).mean().to_numpy()
+    temp_smooth = pd.Series(temp_smooth).bfill().ffill().to_numpy()
+    salt_smooth = pd.Series(salt_smooth).bfill().ffill().to_numpy()
+    pres_smooth = pd.Series(pres_smooth).bfill().ffill().to_numpy()
+    n_sq = gsw.Nsquared(salt_smooth, temp_smooth, pres_smooth, df['lat'])[0]
+    # padding for last value as the function returns only N-1 values
+    n_sq_padded = np.append(n_sq, np.nan)
+    new_df['smooth_n_sq'] = n_sq_padded
+    # turner angle and R_rho
+    [turner_angle, R_rho,p_mid] = gsw.Turner_Rsubrho(salt_smooth, temp_smooth, pres_smooth)
+    new_df['smooth_turner_angle'] = np.append(turner_angle,np.nan)
+    new_df['smooth_R_rho'] = np.append(R_rho,np.nan)
 
-# # print(test_df['n_sq'].min(), test_df['n_sq'].max(), test_df['n_sq'].describe())
-import matplotlib.colors as colors
+    # Compute vmin and vmax for color scaling, ignoring outliers
+    vmin = new_df[value].quantile(0.01)
+    vmax = new_df[value].quantile(0.99)
+    bounds = np.linspace(vmin, vmax, 100)
+    norm = colors.BoundaryNorm(boundaries=bounds, ncolors=256)
 
-# def transectPlot(df):
-#     vmin = df['n_sq'].quantile(0.01)  # ignore extreme low outliers
-#     vmax = df['n_sq'].quantile(0.99)  # ignore extreme high outliers
-#     bounds = np.linspace(vmin, vmax, 100)
+    # Scatter plot (raw data)
+    sc = plt.scatter(
+        new_df['date'], new_df['depth'],
+        c=new_df[value], cmap='viridis',
+        norm=norm,
+        s=10, alpha=0.8, marker = (4,0,45)
+    )
 
-#     norm = colors.BoundaryNorm(boundaries=bounds, ncolors=256)
-
-#     sc = plt.scatter(
-#         df['date'], df['depth'],
-#         c=df['n_sq'], cmap='viridis',
-#         norm=norm,
-#         s=5, alpha=0.8
-#     )
-
-#     plt.colorbar(sc, label='N^2')
-
-
-#     plt.title('Transect View: N_sq over Time and Depth for ITP 100')
-#     plt.xlabel('Date')
-#     plt.ylabel('Depth (m)')
-#     plt.gca().invert_yaxis()
-#     plt.tight_layout()
-#     plt.show()
-
-# transectPlot(test_df)
-
-# import matplotlib.dates as mdates
-# def contourPlot(df):
-#     df = df.copy()
-
-#     # Ensure datetime and binning (in case not already done)
-#     df['date_bin'] = pd.to_datetime(df['date']).dt.floor('D')
-
-#     # Pivot to 2D grid: rows = depth, cols = date
-#     pivot_df = df.pivot_table(
-#         index='depth',
-#         columns='date_bin',
-#         values='n_sq',
-#         aggfunc='mean'
-#     )
-
-#     # Create grid: X = dates, Y = depths, Z = n_sq
-#     X, Y = np.meshgrid(pivot_df.columns, pivot_df.index)
-#     Z = pivot_df.values
-#     Z_masked = np.ma.masked_invalid(Z)
-
-
-
-#     print("Z shape:", Z.shape)
-#     print("Z_masked mask sum (invalid points):", np.sum(Z_masked.mask))
-#     print("Any valid data points?:", np.any(~Z_masked.mask))
-#     print("Z min/max (valid):", Z_masked.min(), Z_masked.max())
-
-#     plt.figure(figsize=(14, 6))
-
-#     norm = SymLogNorm(
-#         linthresh=1e-5,   # Linear between -1e-5 and +1e-5
-#         linscale=1.0,
-#         vmin=-0.08,
-#         vmax=0.08,
-#         base=10
-#     )
-
-#     cp = plt.contourf(X, Y, Z_masked, levels=100, cmap='seismic', norm=norm)
-
-#     # Plot
-#     # cp = plt.contourf(X, Y, Z, levels=100, cmap='viridis', norm=LogNorm(vmin=1e-7, vmax=1e-4))
-#     plt.gca().invert_yaxis()
-
-#     # Format x-axis ticks
-#     plt.xticks(rotation=45)
-#     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
-
-#     # Add colorbar and labels
-#     plt.colorbar(cp, label='N_sq')
-#     plt.title('Contour Plot of N^2 over Time and Depth')
-#     plt.xlabel('Date')
-#     plt.ylabel('Depth (m)')
-#     plt.tight_layout()
-#     plt.show()
-# # contourPlot(test_df)
-
-
-
-
-
-# testing phase
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-from matplotlib.colors import Normalize
-import pandas as pd
-
-def contour_transect_plot(df):
-    df = df.copy()
-    df = df.dropna(subset=['depth', 'date', 'n_sq'])
-    df['date'] = pd.to_datetime(df['date'])  # ensure proper datetime
-
-    # Bin depth to 1 m to reduce noise
-    df['depth_bin'] = df['depth'].round()
-
-    # Pivot: depth vs date
-    pivot = df.pivot_table(index='depth_bin', columns='date', values='n_sq', aggfunc='mean')
-    pivot = pivot.sort_index()
-
-    # Prepare grid
-    Z = pivot.values
-    Y = pivot.index.values  # depth
-    X = mdates.date2num(pivot.columns)  # convert dates to float
-
-    # Meshgrid (but now with proper shape for contourf)
-    X_grid, Y_grid = np.meshgrid(X, Y)
-
-    # Mask invalids
-    Z_masked = np.ma.masked_invalid(Z)
-
-    # Plot
-    fig, ax = plt.subplots(figsize=(14, 6))
-
-    # Use Normalize if you don't want log scale
-    norm = Normalize(vmin=np.nanquantile(Z, 0.01), vmax=np.nanquantile(Z, 0.99))
-
-    cp = ax.contourf(X_grid, Y_grid, Z_masked, levels=100, cmap='viridis', norm=norm)
-
-    # Format x-axis
-    ax.xaxis_date()
-    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-    plt.xticks(rotation=45)
-
-    # Labels and title
-    plt.colorbar(cp, label=r'$N^2$ (s$^{-2}$)')
-    ax.invert_yaxis()
+    plt.colorbar(sc, label=f'{value}')
+    plt.title(f'Transect View: {value} over Time and Depth for ITP 100, smooth window: {window_size}')
     plt.xlabel('Date')
     plt.ylabel('Depth (m)')
-    plt.title('Transect View: $N^2$ over Time and Depth in ITP 100')
+    plt.gca().invert_yaxis()
+    ax = plt.gca()
+    ax.xaxis.set_major_locator(mdates.DayLocator(interval=5))
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))  # adjust format as needed
+    plt.xticks(rotation=45) 
     plt.tight_layout()
     plt.show()
+transectScatter(test_df, 'smooth_R_rho', 30)
 
-
-contour_transect_plot(test_df)
-
-# # print(test_df.head())
-# # print(test_df.shape)
-# # filtered_df = final_df[final_df['mask_cl'].notna()]
-# # print(filtered_df)
-
-
-
-
-# # ocean_sorted_df = final_df.sort_values(by='profileNumber')
-# # print(f'sorted DF: \n{ocean_sorted_df.tail()}')
+####################################################################################
 
 # # Now ocean_df should have everything
-
 # # we now sort the dataframe in order of time:
-# # ocean_sorted_df = ocean_df.sort_values(by='startDate')
+# ocean_sorted_df = ocean_df.sort_values(by='startDate')
 
+# # Ensure 'date' is in datetime format
+# test_df['date'] = pd.to_datetime(test_df['date'])
 
+# # Filter the range
+# subset = test_df[(test_df['date'] >= '2017-11-20') & (test_df['date'] <= '2017-12-01')]
+
+# # Display
+# print(subset[['date']])
 
 
 

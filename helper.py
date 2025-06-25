@@ -126,3 +126,18 @@ def helPlot(x, y):
     # Optional: Rotate date labels for clarity
     plt.xticks(rotation=45)
     plt.show()
+
+
+def printBasicStat(column):
+    # Basic statistics
+    print("Statistical Summary of Depth Differences:")
+    print(f"Count         : {len(column)}")
+    print(f"Min           : {np.min(column)}")
+    print(f"Max           : {np.max(column)}")
+    print(f"Mean          : {np.mean(column)}")
+    print(f"Median        : {np.median(column)}")
+    print(f"Std Dev       : {np.std(column)}")
+    print(f"Variance      : {np.var(column)}")
+    print(f"25th Percentile (Q1): {np.percentile(column, 25)}")
+    print(f"75th Percentile (Q3): {np.percentile(column, 75)}")
+    print(f"IQR           : {np.percentile(column, 75) - np.percentile(column, 25)}")
