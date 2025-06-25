@@ -11,51 +11,13 @@ from matplotlib.colors import SymLogNorm
 import matplotlib.colors as colors
 import matplotlib.dates as mdates
 from matplotlib.colors import Normalize
+from scipy.ndimage import uniform_filter1d
 '''
 In the dataset:
 every row is one observation from one profile.
 It has to be ordered in time so that time series analysis would work.
-----------------------------------------------------------------------------
-thermal expansion coef: alpha
-haline contraction coef: beta
--------------------------------------------------------
-Numerical features:
-Depth
-Temperature
-Salinity
-N^2
---------------------------------------------------------
-Categorical features:
-Mixed layer
-interface layer
---------------------------------------------------------------------
-Target?
-Staircase types: Sharp Mushy SuperMushy
-----------------------------------------------------------------------
-Time analysis variable:
-Date
-I doubt if the exact time would be a variable
-##############################################
 '''
-numeric_features = [
-    "Temp",
-    "Salinity",
-    "Depth",
-    "Density",
-    "Density_N2",
-    "R_rho",
-]
-categorical_features = [
-    "Mixed",
-    "Interface",
-]
-time_feature = ["Date"]
-target = ["StaircaseType"]
-
 # Read in the data:
-# print(ds.dimensions)
-# print(ds.variables)
-ocean_df = pd.DataFrame()
 def readNC(full_path, ls, itp_num):
     ds = nc.Dataset(full_path)
     with ds as dataset:
@@ -115,7 +77,6 @@ def readNC(full_path, ls, itp_num):
             ####################
             ls.append(new_df)
     return ls
-
 #######################################################
 # Read Data and save, Only run once                   #
 #######################################################
@@ -132,17 +93,8 @@ def readNC(full_path, ls, itp_num):
 #######################################################
 #                                                     #
 #######################################################
-
-
-final_df = pd.read_pickle("final.pkl")
-# print(final_df.shape)
-# print(final_df.head())
-
-test_df = final_df[final_df['itpNum'] == 100].copy()
-# print(test_df.columns)
-# print(test_df.head())
-
-
+# final_df = pd.read_pickle("final.pkl")
+# test_df = final_df[final_df['itpNum'] == 100].copy()
 ############################################################
 # file checks:
 # print(test_df.shape)
@@ -168,55 +120,7 @@ test_df = final_df[final_df['itpNum'] == 100].copy()
 
 # print(test_df['n_sq'].min(), test_df['n_sq'].max(), test_df['n_sq'].describe())
 #############################################################
-def transectScatter(df, value, window_size):
-    new_df = df.copy()
-    #prepareation:
-    # Apply centered rolling window smoothing (you can adjust window size)
-    temp_smooth = pd.Series(new_df['temp']).rolling(window=window_size, center=True).mean().to_numpy()
-    salt_smooth = pd.Series(new_df['salinity']).rolling(window=window_size, center=True).mean().to_numpy()
-    pres_smooth = pd.Series(new_df['pressure']).rolling(window=window_size, center=True).mean().to_numpy()
-    temp_smooth = pd.Series(temp_smooth).bfill().ffill().to_numpy()
-    salt_smooth = pd.Series(salt_smooth).bfill().ffill().to_numpy()
-    pres_smooth = pd.Series(pres_smooth).bfill().ffill().to_numpy()
-    n_sq = gsw.Nsquared(salt_smooth, temp_smooth, pres_smooth, df['lat'])[0]
-    # padding for last value as the function returns only N-1 values
-    n_sq_padded = np.append(n_sq, np.nan)
-    new_df['smooth_n_sq'] = n_sq_padded
-    # turner angle and R_rho
-    [turner_angle, R_rho,p_mid] = gsw.Turner_Rsubrho(salt_smooth, temp_smooth, pres_smooth)
-    new_df['smooth_turner_angle'] = np.append(turner_angle,np.nan)
-    new_df['smooth_R_rho'] = np.append(R_rho,np.nan)
-
-    # Compute vmin and vmax for color scaling, ignoring outliers
-    vmin = new_df[value].quantile(0.01)
-    vmax = new_df[value].quantile(0.99)
-    bounds = np.linspace(vmin, vmax, 100)
-    norm = colors.BoundaryNorm(boundaries=bounds, ncolors=256)
-    print(len(new_df[value]))
-
-    # Scatter plot (raw data)
-    sc = plt.scatter(
-        new_df['date'], new_df['depth'],
-        c=new_df[value], cmap='viridis',
-        norm=norm,
-        s=10, alpha=0.8, marker = (4,0,45)
-    )
-
-    plt.colorbar(sc, label=f'{value}')
-    plt.title(f'Transect View: {value} over Time and Depth for ITP 100, smooth window: {window_size}')
-    plt.xlabel('Date')
-    plt.ylabel('Depth (m)')
-    plt.gca().invert_yaxis()
-    ax = plt.gca()
-    ax.xaxis.set_major_locator(mdates.DayLocator(interval=5))
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))  # adjust format as needed
-    plt.xticks(rotation=45) 
-    plt.tight_layout()
-    plt.show()
-# transectScatter(test_df, 'smooth_R_rho', 30)
-
-from scipy.ndimage import uniform_filter1d
-#########################################################
+# visualizations stuff
 def transView(df, values, window_size):
     ls = []
     # test if the loop for every profile works
@@ -275,45 +179,164 @@ def transView(df, values, window_size):
 
     plt.tight_layout()
     plt.show()
- 
-transView(test_df, ["dT/dZ", 'smooth_n_sq'], 5)
-
-
-# t_smooth = test_df['temp']
-# depth = test_df['depth']
-
-# dt_dp = np.gradient(t_smooth, depth)
-
-# # Taking the log of absolute gradient
-# dT_dp_abs_log = np.log10(np.clip(np.abs(dT_dp), 1e-6, None))
-
-# plt.figure(figsize=(12, 6))
-# extent = [time[0], time[-1], np.nanmin(p), np.nanmax(p)]
-# plt.imshow(dT_dp_abs_log, aspect='auto', cmap='viridis', origin='lower', extent=extent)
-# plt.colorbar(label=r'$\log_{10}$(|∂T/∂p|) (°C/dbar)')
-# plt.gca().invert_yaxis()
-# plt.ylabel('Depth (m)')
-# plt.xlabel('Time')
-# plt.title('Smoothed Vertical Temperature Gradient (profile-by-profile)')
-# plt.tight_layout()
-# plt.show()
-
+# transView(test_df, ["dT/dZ", 'smooth_n_sq'], 5)
 ####################################################################################
+'''
+In the demo case we would only use ITP100. and according to the visualization we would devide train set and test set based on date.
+We would make some features on the fly for testing smoothing window_size
 
-# # Now ocean_df should have everything
-# # we now sort the dataframe in order of time:
-# ocean_sorted_df = ocean_df.sort_values(by='startDate')
+-------------------------------------------------------
+Numerical features:
+Depth
+Temperature
+Salinity
+N^2
+turner_angle or R-rho
+--------------------------------------------------------
+Categorical features:
+?
+--------------------------------------------------------------------
+Target? 
+1. layer types:
+        Mixed layer
+        interface layer
+2. staircase types:
+        sharp
+        mushy
+        super mushy
+----------------------------------------------------------------------
+Time analysis variable:
+Date
+'''
+def process_df(df, window_size):
+    ls = []
+    # test if the loop for every profile works
+    unique_profNum = df['profileNumber'].unique()
+    for i in unique_profNum:
+        df_on_fly = df[df['profileNumber'] == i].copy()
+        temp_smooth = uniform_filter1d(df_on_fly['temp'], size=window_size, mode='nearest')
+        salt_smooth = uniform_filter1d(df_on_fly['salinity'], size=window_size, mode='nearest')
+        pres_smooth = uniform_filter1d(df_on_fly['pressure'], size=window_size, mode='nearest')
+        # add new cols:
+        n_sq = gsw.Nsquared(salt_smooth, temp_smooth, pres_smooth, df_on_fly['lat'])[0]
+        # padding for last value as the function returns only N-1 values
+        n_sq_padded = np.append(n_sq, np.nan)
+        df_on_fly['smooth_n_sq'] = n_sq_padded
+        # turner angle and R_rho
+        [turner_angle, R_rho,p_mid] = gsw.Turner_Rsubrho(salt_smooth, temp_smooth, pres_smooth)
+        df_on_fly['smooth_turner_angle'] = np.append(turner_angle,np.nan)
+        df_on_fly['smooth_R_rho'] = np.append(R_rho,np.nan)
+        ls.append(df_on_fly)
+    fin_df = pd.concat(ls, ignore_index=True)
+    return fin_df
+# ocean_df = process_df(test_df, 5)
+# ocean_df.to_pickle("ocean.pkl")
+ocean_df = pd.read_pickle("ocean.pkl")
+ocean_df['Date'] = pd.to_datetime(ocean_df['date'])
+train_df = ocean_df.query("Date <= 20171106")
+test_df = ocean_df.query("Date >  20171106")
+train_df = train_df.assign(
+    Month=train_df["Date"].apply(lambda x: x.month_name())
+    )  # x.month_name() to get the actual string
+test_df = test_df.assign(Month=test_df["Date"].apply(lambda x: x.month_name()))
+print(train_df.info())
+numeric_features = [
+    "temp",
+    "salinity",
+    "depth",
+    "smooth_n_sq",
+    "smooth_R_rho",
+    'lon',
+    'lat'
+]
+categorical_features = []
+time_feature = ["Date", 'Month']
+target = ["mask_sc"]
+drop_features = ['profileNumber',
+                'date',
+                'itpNum',
+                'mask_cl',
+                'mask_int',
+                'mask_ml',
+                'n_sq',
+                'turner_angle',
+                'smooth_turner_angle',
+                'pressure',
+                'R_rho']
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
+from sklearn.compose import ColumnTransformer, make_column_transformer
+from sklearn.impute import SimpleImputer
 
-# # Ensure 'date' is in datetime format
-# test_df['date'] = pd.to_datetime(test_df['date'])
 
-# # Filter the range
-# subset = test_df[(test_df['date'] >= '2017-11-20') & (test_df['date'] <= '2017-12-01')]
+def preprocess_features(
+    train_df,
+    test_df,
+    numeric_features,
+    categorical_features,
+    drop_features,
+    target):
 
-# # Display
-# print(subset[['date']])
+    all_features = set(numeric_features + time_feature + drop_features + target)
+    if set(train_df.columns) != all_features:
+        print("Missing columns", set(train_df.columns) - all_features)
+        print("Extra columns", all_features - set(train_df.columns))
+        raise Exception("Columns do not match")
 
+    numeric_transformer = make_pipeline(
+        SimpleImputer(strategy="median"), StandardScaler()
+    )
+    categorical_transformer = make_pipeline(
+        SimpleImputer(strategy="constant", fill_value="missing"),
+        OneHotEncoder(handle_unknown="ignore", sparse_output=False),
+    )
 
+    preprocessor = make_column_transformer(
+        (numeric_transformer, numeric_features),
+        (categorical_transformer, categorical_features),
+        ("drop", drop_features),
+    )
+    preprocessor.fit(train_df)
+    ohe_feature_names = (
+        preprocessor.named_transformers_["pipeline-2"]
+        .named_steps["onehotencoder"]
+        .get_feature_names_out(categorical_features)
+        .tolist()
+    )
+    new_columns = numeric_features + ohe_feature_names
 
+    X_train_enc = pd.DataFrame(
+        preprocessor.transform(train_df), index=train_df.index, columns=new_columns
+    )
+    X_test_enc = pd.DataFrame(
+        preprocessor.transform(test_df), index=test_df.index, columns=new_columns
+    )
 
+    y_train = train_df["mask_sc"]
+    y_test = test_df["mask_sc"]
 
+    return X_train_enc, y_train, X_test_enc, y_test, preprocessor
+
+X_train_enc, y_train, X_test_enc, y_test, preprocessor = preprocess_features(
+    train_df, test_df, 
+    numeric_features, 
+    categorical_features + ["Month"], 
+    drop_features,
+    target
+    )
+print(X_train_enc.head())
+
+# from sklearn.linear_model import LogisticRegression
+
+# def score_lr_print_coeff(preprocessor, train_df, y_train, test_df, y_test, X_train_enc):
+#     lr_pipe = make_pipeline(preprocessor, LogisticRegression(max_iter=1000))
+#     lr_pipe.fit(train_df, y_train)
+#     print("Train score: {:.2f}".format(lr_pipe.score(train_df, y_train)))
+#     print("Test score: {:.2f}".format(lr_pipe.score(test_df, y_test)))
+#     lr_coef = pd.DataFrame(
+#         data=lr_pipe.named_steps["logisticregression"].coef_.flatten(),
+#         index=X_train_enc.columns,
+#         columns=["Coef"],
+#     )
+#     return lr_coef.sort_values(by="Coef", ascending=False)
+# score_lr_print_coeff(preprocessor, train_df, y_train, test_df, y_test, X_train_enc)
