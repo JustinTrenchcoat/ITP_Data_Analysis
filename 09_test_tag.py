@@ -95,7 +95,7 @@ def readNC(full_path, ls, itp_num):
 #                                                     #
 #######################################################
 final_df = pd.read_pickle("final.pkl")
-test_df = final_df[final_df['itpNum'] == 100].copy()
+test_df = final_df[final_df['itpNum'] == 65].copy()
 ############################################################
 # file checks:
 # print(test_df.shape)
@@ -120,75 +120,6 @@ test_df = final_df[final_df['itpNum'] == 100].copy()
 # print(len(n_sq_index))
 
 # print(test_df['n_sq'].min(), test_df['n_sq'].max(), test_df['n_sq'].describe())
-#############################################################
-# visualizations stuff
-def transView(df, values, window_size):
-    ls = []
-    # test if the loop for every profile works
-    unique_profNum = df['profileNumber'].unique()
-    for i in unique_profNum:
-        df_on_fly = df[df['profileNumber'] == i].copy()
-        temp_smooth = uniform_filter1d(df_on_fly['temp'], size=window_size, mode='nearest')
-        salt_smooth = uniform_filter1d(df_on_fly['salinity'], size=window_size, mode='nearest')
-        pres_smooth = uniform_filter1d(df_on_fly['pressure'], size=window_size, mode='nearest')
-        depth = df_on_fly['depth']
-        # add new cols:
-        df_on_fly['dT/dZ'] = np.gradient(temp_smooth, depth)
-        df_on_fly['dS/dZ'] = np.gradient(salt_smooth, depth)
-        n_sq = gsw.Nsquared(salt_smooth, temp_smooth, pres_smooth, df_on_fly['lat'])[0]
-        # padding for last value as the function returns only N-1 values
-        n_sq_padded = np.append(n_sq, np.nan)
-        df_on_fly['smooth_n_sq'] = n_sq_padded
-        # turner angle and R_rho
-        [turner_angle, R_rho,p_mid] = gsw.Turner_Rsubrho(salt_smooth, temp_smooth, pres_smooth)
-        df_on_fly['smooth_turner_angle'] = np.append(turner_angle,np.nan)
-        df_on_fly['smooth_R_rho'] = np.append(R_rho,np.nan)
-        ls.append(df_on_fly)
-    fin_df = pd.concat(ls, ignore_index=True)
-
-    n_plots = len(values)
-    n_cols = 2
-    n_rows = math.ceil(n_plots / n_cols)
-
-    fig, axs = plt.subplots(n_rows, n_cols, figsize=(5 * n_cols, 4 * n_rows))
-    axs = axs.flatten() 
-
-    for i, value in enumerate(values):
-        ax = axs[i] if len(values) > 1 else axs  # handle case with 1 subplot
-
-        mask = np.isfinite(fin_df[value]) & (fin_df[value] != 0)
-        masked_data = fin_df[value][mask]
-        logged_value = np.log10(np.abs(masked_data))
-
-        # Compute vmin and vmax for color scaling, ignoring outliers
-        vmin = np.quantile(logged_value, 0.01)
-        vmax = np.quantile(logged_value, 0.99)
-        bounds = np.linspace(vmin, vmax, 100)
-        norm = colors.BoundaryNorm(boundaries=bounds, ncolors=256)
-
-        sc = ax.scatter(
-            fin_df['date'][mask], fin_df['depth'][mask],
-            c=logged_value,  # or fin_df[value][mask] if not logging
-            cmap='viridis',
-            norm=norm,
-            s=10, alpha=0.8, marker=(4, 0, 45)
-        )
-        fig.colorbar(sc, ax=ax, label=f'log {value}')
-
-        ax.set_title(f'Logged {value}, ITP 100, window size: {window_size}')
-        ax.set_xlabel('Date')
-        ax.set_ylabel('Depth (m)')
-        ax.invert_yaxis()
-
-        ax.xaxis.set_major_locator(mdates.DayLocator(interval=30))
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-        plt.setp(ax.get_xticklabels(), rotation=45)  # rotate date labels
-
-    plt.tight_layout()
-    plt.savefig('test.png')
-    plt.show()
-transView(test_df, ["dT/dZ", 'dS/dZ','smooth_n_sq','smooth_R_rho'], 20)
-
 ####################################################################################
 # machine learning part
 '''
@@ -219,164 +150,164 @@ Target?
 Time analysis variable:
 Date/Month, dat?
 '''
-# def process_df(df, window_size):
-#     ls = []
-#     # test if the loop for every profile works
-#     unique_profNum = df['profileNumber'].unique()
-#     for i in unique_profNum:
-#         df_on_fly = df[df['profileNumber'] == i].copy()
-#         temp_smooth = uniform_filter1d(df_on_fly['temp'], size=window_size, mode='nearest')
-#         salt_smooth = uniform_filter1d(df_on_fly['salinity'], size=window_size, mode='nearest')
-#         pres_smooth = uniform_filter1d(df_on_fly['pressure'], size=window_size, mode='nearest')
-#         # add new cols:
-#         n_sq = gsw.Nsquared(salt_smooth, temp_smooth, pres_smooth, df_on_fly['lat'])[0]
-#         # padding for last value as the function returns only N-1 values
-#         n_sq_padded = np.append(n_sq, np.nan)
-#         df_on_fly['smooth_n_sq'] = n_sq_padded
-#         # turner angle and R_rho
-#         [turner_angle, R_rho,p_mid] = gsw.Turner_Rsubrho(salt_smooth, temp_smooth, pres_smooth)
-#         df_on_fly['smooth_turner_angle'] = np.append(turner_angle,np.nan)
-#         df_on_fly['smooth_R_rho'] = np.append(R_rho,np.nan)
-#         ls.append(df_on_fly)
-#     fin_df = pd.concat(ls, ignore_index=True)
-#     return fin_df
-# ###################################################
-# # # run once
-# # ocean_df = process_df(test_df, 5)
-# # ocean_df.to_pickle("ocean.pkl")
-# ####################################################
-# ocean_df = pd.read_pickle("ocean.pkl")
-# ocean_df['Date'] = pd.to_datetime(ocean_df['date'])
-# train_df = ocean_df.query("Date <= 20171106")
-# test_df = ocean_df.query("Date >  20171106")
-# train_df = train_df.assign(
-#     Month=train_df["Date"].apply(lambda x: x.month_name())
-#     )  # x.month_name() to get the actual string
-# test_df = test_df.assign(Month=test_df["Date"].apply(lambda x: x.month_name()))
+def process_df(df, window_size):
+    ls = []
+    # test if the loop for every profile works
+    unique_profNum = df['profileNumber'].unique()
+    for i in unique_profNum:
+        df_on_fly = df[df['profileNumber'] == i].copy()
+        temp_smooth = uniform_filter1d(df_on_fly['temp'], size=window_size, mode='nearest')
+        salt_smooth = uniform_filter1d(df_on_fly['salinity'], size=window_size, mode='nearest')
+        pres_smooth = uniform_filter1d(df_on_fly['pressure'], size=window_size, mode='nearest')
+        # add new cols:
+        n_sq = gsw.Nsquared(salt_smooth, temp_smooth, pres_smooth, df_on_fly['lat'])[0]
+        # padding for last value as the function returns only N-1 values
+        n_sq_padded = np.append(n_sq, np.nan)
+        df_on_fly['smooth_n_sq'] = n_sq_padded
+        # turner angle and R_rho
+        [turner_angle, R_rho,p_mid] = gsw.Turner_Rsubrho(salt_smooth, temp_smooth, pres_smooth)
+        df_on_fly['smooth_turner_angle'] = np.append(turner_angle,np.nan)
+        df_on_fly['smooth_R_rho'] = np.append(R_rho,np.nan)
+        ls.append(df_on_fly)
+    fin_df = pd.concat(ls, ignore_index=True)
+    return fin_df
+###################################################
+# run once
+# ocean_df = process_df(test_df, 5)
+# ocean_df.to_pickle("ocean.pkl")
+####################################################
+ocean_df = pd.read_pickle("ocean.pkl")
+ocean_df['Date'] = pd.to_datetime(ocean_df['date'])
+train_df = ocean_df.query("Date <= 20130503")
+test_df = ocean_df.query("Date >  20130503")
+train_df = train_df.assign(
+    Month=train_df["Date"].apply(lambda x: x.month_name())
+    )  # x.month_name() to get the actual string
+test_df = test_df.assign(Month=test_df["Date"].apply(lambda x: x.month_name()))
 # print(train_df.info())
-# numeric_features = [
-#     "depth",
-#     "smooth_n_sq",
-#     "smooth_R_rho",
-#     'lon',
-#     'lat'
-# ]
-# categorical_features = []
-# time_feature = ["Date", 'Month']
-# target = ['mask_ml']
-# drop_features = ['profileNumber',
-#                 'date',
-#                 'itpNum',
-#                 'mask_sc',
-#                 'mask_int',
-#                 'mask_cl',
-#                 'n_sq',
-#                 'turner_angle',
-#                 'smooth_turner_angle',
-#                 'pressure',
-#                 "temp",
-#                 "salinity",
-#                 'R_rho']
-# from sklearn.pipeline import Pipeline, make_pipeline
-# from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
-# from sklearn.compose import ColumnTransformer, make_column_transformer
-# from sklearn.impute import SimpleImputer
+numeric_features = [
+    "depth",
+    "smooth_n_sq",
+    "smooth_R_rho",
+    'lon',
+    'lat'
+]
+categorical_features = []
+time_feature = ["Date", 'Month']
+target = ['mask_ml']
+drop_features = ['profileNumber',
+                'date',
+                'itpNum',
+                'mask_sc',
+                'mask_int',
+                'mask_cl',
+                'n_sq',
+                'turner_angle',
+                'smooth_turner_angle',
+                'pressure',
+                "temp",
+                "salinity",
+                'R_rho']
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
+from sklearn.compose import ColumnTransformer, make_column_transformer
+from sklearn.impute import SimpleImputer
 
 
-# def preprocess_features(
-#     train_df,
-#     test_df,
-#     numeric_features,
-#     categorical_features,
-#     drop_features,
-#     target):
+def preprocess_features(
+    train_df,
+    test_df,
+    numeric_features,
+    categorical_features,
+    drop_features,
+    target):
 
-#     all_features = set(numeric_features + time_feature + drop_features + target)
-#     if set(train_df.columns) != all_features:
-#         print("Missing columns", set(train_df.columns) - all_features)
-#         print("Extra columns", all_features - set(train_df.columns))
-#         raise Exception("Columns do not match")
+    all_features = set(numeric_features + time_feature + drop_features + target)
+    if set(train_df.columns) != all_features:
+        print("Missing columns", set(train_df.columns) - all_features)
+        print("Extra columns", all_features - set(train_df.columns))
+        raise Exception("Columns do not match")
 
-#     numeric_transformer = make_pipeline(
-#         SimpleImputer(strategy="median"), StandardScaler()
-#     )
-#     categorical_transformer = make_pipeline(
-#         SimpleImputer(strategy="constant", fill_value="missing"),
-#         OneHotEncoder(handle_unknown="ignore", sparse_output=False),
-#     )
+    numeric_transformer = make_pipeline(
+        SimpleImputer(strategy="median"), StandardScaler()
+    )
+    categorical_transformer = make_pipeline(
+        SimpleImputer(strategy="constant", fill_value="missing"),
+        OneHotEncoder(handle_unknown="ignore", sparse_output=False),
+    )
 
-#     preprocessor = make_column_transformer(
-#         (numeric_transformer, numeric_features),
-#         (categorical_transformer, categorical_features),
-#         ("drop", drop_features),
-#     )
-#     preprocessor.fit(train_df)
-#     ohe_feature_names = (
-#         preprocessor.named_transformers_["pipeline-2"]
-#         .named_steps["onehotencoder"]
-#         .get_feature_names_out(categorical_features)
-#         .tolist()
-#     )
-#     new_columns = numeric_features + ohe_feature_names
+    preprocessor = make_column_transformer(
+        (numeric_transformer, numeric_features),
+        (categorical_transformer, categorical_features),
+        ("drop", drop_features),
+    )
+    preprocessor.fit(train_df)
+    ohe_feature_names = (
+        preprocessor.named_transformers_["pipeline-2"]
+        .named_steps["onehotencoder"]
+        .get_feature_names_out(categorical_features)
+        .tolist()
+    )
+    new_columns = numeric_features + ohe_feature_names
 
-#     X_train_enc = pd.DataFrame(
-#         preprocessor.transform(train_df), index=train_df.index, columns=new_columns
-#     )
-#     X_test_enc = pd.DataFrame(
-#         preprocessor.transform(test_df), index=test_df.index, columns=new_columns
-#     )
+    X_train_enc = pd.DataFrame(
+        preprocessor.transform(train_df), index=train_df.index, columns=new_columns
+    )
+    X_test_enc = pd.DataFrame(
+        preprocessor.transform(test_df), index=test_df.index, columns=new_columns
+    )
 
-#     y_train = train_df["mask_sc"]
-#     y_test = test_df["mask_sc"]
+    y_train = train_df["mask_sc"]
+    y_test = test_df["mask_sc"]
 
-#     return X_train_enc, y_train, X_test_enc, y_test, preprocessor
+    return X_train_enc, y_train, X_test_enc, y_test, preprocessor
 
-# X_train_enc, y_train, X_test_enc, y_test, preprocessor = preprocess_features(
-#     train_df, test_df, 
-#     numeric_features, 
-#     categorical_features + ["Month"], 
-#     drop_features,
-#     target
-#     )
+X_train_enc, y_train, X_test_enc, y_test, preprocessor = preprocess_features(
+    train_df, test_df, 
+    numeric_features, 
+    categorical_features + ["Month"], 
+    drop_features,
+    target
+    )
 # print(X_train_enc.head())
 
-# from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression
 
-# def score_lr_print_coeff(preprocessor, train_df, y_train, test_df, y_test, X_train_enc):
-#     lr_pipe = make_pipeline(preprocessor, LogisticRegression(max_iter=1000))
-#     lr_pipe.fit(train_df, y_train)
-#     print("Train score: {:.2f}".format(lr_pipe.score(train_df, y_train)))
-#     print("Test score: {:.2f}".format(lr_pipe.score(test_df, y_test)))
-#     lr_coef = pd.DataFrame(
-#         data=lr_pipe.named_steps["logisticregression"].coef_.flatten(),
-#         index=X_train_enc.columns,
-#         columns=["Coef"],
-#     )
-#     return lr_coef.sort_values(by="Coef", ascending=False)
-# score_lr_print_coeff(preprocessor, train_df, y_train, test_df, y_test, X_train_enc)
-# ###################################################################
-# # feaure importance analysis
-# pipe_lr = make_pipeline(preprocessor, LogisticRegression(max_iter=2000, random_state=2))
-# pipe_lr.fit(train_df, y_train)
+def score_lr_print_coeff(preprocessor, train_df, y_train, test_df, y_test, X_train_enc):
+    lr_pipe = make_pipeline(preprocessor, LogisticRegression(max_iter=1000))
+    lr_pipe.fit(train_df, y_train)
+    print("Train score: {:.2f}".format(lr_pipe.score(train_df, y_train)))
+    print("Test score: {:.2f}".format(lr_pipe.score(test_df, y_test)))
+    lr_coef = pd.DataFrame(
+        data=lr_pipe.named_steps["logisticregression"].coef_.flatten(),
+        index=X_train_enc.columns,
+        columns=["Coef"],
+    )
+    return lr_coef.sort_values(by="Coef", ascending=False)
+score_lr_print_coeff(preprocessor, train_df, y_train, test_df, y_test, X_train_enc)
+###################################################################
+# feaure importance analysis
+pipe_lr = make_pipeline(preprocessor, LogisticRegression(max_iter=2000, random_state=2))
+pipe_lr.fit(train_df, y_train)
 
-# feature_names = (
-#     numeric_features + categorical_features + ['Month']
-# )
-# # Get the coefficients (flattened to 1D list)
-# coefs = pipe_lr.named_steps["logisticregression"].coef_.flatten().tolist()
+feature_names = (
+    numeric_features + categorical_features + ['Month']
+)
+# Get the coefficients (flattened to 1D list)
+coefs = pipe_lr.named_steps["logisticregression"].coef_.flatten().tolist()
 
-# # Get the feature names
-# feature_names = pipe_lr.named_steps["columntransformer"].get_feature_names_out()
-# print(feature_names)
+# Get the feature names
+feature_names = pipe_lr.named_steps["columntransformer"].get_feature_names_out()
+print(feature_names)
 
-# # Sanity check
-# assert len(coefs) == len(feature_names)
+# Sanity check
+assert len(coefs) == len(feature_names)
 
-# # Now build the DataFrame
-# data = {
-#     "coefficient": coefs,
-#     "magnitude": np.abs(coefs),
-# }
+# Now build the DataFrame
+data = {
+    "coefficient": coefs,
+    "magnitude": np.abs(coefs),
+}
 
-# coef_df = pd.DataFrame(data, index=feature_names).sort_values("magnitude", ascending=False)
-# print(coef_df)
+coef_df = pd.DataFrame(data, index=feature_names).sort_values("magnitude", ascending=False)
+print(coef_df)
