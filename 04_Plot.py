@@ -14,7 +14,7 @@ from matplotlib.colors import SymLogNorm
 import matplotlib.colors as colors
 import matplotlib.dates as mdates
 from matplotlib.colors import Normalize
-from scipy.ndimage import uniform_filter1d
+from scipy.ndimage import gaussian_filter1d
 import math
 
 # set up file path
@@ -84,10 +84,12 @@ def transView(df, values, window_size):
     unique_profNum = df['profileNumber'].unique()
     for i in unique_profNum:
         df_on_fly = df[df['profileNumber'] == i].copy()
-        temp_smooth = uniform_filter1d(df_on_fly['temp'], size=window_size, mode='nearest')
-        salt_smooth = uniform_filter1d(df_on_fly['salinity'], size=window_size, mode='nearest')
-        pres_smooth = uniform_filter1d(df_on_fly['pressure'], size=window_size, mode='nearest')
+        temp_smooth = gaussian_filter1d(df_on_fly['temp'], sigma=window_size, mode='nearest')
+        salt_smooth = gaussian_filter1d(df_on_fly['salinity'], sigma=window_size, mode='nearest')
+        pres_smooth = gaussian_filter1d(df_on_fly['pressure'], sigma=window_size, mode='nearest')
         depth = df_on_fly['depth']
+        # sliding smooth window: 
+        # initial proposal is dynamically smooth things above 300m and smooth things with fixed window below 300 
         # add new cols:
         df_on_fly['dT/dZ'] = np.gradient(temp_smooth, depth)
         df_on_fly['dS/dZ'] = np.gradient(salt_smooth, depth)
