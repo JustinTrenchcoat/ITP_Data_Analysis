@@ -141,5 +141,8 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 ------------------------------
 2025/06/23:
 - `09_test_tag.py` makes transect plot for specific values, but unclear on how to skip nan value (How does nan get in there??)
-
+-------------------------------
+2025/07/02:
+- `04_Plot.py` now makes the transect plots.
+- `09_test_tag.py` would apply a time series analysis of logistic regression on ITP 62, 65 and 68 with metrics. ROC/AUC is needed, other metrics too
 

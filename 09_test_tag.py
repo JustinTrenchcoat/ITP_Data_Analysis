@@ -310,6 +310,7 @@ data = {
 
 coef_df = pd.DataFrame(data, index=feature_names).sort_values("magnitude", ascending=False)
 print(coef_df)
+#######################################################################################
 # confusion matrix:
 from sklearn.metrics import ConfusionMatrixDisplay
 ConfusionMatrixDisplay.from_estimator(
