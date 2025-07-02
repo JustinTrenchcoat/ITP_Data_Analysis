@@ -76,7 +76,7 @@ def histogramFrequency():
 
 
 final_df = pd.read_pickle("final.pkl")
-test_df = final_df[final_df['itpNum'] == 65].copy()
+experiment_df = final_df[final_df['itpNum'].isin([62, 65, 68])].copy()
 
 def transView(df, values, window_size):
     ls = []
@@ -93,14 +93,6 @@ def transView(df, values, window_size):
         # add new cols:
         df_on_fly['dT/dZ'] = np.gradient(temp_smooth, depth)
         df_on_fly['dS/dZ'] = np.gradient(salt_smooth, depth)
-        n_sq = gsw.Nsquared(salt_smooth, temp_smooth, pres_smooth, df_on_fly['lat'])[0]
-        # padding for last value as the function returns only N-1 values
-        n_sq_padded = np.append(n_sq, np.nan)
-        df_on_fly['smooth_n_sq'] = n_sq_padded
-        # turner angle and R_rho
-        [turner_angle, R_rho,p_mid] = gsw.Turner_Rsubrho(salt_smooth, temp_smooth, pres_smooth)
-        df_on_fly['smooth_turner_angle'] = np.append(turner_angle,np.nan)
-        df_on_fly['smooth_R_rho'] = np.append(R_rho,np.nan)
         ls.append(df_on_fly)
     fin_df = pd.concat(ls, ignore_index=True)
 
@@ -116,7 +108,7 @@ def transView(df, values, window_size):
 
         mask = np.isfinite(fin_df[value]) & (fin_df[value] != 0)
         masked_data = fin_df[value][mask]
-        if value == 'smooth_R_rho':
+        if value == 'R_rho':
             masked_data = np.log10(np.abs(masked_data))
 
         # Compute vmin and vmax for color scaling, ignoring outliers
@@ -124,7 +116,7 @@ def transView(df, values, window_size):
         vmax = np.quantile(masked_data, 0.99)
         bounds = np.linspace(vmin, vmax, 100)
         norm = colors.BoundaryNorm(boundaries=bounds, ncolors=256)
-        if value == 'smooth_R_rho':
+        if value == 'R_rho':
             max_abs = max(abs(vmin), abs(vmax))
             norm = colors.TwoSlopeNorm(vmin=-max_abs, vcenter=0, vmax=max_abs)
             sc = ax.scatter(
@@ -158,7 +150,7 @@ def transView(df, values, window_size):
             temp_min_date = fin_df.loc[temp_min_idx, 'date']
             temp_min_depth = fin_df.loc[temp_min_idx, 'depth']
 
-            nsq_max_idx = group['smooth_n_sq'].idxmax()
+            nsq_max_idx = group['n_sq'].idxmax()
             nsq_max_date = fin_df.loc[nsq_max_idx, 'date']
             nsq_max_depth = fin_df.loc[nsq_max_idx, 'depth']
 
@@ -175,7 +167,7 @@ def transView(df, values, window_size):
 
         ax.legend(loc='upper right')
 
-        ax.set_title(f'Logged {value}, ITP 65, window size: {window_size*0.25}m')
+        ax.set_title(f'Logged {value}, window size: {window_size*0.25}m')
         ax.set_xlabel('Date')
         ax.set_ylabel('Depth (m)')
         ax.invert_yaxis()
@@ -186,4 +178,4 @@ def transView(df, values, window_size):
     plt.tight_layout()
     # plt.savefig('test.png')
     plt.show()
-transView(test_df, ["dT/dZ", 'dS/dZ','smooth_n_sq','smooth_R_rho','smooth_turner_angle'],80)
+transView(experiment_df, ["dT/dZ", 'dS/dZ','n_sq','R_rho','turner_angle'],80)

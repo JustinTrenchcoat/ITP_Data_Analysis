@@ -115,7 +115,6 @@ def countData(datasets_dir):
     # Print total
     print(f"\nTotal number of remaining profiles: {total_profiles}")
     print(f"\nTotal number of ITP systems: {total_itps}")
-
 def helPlot(x, y):
     plt.plot(x, y, marker='o',linestyle='dashed',linewidth=2, markersize=12)
     plt.xlabel("test x")
@@ -130,7 +129,7 @@ def helPlot(x, y):
 
 def printBasicStat(column):
     # Basic statistics
-    print("Statistical Summary of Depth Differences:")
+    print(f"Statistical Summary of {column}:")
     print(f"Count         : {len(column)}")
     print(f"Min           : {np.min(column)}")
     print(f"Max           : {np.max(column)}")

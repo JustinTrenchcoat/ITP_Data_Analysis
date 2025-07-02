@@ -11,7 +11,7 @@ from matplotlib.colors import SymLogNorm
 import matplotlib.colors as colors
 import matplotlib.dates as mdates
 from matplotlib.colors import Normalize
-from scipy.ndimage import uniform_filter1d
+from scipy.ndimage import gaussian_filter1d
 import math
 '''
 In the dataset:
@@ -23,8 +23,8 @@ def readNC(full_path, ls, itp_num):
     ds = nc.Dataset(full_path)
     with ds as dataset:
         # extract variables:
-        # the prof is not profile number, but index. FloatID true profile number from each ITP system
-        # this would not be used as an input variable
+        # the prof variable in nc file is not profile number, but index. 
+        # FloatID is the true profile number from each ITP system
         profN = dataset.variables['FloatID'][:]
         # the nc file mistakenly wrote pressure instead of depth
         depth = dataset.variables['pressure'][:]
@@ -63,16 +63,15 @@ def readNC(full_path, ls, itp_num):
             # background infos, do it here because we calculate it per-profile:
             # N Sqaured:
             # Apply centered rolling window smoothing (you can adjust window size)
-            temp_smooth = pd.Series(temp[i]).rolling(window=5, center=True).mean().to_numpy()
-            salt_smooth = pd.Series(salinity[i]).rolling(window=5, center=True).mean().to_numpy()
-            temp_smooth = pd.Series(temp_smooth).bfill().ffill().to_numpy()
-            salt_smooth = pd.Series(salt_smooth).bfill().ffill().to_numpy()
-            n_sq = gsw.Nsquared(salt_smooth, temp_smooth, new_df['pressure'], lat[i])[0]
+            temp_smooth = gaussian_filter1d(temp[i], sigma=80, mode='nearest')
+            salt_smooth = gaussian_filter1d(salinity[i], sigma=80, mode='nearest')
+            pres_smooth = gaussian_filter1d(new_df['pressure'], sigma=80, mode='nearest')
+            n_sq = gsw.Nsquared(salt_smooth, temp_smooth, pres_smooth, lat[i])[0]
             # padding for last value as the function returns only N-1 values
             n_sq_padded = np.append(n_sq, np.nan)
             new_df['n_sq'] = n_sq_padded
             # turner angle and R_rho
-            [turner_angle, R_rho,p_mid] = gsw.Turner_Rsubrho(salt_smooth, temp_smooth, new_df['pressure'])
+            [turner_angle, R_rho,p_mid] = gsw.Turner_Rsubrho(salt_smooth, temp_smooth, pres_smooth)
             new_df['turner_angle'] = np.append(turner_angle,np.nan)
             new_df['R_rho'] = np.append(R_rho,np.nan)
             ####################
@@ -87,22 +86,24 @@ def readNC(full_path, ls, itp_num):
 #     match = re.search(r'itp(\d+)cormat\.nc', fileName)
 #     if match:
 #             itp_num = int(match.group(1))
+#             print(itp_num)
 #             full_path = os.path.join(tagData_dir, fileName)
 #             df_list = readNC(full_path, df_list, itp_num)
-#             final_df = pd.concat(df_list, ignore_index=True)
-#             final_df.to_pickle("final.pkl")
+# final_df = pd.concat(df_list, ignore_index=True)
+# final_df.to_pickle("final.pkl")
 #######################################################
 #                                                     #
 #######################################################
 final_df = pd.read_pickle("final.pkl")
-test_df = final_df[final_df['itpNum'] == 65].copy()
+experiment_df = final_df[final_df['itpNum'].isin([62, 65, 68])].copy()
 ############################################################
-# file checks:
+# file checks, run it to check if you have loaded everything right:
+
 # print(test_df.shape)
-# num_unique = test_df['profileNumber'].nunique()
+# num_unique = test_df['itpNum'].nunique()
 # print(f"Number of unique profNum values: {num_unique}")
 
-# check_df = test_df[test_df['profileNumber'] == 20].copy()
+# check_df = test_df[test_df['profileNumber'] == 30].copy()
 # checkDepth = check_df['depth']
 # checkTemp = check_df['temp']
 # helPlot(checkTemp, checkDepth)
@@ -113,19 +114,12 @@ test_df = final_df[final_df['itpNum'] == 65].copy()
 # printBasicStat(depth_col)
 # printBasicStat(n_sq_col)
 
-# depth_index = np.where(np.isnan(depth_col))[0]
-# print(depth_index)
-
-# n_sq_index = np.where(np.isnan(n_sq_col))[0]
-# print(len(n_sq_index))
-
 # print(test_df['n_sq'].min(), test_df['n_sq'].max(), test_df['n_sq'].describe())
 ####################################################################################
 # machine learning part
 '''
 In the demo case we would only use ITP100. and according to the visualization we would devide train set and test set based on date.
 We would make some features on the fly for testing smoothing window_size
-
 -------------------------------------------------------
 Numerical features:
 Depth
@@ -150,47 +144,55 @@ Target?
 Time analysis variable:
 Date/Month, dat?
 '''
-def process_df(df, window_size):
-    ls = []
-    # test if the loop for every profile works
-    unique_profNum = df['profileNumber'].unique()
-    for i in unique_profNum:
-        df_on_fly = df[df['profileNumber'] == i].copy()
-        temp_smooth = uniform_filter1d(df_on_fly['temp'], size=window_size, mode='nearest')
-        salt_smooth = uniform_filter1d(df_on_fly['salinity'], size=window_size, mode='nearest')
-        pres_smooth = uniform_filter1d(df_on_fly['pressure'], size=window_size, mode='nearest')
-        # add new cols:
-        n_sq = gsw.Nsquared(salt_smooth, temp_smooth, pres_smooth, df_on_fly['lat'])[0]
-        # padding for last value as the function returns only N-1 values
-        n_sq_padded = np.append(n_sq, np.nan)
-        df_on_fly['smooth_n_sq'] = n_sq_padded
-        # turner angle and R_rho
-        [turner_angle, R_rho,p_mid] = gsw.Turner_Rsubrho(salt_smooth, temp_smooth, pres_smooth)
-        df_on_fly['smooth_turner_angle'] = np.append(turner_angle,np.nan)
-        df_on_fly['smooth_R_rho'] = np.append(R_rho,np.nan)
-        ls.append(df_on_fly)
-    fin_df = pd.concat(ls, ignore_index=True)
-    return fin_df
-###################################################
-# run once
-# ocean_df = process_df(test_df, 5)
-# ocean_df.to_pickle("ocean.pkl")
+# def process_df(df, window_size):
+#     ls = []
+#     # test if the loop for every profile works
+#     unique_profNum = df['profileNumber'].unique()
+#     for i in unique_profNum:
+#         df_on_fly = df[df['profileNumber'] == i].copy()
+#         temp_smooth = gaussian_filter1d(df_on_fly['temp'], sigma=window_size, mode='nearest')
+#         salt_smooth = gaussian_filter1d(df_on_fly['salinity'], sigma=window_size, mode='nearest')
+#         pres_smooth = gaussian_filter1d(df_on_fly['pressure'], sigma=window_size, mode='nearest')
+#         # add new cols:
+#         n_sq = gsw.Nsquared(salt_smooth, temp_smooth, pres_smooth, df_on_fly['lat'])[0]
+#         # padding for last value as the function returns only N-1 values
+#         n_sq_padded = np.append(n_sq, np.nan)
+#         df_on_fly['smooth_n_sq'] = n_sq_padded
+#         # turner angle and R_rho
+#         [turner_angle, R_rho,p_mid] = gsw.Turner_Rsubrho(salt_smooth, temp_smooth, pres_smooth)
+#         df_on_fly['smooth_turner_angle'] = np.append(turner_angle,np.nan)
+#         df_on_fly['smooth_R_rho'] = np.append(R_rho,np.nan)
+#         ls.append(df_on_fly)
+#     fin_df = pd.concat(ls, ignore_index=True)
+#     return fin_df
 ####################################################
-ocean_df = pd.read_pickle("ocean.pkl")
+ocean_df = experiment_df.copy()
 ocean_df['Date'] = pd.to_datetime(ocean_df['date'])
+first_day = ocean_df["Date"].min()
+# 2012-08-28
+last_day = ocean_df["Date"].max()
+# 2014-04-14
 train_df = ocean_df.query("Date <= 20130503")
 test_df = ocean_df.query("Date >  20130503")
 train_df = train_df.assign(
     Month=train_df["Date"].apply(lambda x: x.month_name())
     )  # x.month_name() to get the actual string
+train_df = train_df.assign(
+    Days_since = train_df["Date"].apply(lambda x: (x-first_day).days)
+)
 test_df = test_df.assign(Month=test_df["Date"].apply(lambda x: x.month_name()))
+test_df = test_df.assign(
+    Days_since = test_df["Date"].apply(lambda x: (x-first_day).days)
+)
+
 # print(train_df.info())
 numeric_features = [
     "depth",
-    "smooth_n_sq",
-    "smooth_R_rho",
+    "n_sq",
+    "R_rho",
     'lon',
-    'lat'
+    'lat',
+    'Days_since'
 ]
 categorical_features = []
 time_feature = ["Date", 'Month']
@@ -201,13 +203,10 @@ drop_features = ['profileNumber',
                 'mask_sc',
                 'mask_int',
                 'mask_cl',
-                'n_sq',
                 'turner_angle',
-                'smooth_turner_angle',
                 'pressure',
                 "temp",
-                "salinity",
-                'R_rho']
+                "salinity",]
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
 from sklearn.compose import ColumnTransformer, make_column_transformer
@@ -285,7 +284,7 @@ def score_lr_print_coeff(preprocessor, train_df, y_train, test_df, y_test, X_tra
     )
     return lr_coef.sort_values(by="Coef", ascending=False)
 score_lr_print_coeff(preprocessor, train_df, y_train, test_df, y_test, X_train_enc)
-###################################################################
+# ###################################################################
 # feaure importance analysis
 pipe_lr = make_pipeline(preprocessor, LogisticRegression(max_iter=2000, random_state=2))
 pipe_lr.fit(train_df, y_train)
@@ -311,3 +310,9 @@ data = {
 
 coef_df = pd.DataFrame(data, index=feature_names).sort_values("magnitude", ascending=False)
 print(coef_df)
+# confusion matrix:
+from sklearn.metrics import ConfusionMatrixDisplay
+ConfusionMatrixDisplay.from_estimator(
+    pipe_lr, test_df, y_test, values_format='d', display_labels=["not staircase", 'staircase']
+)
+plt.show()
