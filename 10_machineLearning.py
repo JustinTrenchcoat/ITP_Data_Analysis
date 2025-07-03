@@ -8,73 +8,26 @@ from sklearn.compose import make_column_transformer
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import ConfusionMatrixDisplay, classification_report
-'''
-In the demo case we would only use ITP 62, 65,and 68. and from the visualization we would devide train set and test set based on date.
--------------------------------------------------------
-Numerical features:
-Depth
-Temperature
-Salinity
-N^2
-turner_angle or R-rho
---------------------------------------------------------
-Categorical features:
-Month
---------------------------------------------------------------------
-Target? 
-1. layer types:
-        Mixed layer
-        interface layer
-2. staircase types:
-        appearance of staircase
-        sharp
-        mushy
-        super mushy
-----------------------------------------------------------------------
-Time analysis variable:
-Date/Days since
-'''
+import statsmodels.api as sm
 
-
+# Load Data
 final_df = pd.read_pickle("final.pkl")
+
 experiment_df = final_df[final_df['itpNum'].isin([62, 65, 68])].copy()
-############################################################
-# sanity checks, run it to check if you have loaded everything right:
-
-# print(experiment_df.shape)
-# num_unique = experiment_df['itpNum'].nunique()
-# print(f"Number of unique profNum values: {num_unique}")
-
-# check_df = experiment_df[experiment_df['profileNumber'] == 30].copy()
-# checkDepth = check_df['depth']
-# checkTemp = check_df['temp']
-# helPlot(checkTemp, checkDepth)
-
-# depth_col = experiment_df['depth']
-# n_sq_col = experiment_df['n_sq']
-
-# printBasicStat(depth_col)
-# printBasicStat(n_sq_col)
-
-# print(experiment_df['n_sq'].min(), experiment_df['n_sq'].max(), experiment_df['n_sq'].describe())
-####################################################################################
 ocean_df = experiment_df.copy()
 ocean_df['Date'] = pd.to_datetime(ocean_df['date'])
 first_day = ocean_df["Date"].min()
-# 2012-08-28
-last_day = ocean_df["Date"].max()
-# 2014-04-14
+
 train_df = ocean_df.query("Date <= 20130503")
 test_df = ocean_df.query("Date >  20130503")
+
 train_df = train_df.assign(
-    Month=train_df["Date"].apply(lambda x: x.month_name())
-    )  # x.month_name() to get the actual string
-train_df = train_df.assign(
-    Days_since = train_df["Date"].apply(lambda x: (x-first_day).days)
+    Month=train_df["Date"].apply(lambda x: x.month_name()),
+    Days_since=train_df["Date"].apply(lambda x: (x - first_day).days)
 )
-test_df = test_df.assign(Month=test_df["Date"].apply(lambda x: x.month_name()))
 test_df = test_df.assign(
-    Days_since = test_df["Date"].apply(lambda x: (x-first_day).days)
+    Month=test_df["Date"].apply(lambda x: x.month_name()),
+    Days_since=test_df["Date"].apply(lambda x: (x - first_day).days)
 )
 
 numeric_features = [
@@ -85,31 +38,15 @@ numeric_features = [
     'lat',
     'Days_since'
 ]
-categorical_features = []
+categorical_features = []  # You’ll add 'Month' later
 time_feature = ["Date", 'Month']
 target = ['mask_ml']
-drop_features = ['profileNumber',
-                'date',
-                'itpNum',
-                'mask_sc',
-                'mask_int',
-                'mask_cl',
-                'turner_angle',
-                'pressure',
-                "temp",
-                "salinity",
-                'dT/dZ',
-                'dS/dZ']
+drop_features = [
+    'profileNumber', 'date', 'itpNum', 'mask_sc', 'mask_int', 'mask_cl',
+    'turner_angle', 'pressure', "temp", "salinity", 'dT/dZ', 'dS/dZ'
+]
 
-
-def preprocess_features(
-    train_df,
-    test_df,
-    numeric_features,
-    categorical_features,
-    drop_features,
-    target):
-
+def preprocess_features(train_df, test_df, numeric_features, categorical_features, drop_features, target):
     all_features = set(numeric_features + time_feature + drop_features + target)
     if set(train_df.columns) != all_features:
         print("Missing columns", set(train_df.columns) - all_features)
@@ -148,6 +85,16 @@ def preprocess_features(
     y_train = train_df["mask_sc"]
     y_test = test_df["mask_sc"]
 
+    # Drop rows with missing target in train set
+    mask_train = ~y_train.isna()
+    X_train_enc = X_train_enc[mask_train]
+    y_train = y_train[mask_train]
+
+    # Drop rows with missing target in test set
+    mask_test = ~y_test.isna()
+    X_test_enc = X_test_enc[mask_test]
+    y_test = y_test[mask_test]
+
     return X_train_enc, y_train, X_test_enc, y_test, preprocessor
 
 X_train_enc, y_train, X_test_enc, y_test, preprocessor = preprocess_features(
@@ -156,92 +103,111 @@ X_train_enc, y_train, X_test_enc, y_test, preprocessor = preprocess_features(
     categorical_features + ["Month"], 
     drop_features,
     target
-    )
-# print(X_train_enc.head())
-
-
-def score_lr_print_coeff(preprocessor, train_df, y_train, test_df, y_test, X_train_enc):
-    lr_pipe = make_pipeline(preprocessor, LogisticRegression(max_iter=1000))
-    lr_pipe.fit(train_df, y_train)
-    print("Train score: {:.2f}".format(lr_pipe.score(train_df, y_train)))
-    print("Test score: {:.2f}".format(lr_pipe.score(test_df, y_test)))
-    lr_coef = pd.DataFrame(
-        data=lr_pipe.named_steps["logisticregression"].coef_.flatten(),
-        index=X_train_enc.columns,
-        columns=["Coef"],
-    )
-    return lr_coef.sort_values(by="Coef", ascending=False)
-score_lr_print_coeff(preprocessor, train_df, y_train, test_df, y_test, X_train_enc)
-# ###################################################################
-# feaure importance analysis
-print('feature importance analysis: \n')
-pipe_lr = make_pipeline(preprocessor, LogisticRegression(max_iter=2000, random_state=2, class_weight='balanced'))
-pipe_lr.fit(train_df, y_train)
-
-feature_names = (
-    numeric_features + categorical_features + ['Month']
 )
-# Get the coefficients (flattened to 1D list)
-coefs = pipe_lr.named_steps["logisticregression"].coef_.flatten().tolist()
 
-# Get the feature names
-feature_names = pipe_lr.named_steps["columntransformer"].get_feature_names_out()
+# Feature Importance Analysis via statsmodels (with correct alignment)
+feature_names = preprocessor.get_feature_names_out()
+print("Feature Names:", feature_names)
 
-# Sanity check
-assert len(coefs) == len(feature_names)
+# Apply preprocessor only on the same clean subset
+mask_train = ~train_df["mask_sc"].isna()
+X_train_processed = preprocessor.transform(train_df[mask_train])
+y_train_clean = train_df.loc[mask_train, "mask_sc"]
 
-# Now build the DataFrame
-data = {
-    "coefficient": coefs,
-    "magnitude": np.abs(coefs),
-}
+# Add intercept manually
+X_train_processed = sm.add_constant(X_train_processed)
+feature_names = np.insert(feature_names, 0, 'Intercept')
 
-coef_df = pd.DataFrame(data, index=feature_names).sort_values("magnitude", ascending=False)
+# Fit logistic regression with statsmodels
+model = sm.Logit(y_train_clean, X_train_processed)
+result = model.fit()
+
+# Collect coefficients and p-values
+coef_df = pd.DataFrame({
+    'coef': result.params,
+    'p_value': result.pvalues,
+    'conf_lower': result.conf_int()[0],
+    'conf_upper': result.conf_int()[1]
+}, index=feature_names)
+
 print(coef_df)
+
+
+import seaborn as sns
+
+# Diagnostics: Target distribution
+print("\n✅ Target class distribution:")
+print(y_train_clean.value_counts())
+
+# Diagnostics: Dataset uniqueness check
+print("\n✅ Unique feature rows vs. total rows:")
+print(f"Unique feature rows: {np.unique(X_train_processed, axis=0).shape[0]}")
+print(f"Total rows: {len(X_train_processed)}")
+
+# Diagnostics: Simple cross-tab for potential separation in categorical/time features
+print("\n✅ Crosstab with Month:")
+print(pd.crosstab(train_df.loc[mask_train, "Month"], y_train_clean))
+
+
+# ✅ Try Regularized Logistic Regression (Handles Separation)
+print("\n✅ Fitting Regularized Logistic Regression (handles separation automatically):")
+model = sm.Logit(y_train_clean, X_train_processed)
+result = model.fit_regularized()
+
+print(result.summary())
+
+# Coefficient table
+coef_df = pd.DataFrame({
+    'coef': result.params,
+})
+print("\n✅ Coefficients (Regularized Model):")
+print(coef_df)
+
+
 #######################################################################################
-print("Model performance assessment:\n")
-# confusion matrix:
-ConfusionMatrixDisplay.from_estimator(
-    pipe_lr, test_df, y_test, values_format='d', display_labels=["not staircase", 'staircase']
-)
-plt.show()
-print(classification_report(y_test, pipe_lr.predict(test_df)))
-###########################################################################################
-#  ROC and AUC metric:
-from sklearn.metrics import roc_curve
-lr_pipe = make_pipeline(preprocessor, LogisticRegression(max_iter=2000))
-lr_pipe.fit(train_df, y_train)
+# print("Model performance assessment:\n")
+# # confusion matrix:
+# ConfusionMatrixDisplay.from_estimator(
+#     pipe_lr, test_df, y_test, values_format='d', display_labels=["not staircase", 'staircase']
+# )
+# plt.show()
+# print(classification_report(y_test, pipe_lr.predict(test_df)))
+# ###########################################################################################
+# #  ROC and AUC metric:
+# from sklearn.metrics import roc_curve
+# lr_pipe = make_pipeline(preprocessor, LogisticRegression(max_iter=2000))
+# lr_pipe.fit(train_df, y_train)
 
 
-fpr_imbalanced, tpr_imbalanced, thresholds_imbalanced = roc_curve(y_test, lr_pipe.predict_proba(test_df)[:, 1])
-plt.plot(fpr_imbalanced, tpr_imbalanced, label="ROC Curve")
-plt.xlabel("FPR")
-plt.ylabel("TPR (recall)")
+# fpr_imbalanced, tpr_imbalanced, thresholds_imbalanced = roc_curve(y_test, lr_pipe.predict_proba(test_df)[:, 1])
+# plt.plot(fpr_imbalanced, tpr_imbalanced, label="ROC Curve")
+# plt.xlabel("FPR")
+# plt.ylabel("TPR (recall)")
 
-default_threshold = np.argmin(np.abs(thresholds_imbalanced - 0.5))
+# default_threshold = np.argmin(np.abs(thresholds_imbalanced - 0.5))
 
-plt.plot(
-    fpr_imbalanced[default_threshold],
-    tpr_imbalanced[default_threshold],
-    "ob",
-    markersize=10,
-    label="threshold 0.5",
-)
+# plt.plot(
+#     fpr_imbalanced[default_threshold],
+#     tpr_imbalanced[default_threshold],
+#     "ob",
+#     markersize=10,
+#     label="threshold 0.5",
+# )
 
-fpr, tpr, thresholds = roc_curve(y_test, pipe_lr.predict_proba(test_df)[:, 1])
-plt.plot(fpr, tpr, label="ROC Curve")
-plt.xlabel("FPR")
-plt.ylabel("TPR (recall)")
+# fpr, tpr, thresholds = roc_curve(y_test, pipe_lr.predict_proba(test_df)[:, 1])
+# plt.plot(fpr, tpr, label="ROC Curve")
+# plt.xlabel("FPR")
+# plt.ylabel("TPR (recall)")
 
-default_threshold = np.argmin(np.abs(thresholds - 0.5))
+# default_threshold = np.argmin(np.abs(thresholds - 0.5))
 
-plt.plot(
-    fpr[default_threshold],
-    tpr[default_threshold],
-    "or",
-    markersize=10,
-    label="threshold 0.5",
-)
-plt.legend(loc="best")
-plt.show()
+# plt.plot(
+#     fpr[default_threshold],
+#     tpr[default_threshold],
+#     "or",
+#     markersize=10,
+#     label="threshold 0.5",
+# )
+# plt.legend(loc="best")
+# plt.show()
 
