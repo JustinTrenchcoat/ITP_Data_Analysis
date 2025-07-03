@@ -1,26 +1,16 @@
-import argparse
-import h5py
 import pickle
 from helper import *
 import pandas as pd
 import matplotlib.pyplot as plt
 import netCDF4 as nc
 import numpy as np
-import gsw
-import datetime
-import re
-import seaborn as sns
-from matplotlib.colors import SymLogNorm
 import matplotlib.colors as colors
 import matplotlib.dates as mdates
-from matplotlib.colors import Normalize
 from scipy.ndimage import gaussian_filter1d
 import math
 
 # set up file path
 full_path = r'D:\EOAS\ITP_Data_Analysis\datasets\itp112cormat\cor0001.mat'
-
-
 
 
 def plotHelper(x,y, xlabel, ylabel, sysNum, profNum,time):
@@ -38,7 +28,7 @@ def plotHelper(x,y, xlabel, ylabel, sysNum, profNum,time):
     plt.xticks(rotation=45)
     plt.show()
 
-def histogramFrequency():
+def depthDiffHist():
     # Load the depth differences
     with open("depth_differences.pkl", "rb") as f:
         all_depth_differences = pickle.load(f)
@@ -71,30 +61,10 @@ def histogramFrequency():
     plt.tight_layout()
     plt.show()
 
-
-# histogramFrequency()
-
-
 final_df = pd.read_pickle("final.pkl")
 experiment_df = final_df[final_df['itpNum'].isin([62, 65, 68])].copy()
 
 def transView(df, values, window_size):
-    ls = []
-    # test if the loop for every profile works
-    unique_profNum = df['profileNumber'].unique()
-    for i in unique_profNum:
-        df_on_fly = df[df['profileNumber'] == i].copy()
-        temp_smooth = gaussian_filter1d(df_on_fly['temp'], sigma=window_size, mode='nearest')
-        salt_smooth = gaussian_filter1d(df_on_fly['salinity'], sigma=window_size, mode='nearest')
-        pres_smooth = gaussian_filter1d(df_on_fly['pressure'], sigma=window_size, mode='nearest')
-        depth = df_on_fly['depth']
-        # sliding smooth window: 
-        # initial proposal is dynamically smooth things above 300m and smooth things with fixed window below 300 
-        # add new cols:
-        df_on_fly['dT/dZ'] = np.gradient(temp_smooth, depth)
-        df_on_fly['dS/dZ'] = np.gradient(salt_smooth, depth)
-        ls.append(df_on_fly)
-    fin_df = pd.concat(ls, ignore_index=True)
 
     n_plots = len(values)
     n_cols = 2
@@ -106,8 +76,8 @@ def transView(df, values, window_size):
     for i, value in enumerate(values):
         ax = axs[i] if len(values) > 1 else axs  # handle case with 1 subplot
 
-        mask = np.isfinite(fin_df[value]) & (fin_df[value] != 0)
-        masked_data = fin_df[value][mask]
+        mask = np.isfinite(df[value]) & (df[value] != 0)
+        masked_data = df[value][mask]
         if value == 'R_rho':
             masked_data = np.log10(np.abs(masked_data))
 
@@ -120,7 +90,7 @@ def transView(df, values, window_size):
             max_abs = max(abs(vmin), abs(vmax))
             norm = colors.TwoSlopeNorm(vmin=-max_abs, vcenter=0, vmax=max_abs)
             sc = ax.scatter(
-                fin_df['date'][mask], fin_df['depth'][mask],
+                df['date'][mask], df['depth'][mask],
                 c=masked_data,  # or fin_df[value][mask] if not logging
                 cmap='RdBu_r',
                 norm=norm,
@@ -128,7 +98,7 @@ def transView(df, values, window_size):
             )
         else: 
             sc = ax.scatter(
-                fin_df['date'][mask], fin_df['depth'][mask],
+                df['date'][mask], df['depth'][mask],
                 c=masked_data,  # or fin_df[value][mask] if not logging
                 cmap='plasma',
                 norm=norm,
@@ -137,33 +107,28 @@ def transView(df, values, window_size):
         fig.colorbar(sc, ax=ax, label=f'log {value}')
 
         first_marker = True  # flag to add just one legend entry
-        grouped = fin_df.groupby('profileNumber')
+        grouped = df.groupby('profileNumber')
         for prof_id, group in grouped:
             if group['temp'].isna().all():
                 continue  
             temp_max_idx = group['temp'].idxmax()
-            temp_max_date = fin_df.loc[temp_max_idx, 'date']
-            temp_max_depth = fin_df.loc[temp_max_idx, 'depth']
+            temp_max_date = df.loc[temp_max_idx, 'date']
+            temp_max_depth = df.loc[temp_max_idx, 'depth']
             # temp_max_val = fin_df.loc[temp_max_idx, 'temp']
 
             temp_min_idx = group['temp'].idxmin()
-            temp_min_date = fin_df.loc[temp_min_idx, 'date']
-            temp_min_depth = fin_df.loc[temp_min_idx, 'depth']
+            temp_min_date = df.loc[temp_min_idx, 'date']
+            temp_min_depth = df.loc[temp_min_idx, 'depth']
 
             nsq_max_idx = group['n_sq'].idxmax()
-            nsq_max_date = fin_df.loc[nsq_max_idx, 'date']
-            nsq_max_depth = fin_df.loc[nsq_max_idx, 'depth']
+            nsq_max_date = df.loc[nsq_max_idx, 'date']
+            nsq_max_depth = df.loc[nsq_max_idx, 'depth']
 
 
             ax.plot(temp_min_date, temp_min_depth, "k*", markersize=3, label='Min Temp' if first_marker else "")
             ax.plot(temp_max_date, temp_max_depth, 'y*', markersize=3,label = 'Max Temp' if first_marker else "")
             ax.plot(nsq_max_date, nsq_max_depth, 'r*', markersize=3, label='Max N^2' if first_marker else "")
             first_marker = False
-
-        # ax.annotate(f'{temp_max_val:.2f}°C',
-        #             (temp_max_date, temp_max_depth),
-        #             textcoords="offset points", xytext=(0, -10), ha='center',
-        #             fontsize=8, color='red')
 
         ax.legend(loc='upper right')
 
@@ -176,6 +141,41 @@ def transView(df, values, window_size):
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
         plt.setp(ax.get_xticklabels(), rotation=45)  # rotate date labels
     plt.tight_layout()
-    # plt.savefig('test.png')
     plt.show()
-transView(experiment_df, ["dT/dZ", 'dS/dZ','n_sq','R_rho','turner_angle'],80)
+#####################################################################################    
+# transView(experiment_df, ["dT/dZ", 'dS/dZ','n_sq','R_rho','turner_angle'],80)
+def dataSummary(data, name, year):
+    # Basic statistics
+    print(f"Statistical Summary of {name}:")
+    print(f"Count         : {len(data)}")
+    print(f"Min           : {np.min(data)}")
+    print(f"Max           : {np.max(data)}")
+    print(f"Mean          : {np.mean(data)}")
+    print(f"Median        : {np.median(data)}")
+    print(f"Std Dev       : {np.std(data)}")
+    print(f"Variance      : {np.var(data)}")
+    print(f"25th Percentile (Q1): {np.percentile(data, 25)}")
+    print(f"75th Percentile (Q3): {np.percentile(data, 75)}")
+    print(f"IQR           : {np.percentile(data, 75) - np.percentile(data, 25)}")
+
+    # Plot the histogram
+    plt.figure(figsize=(10, 6))
+    plt.hist(data, bins=50, log=(name == 'n_sq' or name == 'R_rho'), edgecolor='black')  # adjust bin count or bin edges here
+    plt.title(f"Histogram of {'logged ' + name if name in ['n_sq', 'R_rho'] else name} in {year}")
+    plt.xlabel(f"{'logged ' + name if name in ['n_sq', 'R_rho'] else name}")
+    plt.ylabel("Frequency")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+def processDataHist(variable, year):
+    try:
+        # Load the depth differences
+        with open("final.pkl", "rb") as f:
+            df = pickle.load(f)
+            year_df = df[df['date'].apply(lambda d: d.year) == year].copy()
+            dataSummary(year_df[variable], variable, year)
+    except Exception as e:
+        traceback.print_exc()
+
+processDataHist("dT/dZ", 2015)

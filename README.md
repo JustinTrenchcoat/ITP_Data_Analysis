@@ -145,4 +145,9 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 2025/07/02:
 - `04_Plot.py` now makes the transect plots.
 - `09_test_tag.py` would apply a time series analysis of logistic regression on ITP 62, 65 and 68 with metrics. ROC/AUC is needed, other metrics too
-
+-------------------------------
+2025/07/03:
+- renamed 09 script, took out machine learning part, and put it in `10_machineLearning.py`
+- The algorithm has very low precision on positive values, which is a problem. changing the positive class weight to 10 raised the precision from 0.06 to 0.22, imporoved recall and f1-score from 0 to 0.72 and 0.34
+- keep raising the weight might reduce the precision, weight of 10 is good enough
+- ROC curve shows that the current performance (with weighted class) is not as good as expected. To raise the TPR to 80%, the false positive rate would have to be raised to beyond 20%
