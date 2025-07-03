@@ -186,7 +186,6 @@ coefs = pipe_lr.named_steps["logisticregression"].coef_.flatten().tolist()
 
 # Get the feature names
 feature_names = pipe_lr.named_steps["columntransformer"].get_feature_names_out()
-print(feature_names)
 
 # Sanity check
 assert len(coefs) == len(feature_names)
@@ -200,6 +199,7 @@ data = {
 coef_df = pd.DataFrame(data, index=feature_names).sort_values("magnitude", ascending=False)
 print(coef_df)
 #######################################################################################
+print("Model performance assessment:\n")
 # confusion matrix:
 ConfusionMatrixDisplay.from_estimator(
     pipe_lr, test_df, y_test, values_format='d', display_labels=["not staircase", 'staircase']

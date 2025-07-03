@@ -13,7 +13,8 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 | `06_gridMaker.py`    | Take profiles from `goldData`, interpolate the data into a 0.25 m regular grided dataset, stores them in folder named `gridData`|
 | `07_singleReader.py` | Tool for checking individual profile when something goes wrong.|
 | `helper.py`          | Place for all helper functions|
-| `09_test_tag.py`     | a toy time series analysis|
+| `09_process.py`      | process tagged dataset. It applies gaussian smoothing to the temperature, salinity, pressure and depth to produce new columns: `dS/dZ`, `dT/dZ`, `n_sq`, `turner_angle`, and `R_rho`|
+| `10_machineLearning.py`  | a toy logistic time series regression with metrics and feature importance analysis|
  
 
 ## Development Log:
