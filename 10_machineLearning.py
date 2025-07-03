@@ -209,6 +209,24 @@ print(classification_report(y_test, pipe_lr.predict(test_df)))
 ###########################################################################################
 #  ROC and AUC metric:
 from sklearn.metrics import roc_curve
+lr_pipe = make_pipeline(preprocessor, LogisticRegression(max_iter=2000))
+lr_pipe.fit(train_df, y_train)
+
+
+fpr_imbalanced, tpr_imbalanced, thresholds_imbalanced = roc_curve(y_test, lr_pipe.predict_proba(test_df)[:, 1])
+plt.plot(fpr_imbalanced, tpr_imbalanced, label="ROC Curve")
+plt.xlabel("FPR")
+plt.ylabel("TPR (recall)")
+
+default_threshold = np.argmin(np.abs(thresholds_imbalanced - 0.5))
+
+plt.plot(
+    fpr_imbalanced[default_threshold],
+    tpr_imbalanced[default_threshold],
+    "ob",
+    markersize=10,
+    label="threshold 0.5",
+)
 
 fpr, tpr, thresholds = roc_curve(y_test, pipe_lr.predict_proba(test_df)[:, 1])
 plt.plot(fpr, tpr, label="ROC Curve")
