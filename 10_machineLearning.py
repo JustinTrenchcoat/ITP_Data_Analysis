@@ -142,3 +142,7 @@ sns.heatmap(corr, annot=True)
 plt.show()
 # heat map and VIF indicated that Days_since and latitude is hight correlated, but I think it might be due to the lack of data.
 # additionally, n_sq, r_rho and depth are highly correlated, considering that, we might need to drop depth for better inference??
+######################################################################
+# pearson residual
+# resid_pearson = model.resid_pearson
+# print(resid_pearson)

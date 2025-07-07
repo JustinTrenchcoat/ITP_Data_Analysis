@@ -15,22 +15,26 @@ import statsmodels.api as sm
 
 final_df = pd.read_pickle("final.pkl")
 
-experiment_df = final_df[final_df['itpNum'].isin([62, 65, 68])].copy()
+experiment_df = final_df[final_df['itpNum'].isin([62, 64,65,68,69])].copy()
+
+
 import matplotlib.pyplot as plt
 import numpy as np
 
 def plotHelper(x, y, xlabel, ylabel, third):
     plt.figure(figsize=(8, 6))
     
-    # Scatter plot with coloring
-    plt.scatter(x, y, c=third, s=10)
+    categories = third.unique()
+    cmap = plt.get_cmap('tab10')  # You can change colormap if needed
+    
+    for idx, cat in enumerate(categories):
+        mask = (third == cat)
+        plt.scatter(x[mask], y[mask], s=10, label=str(cat), color=cmap(idx))
     
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(f"{xlabel} vs {ylabel} Colored by mask_sc")
-
     plt.legend(title="mask_sc")
-
     plt.show()
 
 # Example usage:
