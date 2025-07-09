@@ -1,18 +1,10 @@
 import pandas as pd
 from helper import *
-import matplotlib.pyplot as plt
 import netCDF4 as nc
 import numpy as np
 import gsw
-import datetime
 import re
-import seaborn as sns
-from matplotlib.colors import SymLogNorm
-import matplotlib.colors as colors
-import matplotlib.dates as mdates
-from matplotlib.colors import Normalize
 from scipy.ndimage import gaussian_filter1d
-import math
 '''
 In the dataset:
 every row is one observation from one profile.

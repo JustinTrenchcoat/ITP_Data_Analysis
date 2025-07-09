@@ -2,7 +2,7 @@ import numpy as np
 import h5py
 from helper import *
 import os
-from scipy.interpolate import CubicSpline
+from scipy.interpolate import interp1d
 import pandas as pd
 import re
 from scipy.io import savemat
@@ -85,10 +85,13 @@ def makeGrid(full_path, file_name, folder_name):
         sal_filtered = salinity_sorted[filter_mask]
 
         # Step 2: Create regular depth grid (every 0.25 m)
-        regular_depths = np.arange(depth_filtered.min(), depth_filtered.max(), 0.25)
+        start = np.floor(depth_filtered.min())
+        end = np.ceil(depth_filtered.max())
+        regular_depths = np.arange(start, end, 0.25)
+        check_length = np.arange(depth_filtered.min(),depth_filtered.max(), 0.25)
         
         # check 2 for encoutnering zero
-        if len(regular_depths) < 2:
+        if len(check_length) < 2:
             error_list.append(f'{full_path}: lack enough points')
             raise ValueError(f"{full_path} does not enough valid points.")
 
@@ -100,8 +103,8 @@ def makeGrid(full_path, file_name, folder_name):
             print(f"Duplicates found for file{full_path}")
 
         # Step 3: Interpolate each variable
-        temp_interp = CubicSpline(depth_filtered, temp_filtered)
-        sal_interp = CubicSpline(depth_filtered, sal_filtered)
+        temp_interp = interp1d(depth_filtered, temp_filtered,kind='linear', fill_value="extrapolate")
+        sal_interp = interp1d(depth_filtered, sal_filtered,kind='linear', fill_value="extrapolate")
         interpolated_temperatures = temp_interp(regular_depths)
         interpolated_salinity = sal_interp(regular_depths)
         
@@ -192,12 +195,15 @@ def makeMatGrid(full_path, file_name, folder_name):
         temp_filtered = temperatures_sorted[filter_mask]
         sal_filtered = salinity_sorted[filter_mask]
 
-        # Step 2: Create regular depth grid (every 0.25 m)
-        regular_depths = np.arange(depth_filtered.min(), depth_filtered.max(), 0.25)
+         # Step 2: Create regular depth grid (every 0.25 m)
+        start = np.floor(depth_filtered.min())
+        end = np.ceil(depth_filtered.max())
+        regular_depths = np.arange(start, end, 0.25)
+        check_length = np.arange(depth_filtered.min(),depth_filtered.max(), 0.25)
         
         # check 2 for encoutnering zero
-        if len(regular_depths) < 2:
-            mat_error_list.append(f'{full_path}: lack enough points')
+        if len(check_length) < 2:
+            error_list.append(f'{full_path}: lack enough points')
             raise ValueError(f"{full_path} does not enough valid points.")
 
         # add check 3 for interpolation error:
@@ -208,10 +214,49 @@ def makeMatGrid(full_path, file_name, folder_name):
             print(f"Duplicates found for file{full_path}")
 
         # Step 3: Interpolate each variable
-        temp_interp = CubicSpline(depth_filtered, temp_filtered)
-        sal_interp = CubicSpline(depth_filtered, sal_filtered)
+        temp_interp = interp1d(depth_filtered, temp_filtered,kind='linear', fill_value="extrapolate")
+        sal_interp = interp1d(depth_filtered, sal_filtered,kind='linear', fill_value="extrapolate")
         interpolated_temperatures = temp_interp(regular_depths)
         interpolated_salinity = sal_interp(regular_depths)
+
+        import warnings
+
+        # Define physical ranges (adjust if needed)
+        TEMP_MIN, TEMP_MAX = -4, 4
+        SAL_MIN, SAL_MAX = 0, 42
+
+        # Check for NaNs
+        if np.isnan(interpolated_temperatures).any():
+            nan_indices = np.where(np.isnan(interpolated_temperatures))[0]
+            msg = (f"{full_path}: NaNs found in interpolated temperatures at indices {nan_indices}. "
+                f"Values: {interpolated_temperatures[nan_indices]}")
+            mat_error_list.append(msg)
+            raise ValueError(msg)
+
+        if np.isnan(interpolated_salinity).any():
+            nan_indices = np.where(np.isnan(interpolated_salinity))[0]
+            msg = (f"{full_path}: NaNs found in interpolated salinity at indices {nan_indices}. "
+                f"Values: {interpolated_salinity[nan_indices]}")
+            mat_error_list.append(msg)
+            raise ValueError(msg)
+
+        # Check for out-of-range values
+        temp_out_of_range_idx = np.where((interpolated_temperatures < TEMP_MIN) | (interpolated_temperatures > TEMP_MAX))[0]
+        if temp_out_of_range_idx.size > 0:
+            values = interpolated_temperatures[temp_out_of_range_idx]
+            msg = (f"{full_path}: interpolated temperatures out of physical range ({TEMP_MIN} to {TEMP_MAX} °C) "
+                f"at indices {temp_out_of_range_idx} with values {values}")
+            mat_error_list.append(msg)
+            raise ValueError(msg)
+
+        sal_out_of_range_idx = np.where((interpolated_salinity < SAL_MIN) | (interpolated_salinity > SAL_MAX))[0]
+        if sal_out_of_range_idx.size > 0:
+            values = interpolated_salinity[sal_out_of_range_idx]
+            msg = (f"{full_path}: interpolated salinity out of physical range ({SAL_MIN} to {SAL_MAX} PSU) "
+                f"at indices {sal_out_of_range_idx} with values {values}")
+            mat_error_list.append(msg)
+            raise ValueError(msg)
+
         
         if not (len(regular_depths) == len(interpolated_temperatures) == len(interpolated_salinity)):
               mat_error_list.append(f'{full_path}: mismatch length')
@@ -230,11 +275,11 @@ def makeMatGrid(full_path, file_name, folder_name):
 
 
 
-traverse_datasets(datasets_dir, makeGrid)
-with open("errorDF.txt", "w") as bad_file:
-    for file in error_list:
-        bad_file.write(f"{file}\n")
-# traverse_datasets(datasets_dir, makeMatGrid)
-# with open("mat_error.txt", "w") as bad_file:
-#     for file in mat_error_list:
+# traverse_datasets(datasets_dir, makeGrid)
+# with open("errorDF.txt", "w") as bad_file:
+#     for file in error_list:
 #         bad_file.write(f"{file}\n")
+traverse_datasets(datasets_dir, makeMatGrid)
+with open("mat_error.txt", "w") as bad_file:
+    for file in mat_error_list:
+        bad_file.write(f"{file}\n")

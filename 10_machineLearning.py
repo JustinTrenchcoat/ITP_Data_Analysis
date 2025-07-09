@@ -10,14 +10,15 @@ import statsmodels.api as sm
 
 # Load Data
 final_df = pd.read_pickle("final.pkl")
-
-experiment_df = final_df[final_df['itpNum'].isin([62, 65, 68])].copy()
+experiment_df = final_df[final_df['itpNum'].isin([62, 64, 65, 68,69,70,77,78,79,80,81,82])].copy()
 ocean_df = experiment_df.copy()
 ocean_df['Date'] = pd.to_datetime(ocean_df['date'])
 first_day = ocean_df["Date"].min()
-
-train_df = ocean_df.query("Date <= 20130503")
-test_df = ocean_df.query("Date >  20130503")
+last_day = ocean_df['Date'].max()
+print(first_day)
+print(last_day)
+train_df = ocean_df.query("Date <= 20150721")
+test_df = ocean_df.query("Date >  20150721")
 
 train_df = train_df.assign(
     Month=train_df["Date"].apply(lambda x: x.month_name()),
@@ -139,10 +140,33 @@ The VIF shows that Days_since is highly correlated with other features, further 
 import seaborn as sns
 corr = X_train_enc[['Days_since', 'n_sq', 'R_rho', 'lon', 'lat']].corr()
 sns.heatmap(corr, annot=True)
+plt.title("Correlation Heatmap for Modelling Variables")
 plt.show()
 # heat map and VIF indicated that Days_since and latitude is hight correlated, but I think it might be due to the lack of data.
 # additionally, n_sq, r_rho and depth are highly correlated, considering that, we might need to drop depth for better inference??
 ######################################################################
 # pearson residual
-# resid_pearson = model.resid_pearson
-# print(resid_pearson)
+# resid_pearson = result.resid_pearson
+
+# print(resid_pearson.describe())
+# print(f"Statistical Summary of pearson residual:")
+# print(f"Count         : {len(resid_pearson)}")
+# print(f"Min           : {np.min(resid_pearson)}")
+# print(f"Max           : {np.max(resid_pearson)}")
+# print(f"Mean          : {np.mean(resid_pearson)}")
+# print(f"Median        : {np.median(resid_pearson)}")
+# print(f"Std Dev       : {np.std(resid_pearson)}")
+# print(f"Variance      : {np.var(resid_pearson)}")
+# print(f"25th Percentile (Q1): {np.percentile(resid_pearson, 25)}")
+# print(f"75th Percentile (Q3): {np.percentile(resid_pearson, 75)}")
+# print(f"IQR           : {np.percentile(resid_pearson, 75) - np.percentile(resid_pearson, 25)}")
+
+#     # Plot the histogram
+# plt.figure(figsize=(10, 6))
+# plt.hist(resid_pearson, bins=50, edgecolor='black')  # adjust bin count or bin edges here
+# plt.title(f"Histogram of Pearson Residual")
+# plt.xlabel("Pearson residual")
+# plt.ylabel("Frequency")
+# plt.grid(True)
+# plt.tight_layout()
+# plt.show()

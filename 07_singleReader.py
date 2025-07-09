@@ -6,14 +6,16 @@ import traceback
 from scipy.interpolate import CubicSpline
 from helper import *
 import re
-from scipy.io import savemat
+from scipy.io import loadmat
+from scipy.ndimage import gaussian_filter1d
+
 
 # this script looks through each profile extract depth, temperature and every other measurement, interpolate the values by depth grid of 0.25m
 # should it look like a dataframe or?
 
 # set up file path
 # full_path = r'D:\EOAS\ITP_Data_Analysis\datasets\itp62cormat\cor0008.mat'
-full_path = r'D:\EOAS\ITP_Data_Analysis\gridDataMat\itp1cormat\cor0001.mat'
+full_path = r'D:\EOAS\ITP_Data_Analysis\gridDataMat\itp101cormat\cor0320.mat'
 
 new_dir = "testData"
 folder_name = "test"
@@ -40,37 +42,63 @@ def plot(x, y):
     plt.xticks(rotation=45)
     plt.show()
 
-
-
-
 try:
-    with h5py.File(full_path, 'r') as f:
-        depth = read_var(f, 'Depth')
-        lat = read_var(f, "lat")
-        lon = read_var(f, "lon")
-        psdate = read_var(f, "psdate")
-        pstart = read_var(f, "pstart")
-        pedate = read_var(f, "pedate")
-        pstop = read_var(f, "pstop")
-        te_adj = read_var(f, "te_adj")
-        sa_adj = read_var(f, "sa_adj")
+    data = loadmat(full_path)
+    
+    # Adjust according to actual variable names in your .mat file
+    depth = data['Depth'].squeeze()
+    lat = data['lat'].squeeze()
+    lon = data['lon'].squeeze()
+    psdate = data['startDate'].squeeze()
+    date = pd.to_datetime(psdate, format='%m/%d/%y')
+    date = date.date
+    temp = data['Temperature'].squeeze()
+    salinity = data['Salinity'].squeeze()
+    pres = pressure(depth, lat)
 
-        # helPlot(te_adj, pr_filt)
-        print(f'length of profile: {len(pr_filt)}')
-        print(f'length of profile without nan:{len(~np.isnan(pr_filt))}')
+    assert not np.isnan(depth).any(), "depth contains NaN values"
+    assert not np.isnan(temp).any(), "temp contains NaN values"
+    assert not np.isnan(salinity).any(), "salinity contains NaN values"
+    assert not np.isnan(pres).any(), "pres contains NaN values"
 
-        depth = height(pr_filt, lat)
-        print(f'pressure: {pr_filt}')
-        pressure_cal = pressure(depth, lat)
-        print(f'function check:{pressure_cal}')
+    # extra lines for debugging#####################
+    print("SA min/max:", np.min(salinity), np.max(salinity))
+    print("temp min/max:", np.min(temp), np.max(temp))
+    print("pres min/max:", np.min(pres), np.max(pres))
+    for i, (sa_i, t_i, p_i) in enumerate(zip(salinity, temp, pres)):
+        try:
+            gsw.CT_from_t(np.array([sa_i]), np.array([t_i]), np.array([p_i]))
+        except Exception as e:
+            print(f"Invalid input at index {i}: SA={sa_i}, t={t_i}, p={p_i}")
 
-        lat = lat[0]
-        print(lat)
-        print(type(lat))
-        print(lon)
-        psdate = pd.to_datetime(psdate, format="%m/%d/%y").date()
-        print(psdate)
-        print(type(psdate))
+
+
+    ###############################################################
+    new_df = pd.DataFrame({
+            "depth" : depth,
+            'temp' : temp,
+            'date' : date,
+            "salinity" : salinity,
+            "lon" : lon,
+            "lat" : lat,
+            "pressure" : pres
+        })
+
+    # add new cols:
+    new_df['dT/dZ'] = gaussian_filter1d(np.gradient(temp, depth),sigma=80, mode='nearest')
+    new_df['dS/dZ'] = gaussian_filter1d(np.gradient(salinity, depth),sigma=80, mode='nearest')
+
+    n_sq = gaussian_filter1d(gsw.Nsquared(salinity, temp, pres, lat)[0], sigma=80,mode="nearest")
+    # padding for last value as the function returns only N-1 values
+    n_sq_padded = np.append(n_sq, np.nan)
+    new_df['n_sq'] = n_sq_padded
+    # turner angle and R_rho
+    [turner_angle, R_rho,p_mid] = gsw.Turner_Rsubrho(salinity, temp, pres)
+    turner_angle = gaussian_filter1d(turner_angle, sigma=80, mode="nearest")
+    R_rho = gaussian_filter1d(R_rho, sigma=80, mode="nearest")
+    new_df['turner_angle'] = np.append(turner_angle,np.nan)
+    new_df['R_rho'] = np.append(R_rho,np.nan)
+    plot(new_df["dT/dZ"], new_df['depth'])
 
 
 except Exception as e:

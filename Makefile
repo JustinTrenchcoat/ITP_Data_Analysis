@@ -11,4 +11,4 @@ clean:
 		rm -rf plots/*
 		rm -rf gridDataMat/*
 		rm -rf gridData/*
-		rm -rf goldData/*
+# rm -rf goldData/*

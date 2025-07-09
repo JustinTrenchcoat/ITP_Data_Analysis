@@ -8,6 +8,7 @@ import matplotlib.colors as colors
 import matplotlib.dates as mdates
 from scipy.ndimage import gaussian_filter1d
 import math
+import seaborn as sns
 
 # set up file path
 full_path = r'D:\EOAS\ITP_Data_Analysis\datasets\itp112cormat\cor0001.mat'
@@ -61,8 +62,8 @@ def depthDiffHist():
     plt.tight_layout()
     plt.show()
 
-final_df = pd.read_pickle("final.pkl")
-experiment_df = final_df[final_df['itpNum'].isin([62, 65, 68])].copy()
+# final_df = pd.read_pickle("final.pkl")
+# experiment_df = final_df[final_df['itpNum'].isin([62, 65, 68])].copy()
 
 def transView(df, values, window_size):
 
@@ -160,7 +161,8 @@ def dataSummary(data, name, year):
 
     # Plot the histogram
     plt.figure(figsize=(10, 6))
-    plt.hist(data, bins=50, log=(name == 'n_sq' or name == 'R_rho'), edgecolor='black')  # adjust bin count or bin edges here
+    counts, edges, bars = plt.hist(data, bins=50, log=(name == 'n_sq' or name == 'R_rho'), edgecolor='black')  # adjust bin count or bin edges here
+    plt.bar_label(bars)
     plt.title(f"Histogram of {'logged ' + name if name in ['n_sq', 'R_rho'] else name} in {year}")
     plt.xlabel(f"{'logged ' + name if name in ['n_sq', 'R_rho'] else name}")
     plt.ylabel("Frequency")
@@ -178,4 +180,47 @@ def processDataHist(variable, year):
     except Exception as e:
         traceback.print_exc()
 
-processDataHist("dT/dZ", 2015)
+# for year in years_list:
+#     processDataHist("dT/dZ", year)
+###############################################################################################
+def overlapPlot(variable, yearStart, yearEnd):
+    try:
+        with open("test.pkl", "rb") as f:
+            df = pickle.load(f)
+            yearS_df = df[df['date'].apply(lambda d: d.year) == yearStart].copy()
+
+            yearE_df = df[df['date'].apply(lambda d: d.year) == yearEnd].copy()
+
+            # Group by depth and compute average dtdz
+            avgStart = yearS_df.groupby('depth')[variable].agg(["mean", "std"])
+            avgEnd = yearE_df.groupby('depth')[variable].agg(["mean", "std"])
+
+
+            depthStart = avgStart.index.to_numpy()
+            # 2660648
+            print(f"length of depthStart:{len(depthStart)}")
+            meanStart = avgStart['mean'].to_numpy()
+            print(f"length of meanStart:{len(meanStart)}")
+            stdStart= avgStart['std'].to_numpy()
+
+            depthEnd = avgEnd.index.to_numpy()
+            meanEnd = avgEnd['mean'].to_numpy()
+            stdEnd= avgEnd['std'].to_numpy()
+
+            # sns.lineplot(data=avgStart, x="mean", y="depth", errorbar=('sd', 1))
+            # sns.lineplot(data=avgEnd, x="mean", y="depth", errorbar=('sd', 1))
+            plt.errorbar(meanStart, depthStart, xerr=stdStart, fmt='-o', alpha = 0.2, capsize=3, label=f'{yearStart}')
+            plt.errorbar(meanEnd, depthEnd, xerr=stdEnd, fmt='-o', alpha=0.2, capsize=3, label=f'{yearEnd}')
+
+            plt.gca().invert_yaxis()  # optional: invert depth axis if needed
+            plt.xlabel(f'Average {variable}')
+            plt.title(f"Comparison of {variable} between {yearStart} and {yearEnd}")
+            plt.ylabel('Depth')
+            plt.legend()
+            plt.show()
+
+
+    except Exception as e:
+        traceback.print_exc()
+
+overlapPlot('n_sq', 2007, 2015)
