@@ -165,6 +165,7 @@ def makeMatGrid(full_path, file_name, folder_name):
         depths_sorted = depth[sorted_indices]
         temperatures_sorted = te_adj[sorted_indices]
         salinity_sorted = sa_adj[sorted_indices]
+        
         if depth.max() > 800:
             mat_error_list.append(f'{full_path}: abnormal depth')
             raise ValueError(f'Abnormal Depth of {depth.max()}! Please check profile {full_path}')

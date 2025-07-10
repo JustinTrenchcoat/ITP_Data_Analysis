@@ -182,45 +182,257 @@ def processDataHist(variable, year):
 
 # for year in years_list:
 #     processDataHist("dT/dZ", year)
+
+# depth of the Tmin
+# depth of the Tmax
+# value of the Tmin
+# value of the Tmax
+# value of the AW thermocline-scale temperature gradient: [Tmax-Tmin]/[depth of the Tmax - depth of the Tmin]
+# values of R_rho background 
+# (maybe the average value between Tmin and Tmax so you have only 1 per profile and thus the same number of entries as the plots above…)
+
 ###############################################################################################
 def overlapPlot(variable, yearStart, yearEnd):
     try:
         with open("test.pkl", "rb") as f:
             df = pickle.load(f)
             yearS_df = df[df['date'].apply(lambda d: d.year) == yearStart].copy()
-
             yearE_df = df[df['date'].apply(lambda d: d.year) == yearEnd].copy()
 
-            # Group by depth and compute average dtdz
-            avgStart = yearS_df.groupby('depth')[variable].agg(["mean", "std"])
-            avgEnd = yearE_df.groupby('depth')[variable].agg(["mean", "std"])
+            # Group by depth and compute mean, std, and count
+            avgStart = yearS_df.groupby('depth')[variable].agg(["mean", "std", "count"])
+            avgEnd = yearE_df.groupby('depth')[variable].agg(["mean", "std", "count"])
 
-
+            # Monitor depths with large number of observations
+            
             depthStart = avgStart.index.to_numpy()
-            # 2660648
-            print(f"length of depthStart:{len(depthStart)}")
             meanStart = avgStart['mean'].to_numpy()
-            print(f"length of meanStart:{len(meanStart)}")
-            stdStart= avgStart['std'].to_numpy()
+            stdStart = avgStart['std'].to_numpy()
 
             depthEnd = avgEnd.index.to_numpy()
             meanEnd = avgEnd['mean'].to_numpy()
-            stdEnd= avgEnd['std'].to_numpy()
+            stdEnd = avgEnd['std'].to_numpy()
 
-            # sns.lineplot(data=avgStart, x="mean", y="depth", errorbar=('sd', 1))
-            # sns.lineplot(data=avgEnd, x="mean", y="depth", errorbar=('sd', 1))
-            plt.errorbar(meanStart, depthStart, xerr=stdStart, fmt='-o', alpha = 0.2, capsize=3, label=f'{yearStart}')
+            # # Main plot: mean profiles
+            plt.errorbar(meanStart, depthStart, xerr=stdStart, fmt='-o', alpha=0.2, capsize=3, label=f'{yearStart}')
             plt.errorbar(meanEnd, depthEnd, xerr=stdEnd, fmt='-o', alpha=0.2, capsize=3, label=f'{yearEnd}')
-
-            plt.gca().invert_yaxis()  # optional: invert depth axis if needed
+            plt.gca().invert_yaxis()  
             plt.xlabel(f'Average {variable}')
             plt.title(f"Comparison of {variable} between {yearStart} and {yearEnd}")
             plt.ylabel('Depth')
             plt.legend()
             plt.show()
 
+            # Plot depth vs. count (histogram-like bar plot)
+            plt.figure(figsize=(10, 6))
+            plt.bar(avgStart.index, avgStart['count'], width=0.8, alpha=0.5, color='red', label=f'{yearStart} Counts')
+            plt.bar(avgEnd.index, avgEnd['count'], width=0.8, alpha=0.5, color='blue', label=f'{yearEnd} Counts')
+            plt.xlabel('Depth')
+            plt.ylabel('Number of Observations')
+            plt.title('Number of Observations per Depth')
+            plt.legend()
+            plt.show()
+
+            # Plot histogram of minimum depth per profile
+            # Get index (row number) of max temperature per profile
+            idx_max_temp_start = yearS_df.groupby('profileNum')['temp'].idxmax()
+            idx_max_temp_end = yearE_df.groupby('profileNum')['temp'].idxmax()
+
+            idx_min_temp_start = yearS_df.groupby('profileNum')['temp'].idxmin()
+            idx_min_temp_end = yearE_df.groupby('profileNum')['temp'].idxmin()
+
+            # Access corresponding depths at max temperature:
+            max_temp_depth_start = yearS_df.loc[idx_max_temp_start, 'depth'].values
+            max_temp_depth_end = yearE_df.loc[idx_max_temp_end, 'depth'].values
+
+            min_temp_depth_start = yearS_df.loc[idx_min_temp_start, 'depth'].values
+            min_temp_depth_end = yearE_df.loc[idx_min_temp_end, 'depth'].values
+
+            plt.figure(figsize=(10, 6))
+            counts_start, _, patches_start =plt.hist(min_temp_depth_start, bins=30, alpha=0.5, color='red', 
+                                    label=f'{yearStart} Depth at Tmin per Profile, total {len(min_temp_depth_start)} observations')
+            counts_end, _, patches_end =plt.hist(min_temp_depth_end, bins=30, alpha=0.5, color='blue', 
+                                    label=f'{yearEnd} Depth at Tmin per Profile, total {len(min_temp_depth_end)} observations')
+            for count, patch in zip(counts_start, patches_start):
+                # omit 0 so the plot looks better
+                if count != 0:
+                    plt.text(patch.get_x() + patch.get_width()/2, count, int(count),
+                    ha='center', va='bottom', fontsize=8)
+            for count, patch in zip(counts_end, patches_end):
+                if count != 0:
+                    plt.text(patch.get_x() + patch.get_width()/2, count, int(count),
+                    ha='center', va='bottom', fontsize=8)
+            plt.xlabel('Depth at Tmin per Profile')
+            plt.ylabel('Frequency')
+            plt.title('Histogram of Depth at Tmin per Profile')
+            plt.legend()
+            plt.show()
+
+            plt.figure(figsize=(10, 6))
+            counts_start, _, patches_start =plt.hist(max_temp_depth_start, bins=30, alpha=0.5, color='red', 
+                                    label=f'{yearStart} Depth at Tmax per Profile, total {len(max_temp_depth_start)} observations')
+            counts_end, _, patches_end =plt.hist(max_temp_depth_end, bins=30, alpha=0.5, color='blue', 
+                                    label=f'{yearEnd} Depth at Tmax per Profile, total {len(max_temp_depth_end)} observations')
+            for count, patch in zip(counts_start, patches_start):
+                # omit 0 so the plot looks better
+                if count != 0:
+                    plt.text(patch.get_x() + patch.get_width()/2, count, int(count),
+                    ha='center', va='bottom', fontsize=8)
+            for count, patch in zip(counts_end, patches_end):
+                if count != 0:
+                    plt.text(patch.get_x() + patch.get_width()/2, count, int(count),
+                    ha='center', va='bottom', fontsize=8)
+            plt.xlabel('Depth at Tmax per Profile')
+            plt.ylabel('Frequency')
+            plt.title('Histogram of Depth at Tmax per Profile')
+            plt.legend()
+            plt.show()
+
+
+            # value of Tmin and Tmax:
+            max_temp_start = yearS_df.loc[idx_max_temp_start, 'temp'].values
+            max_temp_end = yearE_df.loc[idx_max_temp_end, 'temp'].values
+
+            min_temp_start = yearS_df.loc[idx_min_temp_start, 'temp'].values
+            min_temp_end = yearE_df.loc[idx_min_temp_end, 'temp'].values
+
+            plt.figure(figsize=(10, 6))
+            counts_start, _, patches_start =plt.hist(min_temp_start, bins=30, alpha=0.5, color='red', 
+                                                     label=f'{yearStart} Tmin per Profile, total {len(min_temp_start)} observations')
+            counts_end, _, patches_end =plt.hist(min_temp_end, bins=30, alpha=0.5, color='blue', 
+                                                 label=f'{yearEnd} Tmin per Profile, total {len(min_temp_end)} observations')
+            for count, patch in zip(counts_start, patches_start):
+                # omit 0 so the plot looks better
+                if count != 0:
+                    plt.text(patch.get_x() + patch.get_width()/2, count, int(count),
+                    ha='center', va='bottom', fontsize=8)
+            for count, patch in zip(counts_end, patches_end):
+                if count != 0:
+                    plt.text(patch.get_x() + patch.get_width()/2, count, int(count),
+                    ha='center', va='bottom', fontsize=8)
+            plt.xlabel('Tmin per Profile')
+            plt.ylabel('Frequency')
+            plt.title('Histogram of Tmin per Profile')
+            plt.legend()
+            plt.show()
+
+            plt.figure(figsize=(10, 6))
+            counts_start, _, patches_start =plt.hist(max_temp_start, bins=30, alpha=0.5, color='red', 
+                                                     label=f'{yearStart} Tmax per Profile, total {len(max_temp_start)} observations')
+            counts_end, _, patches_end =plt.hist(max_temp_end, bins=30, alpha=0.5, color='blue', 
+                                                 label=f'{yearEnd} Tmax per Profile, total {len(max_temp_end)} observations')
+            for count, patch in zip(counts_start, patches_start):
+                # omit 0 so the plot looks better
+                if count != 0:
+                    plt.text(patch.get_x() + patch.get_width()/2, count, int(count),
+                    ha='center', va='bottom', fontsize=8)
+            for count, patch in zip(counts_end, patches_end):
+                if count != 0:
+                    plt.text(patch.get_x() + patch.get_width()/2, count, int(count),
+                    ha='center', va='bottom', fontsize=8)
+            plt.xlabel('Tmax per Profile')
+            plt.ylabel('Frequency')
+            plt.title('Histogram of Tmax per Profile')
+            plt.legend()
+            plt.show()
+
+            temp_diff_start = max_temp_start-min_temp_start
+            temp_diff_end = max_temp_end-min_temp_end
+
+            depth_diff_start = max_temp_depth_start-min_temp_depth_start
+            depth_diff_end = max_temp_depth_end-min_temp_depth_end
+
+            gradient_start = (temp_diff_start)/(depth_diff_start)
+            gradient_end =  (temp_diff_end)/(depth_diff_end)
+
+            plt.figure(figsize=(10, 6))
+            counts_start, _, patches_start = plt.hist(gradient_start, bins=30, alpha=0.5, color='red', 
+                    label=f'{yearStart} thermocline-scale temperature gradient per Profile, total {len(gradient_start)} observations')
+            counts_end, _, patches_end = plt.hist(gradient_end, bins=30, alpha=0.5, color='blue', 
+                    label=f'{yearEnd} thermocline-scale temperature gradient per Profile, total {len(gradient_end)} observations')
+            for count, patch in zip(counts_start, patches_start):
+                # omit 0 so the plot looks better
+                if count != 0:
+                    plt.text(patch.get_x() + patch.get_width()/2, count, int(count),
+                    ha='center', va='bottom', fontsize=8)
+            for count, patch in zip(counts_end, patches_end):
+                if count != 0:
+                    plt.text(patch.get_x() + patch.get_width()/2, count, int(count),
+                    ha='center', va='bottom', fontsize=8)
+            plt.xlabel('thermocline-scale temperature gradient values')
+            plt.ylabel('Frequency')
+            plt.title('Histogram of thermocline-scale temperature gradient per Profile')
+            plt.legend()
+            plt.show()
+
+
+            rhoStart = yearS_df.groupby('profileNum')['R_rho'].agg(lambda x: np.mean(np.log10(x)))
+            R_rho_start = rhoStart.to_numpy()
+            R_rho_start_count = len(R_rho_start)
+
+            rhoEnd = yearE_df.groupby('profileNum')['R_rho'].agg(lambda x: np.mean(np.log10(x)))
+            R_rho_end = rhoEnd.to_numpy()
+            R_rho_end_count = len(R_rho_end)
+
+            plt.figure(figsize=(10, 6))
+            counts_start, _, patches_start = plt.hist(R_rho_start, bins=100, alpha=0.5,color='red', 
+                                                    label=f'{yearStart} average log10(R_rho) per Profile, total {R_rho_start_count} observations')
+            counts_end,_, patches_end = plt.hist(R_rho_end, bins=100, alpha=0.5, color='blue', 
+                                                label=f'{yearEnd} average log10(R_rho) per Profile, total {R_rho_end_count} observations')
+
+            for count, patch in zip(counts_start, patches_start):
+                # omit 0 so the plot looks better
+                if count != 0:
+                    plt.text(patch.get_x() + patch.get_width()/2, count, int(count),
+                    ha='center', va='bottom', fontsize=8)
+            for count, patch in zip(counts_end, patches_end):
+                if count != 0:
+                    plt.text(patch.get_x() + patch.get_width()/2, count, int(count),
+                    ha='center', va='bottom', fontsize=8)
+            plt.xlabel('average log10(R_rho) values')
+            plt.ylabel('Frequency')
+            plt.title('Histogram of average log10(R_rho) per Profile')
+            plt.legend()
+            plt.show()
 
     except Exception as e:
         traceback.print_exc()
 
-overlapPlot('n_sq', 2007, 2015)
+
+# overlapPlot('n_sq', 2007, 2015)
+
+
+def profileChecker():
+    try:
+        with open("test.pkl", "rb") as f:
+            df = pickle.load(f)
+            years = df['date'].apply(lambda d: d.year).unique()
+            years_sorted = np.sort(years)
+            print(years_sorted)
+            
+            year_counts = []
+            for year in years_sorted:
+                year_df = df[df['date'].apply(lambda d: d.year) == year].copy()
+                profiles = year_df['profileNum'].unique()
+                print(f'year {year} has {len(profiles)} profiles')
+                year_counts.append(len(profiles))
+            
+            # Bar plot with notations
+            fig, ax = plt.subplots(figsize=(10, 6))
+            bars = ax.bar(years_sorted, year_counts, edgecolor='black')
+            ax.set_title("Number of Profiles per Year")
+            ax.set_xlabel("Year")
+            ax.set_ylabel("Number of Profiles")
+            ax.grid(axis='y', linestyle='--', alpha=0.7)
+            ax.set_xticks(years_sorted)
+            
+            # Add count labels above each bar
+            ax.bar_label(bars, padding=3)
+            
+            plt.tight_layout()
+            plt.show()
+            
+    except Exception as e:
+        traceback.print_exc()
+
+profileChecker()
