@@ -213,7 +213,7 @@ def overlapPlot(variable, yearStart, yearEnd):
             meanEnd = avgEnd['mean'].to_numpy()
             stdEnd = avgEnd['std'].to_numpy()
 
-            # # Main plot: mean profiles
+            # # # Main plot: mean profiles
             plt.errorbar(meanStart, depthStart, xerr=stdStart, fmt='-o', alpha=0.2, capsize=3, label=f'{yearStart}')
             plt.errorbar(meanEnd, depthEnd, xerr=stdEnd, fmt='-o', alpha=0.2, capsize=3, label=f'{yearEnd}')
             plt.gca().invert_yaxis()  
@@ -225,8 +225,8 @@ def overlapPlot(variable, yearStart, yearEnd):
 
             # Plot depth vs. count (histogram-like bar plot)
             plt.figure(figsize=(10, 6))
-            plt.bar(avgStart.index, avgStart['count'], width=0.8, alpha=0.5, color='red', label=f'{yearStart} Counts')
-            plt.bar(avgEnd.index, avgEnd['count'], width=0.8, alpha=0.5, color='blue', label=f'{yearEnd} Counts')
+            plt.bar(avgStart.index, len(depthStart), width=0.8, alpha=0.5, color='red', label=f'{yearStart} Counts')
+            plt.bar(avgEnd.index, len(depthEnd), width=0.8, alpha=0.5, color='blue', label=f'{yearEnd} Counts')
             plt.xlabel('Depth')
             plt.ylabel('Number of Observations')
             plt.title('Number of Observations per Depth')
@@ -399,7 +399,7 @@ def overlapPlot(variable, yearStart, yearEnd):
         traceback.print_exc()
 
 
-# overlapPlot('n_sq', 2007, 2015)
+overlapPlot('n_sq', 2007, 2015)
 
 
 def profileChecker():
@@ -435,4 +435,4 @@ def profileChecker():
     except Exception as e:
         traceback.print_exc()
 
-profileChecker()
+# profileChecker()
