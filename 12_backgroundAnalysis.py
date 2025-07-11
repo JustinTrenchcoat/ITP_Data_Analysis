@@ -70,7 +70,26 @@ with open('grouped.pkl', 'rb') as f:
 
 '''
 '''
-def singleGroupHandeler(df, groupNum):
+
+def histogramPlot(data, groupNum, description, filename):
+    plt.figure(figsize=(10, 6))
+    counts, _, patches =plt.hist(data, bins=70, alpha=0.5, color='red', 
+                                    label=f'{description} per Profile in year Group {groupNum},  total {len(data)} observations')
+    plt.axvline(np.median(data), color='k', linestyle='dashed', linewidth=1)
+    plt.text(np.median(data), plt.ylim()[1]*0.9, f'Median: {np.median(data):.2f}', va='top', ha='right')
+
+    for count, patch in zip(counts, patches):
+                # omit 0 so the plot looks better
+                if count != 0:
+                    plt.text(patch.get_x() + patch.get_width()/2, count, int(count),
+                    ha='center', va='bottom', fontsize=8)
+    plt.xlabel(f'{description} per Profile')
+    plt.ylabel('Frequency')
+    plt.title(f'Histogram of {description} per Profile')
+    plt.legend()
+    plt.savefig(f"plots/{filename}G{groupNum}")
+
+def singleGroupBulkPlot(df, groupNum):
     print(f'-------Processing Group{groupNum}------------------')
     df['year'] = df['date'].apply(lambda d: d.year)
     # index min temp for every profile in every year:
@@ -80,43 +99,11 @@ def singleGroupHandeler(df, groupNum):
     
     # depth at Tmin:
     min_temp_depth = df.loc[idx_min_temp, 'depth'].values
-    plt.figure(figsize=(10, 6))
-    counts, _, patches =plt.hist(min_temp_depth, bins=70, alpha=0.5, color='red', 
-                                    label=f'Depth at Tmin per Profile in year Group {groupNum}, total {len(min_temp_depth)} observations')
-    plt.axvline(np.median(min_temp_depth), color='k', linestyle='dashed', linewidth=1)
-    plt.text(np.median(min_temp_depth), plt.ylim()[1]*0.9, f'Median: {np.median(min_temp_depth):.2f}', va='top', ha='right')
-
-    for count, patch in zip(counts, patches):
-                # omit 0 so the plot looks better
-                if count != 0:
-                    plt.text(patch.get_x() + patch.get_width()/2, count, int(count),
-                    ha='center', va='bottom', fontsize=8)
-
-    plt.xlabel('Depth at Tmin per Profile')
-    plt.ylabel('Frequency')
-    plt.title('Histogram of Depth at Tmin per Profile')
-    plt.legend()
-    plt.savefig(f"plots/TminDepthG{groupNum}")
-
+    histogramPlot(min_temp_depth, groupNum, "Depth at Tmin", "TminDepth")
 
     # depth at Tmax:
     max_temp_depth = df.loc[idx_max_temp, 'depth'].values
-    # plt.figure(figsize=(10, 6))
-    # counts, _, patches =plt.hist(max_temp_depth, bins=70, alpha=0.5, color='red', 
-    #                                 label=f'Depth at Tmax per Profile in year Group {groupNum},  total {len(max_temp_depth)} observations')
-    # plt.axvline(np.median(max_temp_depth), color='k', linestyle='dashed', linewidth=1)
-    # plt.text(np.median(max_temp_depth), plt.ylim()[1]*0.9, f'Median: {np.median(max_temp_depth):.2f}', va='top', ha='right')
-
-    # for count, patch in zip(counts, patches):
-    #             # omit 0 so the plot looks better
-    #             if count != 0:
-    #                 plt.text(patch.get_x() + patch.get_width()/2, count, int(count),
-    #                 ha='center', va='bottom', fontsize=8)
-    # plt.xlabel('Depth at Tmax per Profile')
-    # plt.ylabel('Frequency')
-    # plt.title('Histogram of Depth at Tmax per Profile')
-    # plt.legend()
-    # plt.savefig(f"plots/TmaxDepthG{groupNum}")
+    # histogramPlot(max_temp_depth, groupNum,"Depth at Tmax", "TmaxDepth" )
 
     # DZ:
     dz = max_temp_depth - min_temp_depth
@@ -371,9 +358,9 @@ def singleGroupHandeler(df, groupNum):
     # plt.savefig(f"plots/rhoGradG{groupNum}")  
 
     # Bulk Rho:
-
+#####################################################################################
 for i in range(5):
-     singleGroupHandeler(groupedYears[i], i)
+     singleGroupBulkPlot(groupedYears[i], i)
 
 def boxPlots(df):
     n_cols = 5
