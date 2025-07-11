@@ -165,13 +165,14 @@ def makeMatGrid(full_path, file_name, folder_name):
         depths_sorted = depth[sorted_indices]
         temperatures_sorted = te_adj[sorted_indices]
         salinity_sorted = sa_adj[sorted_indices]
-        
+
+        # check for abnormal depth measurements
         if depth.max() > 800:
             mat_error_list.append(f'{full_path}: abnormal depth')
             raise ValueError(f'Abnormal Depth of {depth.max()}! Please check profile {full_path}')
 
         # add checks for possible empty depth files
-        if (depths_sorted.size == 0) or (temperatures_sorted.size == 0):
+        if (depths_sorted.size == 0) or (temperatures_sorted.size == 0) or (salinity_sorted.size == 0):
              mat_error_list.append(f'{full_path}: empty entries')
              raise ValueError(f'File {full_path} has empty entries')
 
@@ -187,11 +188,11 @@ def makeMatGrid(full_path, file_name, folder_name):
         # look up from T_Max, find the T_min between (100, T_Max_depth)
         # select only from Tmin (above 400m?)to 5+Tmax for interpolation:
         # surface_index is all indeces of depth array who's above T_Max and below 100m 
-        surface_index = np.where((100 <= depths_sorted) & (depths_sorted <= T_Max_Depth))[0]
+        surface_index = np.where((depths_sorted >= 100) & (depths_sorted <= T_Max_Depth))[0]
         temp_min_idx = np.argmin(temperatures_sorted[surface_index])
         temp_min_depth_idx = surface_index[temp_min_idx]
 
-        filter_mask = np.arange(temp_min_depth_idx, temp_max_depth_idx + 20)
+        filter_mask = np.arange(temp_min_depth_idx, temp_max_depth_idx + 8)
         depth_filtered = depths_sorted[filter_mask]
         temp_filtered = temperatures_sorted[filter_mask]
         sal_filtered = salinity_sorted[filter_mask]
@@ -202,8 +203,8 @@ def makeMatGrid(full_path, file_name, folder_name):
         regular_depths = np.arange(start, end, 0.25)
         check_length = np.arange(depth_filtered.min(),depth_filtered.max(), 0.25)
         
-        # check 2 for encoutnering zero
-        if len(check_length) < 2:
+        # check for too less number of observations
+        if len(check_length) < 18:
             error_list.append(f'{full_path}: lack enough points')
             raise ValueError(f"{full_path} does not enough valid points.")
 

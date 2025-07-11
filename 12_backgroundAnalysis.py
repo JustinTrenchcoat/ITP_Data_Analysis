@@ -69,8 +69,6 @@ with open('grouped.pkl', 'rb') as f:
     groupedYears = pickle.load(f)
 
 '''
-3. DZ=depth of Tmax - depth of Tmin (the thickness of the AW thermocline)
-4. T at the depth of the Tmin
 5. T at the depth of the Tmax
 6. DT = bulk-scale temperature change over the scale of the AW thermocline
 7. S at the depth of the Tmin
@@ -85,6 +83,7 @@ with open('grouped.pkl', 'rb') as f:
 16. log10(R_rho_BULK)= log10[ (beta DS/DZ) / (alpha DT/DZ) ]
 '''
 def singleGroupHandeler(df, groupNum):
+    print(f'-------Processing Group{groupNum}------------------')
     df['year'] = df['date'].apply(lambda d: d.year)
     # index min temp for every profile in every year:
     idx_min_temp = df.groupby(['year','profileNum'])['temp'].idxmin()
@@ -93,43 +92,82 @@ def singleGroupHandeler(df, groupNum):
     
     # depth at Tmin:
     min_temp_depth = df.loc[idx_min_temp, 'depth'].values
-    plt.figure(figsize=(10, 6))
-    counts, _, patches =plt.hist(min_temp_depth, bins=70, alpha=0.5, color='red', 
-                                    label=f'Depth at Tmin per Profile in year Group {groupNum}, total {len(min_temp_depth)} observations')
-    plt.axvline(np.median(min_temp_depth), color='k', linestyle='dashed', linewidth=1)
-    plt.text(np.median(min_temp_depth), plt.ylim()[1]*0.9, f'Median: {np.median(min_temp_depth):.2f}', va='top', ha='right')
+    # plt.figure(figsize=(10, 6))
+    # counts, _, patches =plt.hist(min_temp_depth, bins=70, alpha=0.5, color='red', 
+    #                                 label=f'Depth at Tmin per Profile in year Group {groupNum}, total {len(min_temp_depth)} observations')
+    # plt.axvline(np.median(min_temp_depth), color='k', linestyle='dashed', linewidth=1)
+    # plt.text(np.median(min_temp_depth), plt.ylim()[1]*0.9, f'Median: {np.median(min_temp_depth):.2f}', va='top', ha='right')
 
-    for count, patch in zip(counts, patches):
-                # omit 0 so the plot looks better
-                if count != 0:
-                    plt.text(patch.get_x() + patch.get_width()/2, count, int(count),
-                    ha='center', va='bottom', fontsize=8)
+    # for count, patch in zip(counts, patches):
+    #             # omit 0 so the plot looks better
+    #             if count != 0:
+    #                 plt.text(patch.get_x() + patch.get_width()/2, count, int(count),
+    #                 ha='center', va='bottom', fontsize=8)
 
-    plt.xlabel('Depth at Tmin per Profile')
-    plt.ylabel('Frequency')
-    plt.title('Histogram of Depth at Tmin per Profile')
-    plt.legend()
-    plt.savefig(f"plots/TminG{groupNum}")
+    # plt.xlabel('Depth at Tmin per Profile')
+    # plt.ylabel('Frequency')
+    # plt.title('Histogram of Depth at Tmin per Profile')
+    # plt.legend()
+    # # plt.savefig(f"plots/TminG{groupNum}")
 
 
     # depth at Tmax:
     max_temp_depth = df.loc[idx_max_temp, 'depth'].values
-    plt.figure(figsize=(10, 6))
-    counts, _, patches =plt.hist(max_temp_depth, bins=70, alpha=0.5, color='red', 
-                                    label=f'Depth at Tmax per Profile in year Group {groupNum},  total {len(max_temp_depth)} observations')
-    plt.axvline(np.median(max_temp_depth), color='k', linestyle='dashed', linewidth=1)
-    plt.text(np.median(max_temp_depth), plt.ylim()[1]*0.9, f'Median: {np.median(max_temp_depth):.2f}', va='top', ha='right')
+    # plt.figure(figsize=(10, 6))
+    # counts, _, patches =plt.hist(max_temp_depth, bins=70, alpha=0.5, color='red', 
+    #                                 label=f'Depth at Tmax per Profile in year Group {groupNum},  total {len(max_temp_depth)} observations')
+    # plt.axvline(np.median(max_temp_depth), color='k', linestyle='dashed', linewidth=1)
+    # plt.text(np.median(max_temp_depth), plt.ylim()[1]*0.9, f'Median: {np.median(max_temp_depth):.2f}', va='top', ha='right')
 
-    for count, patch in zip(counts, patches):
-                # omit 0 so the plot looks better
-                if count != 0:
-                    plt.text(patch.get_x() + patch.get_width()/2, count, int(count),
-                    ha='center', va='bottom', fontsize=8)
-    plt.xlabel('Depth at Tmax per Profile')
-    plt.ylabel('Frequency')
-    plt.title('Histogram of Depth at Tmax per Profile')
-    plt.legend()
-    plt.savefig(f"plots/TmaxG{groupNum}")
+    # for count, patch in zip(counts, patches):
+    #             # omit 0 so the plot looks better
+    #             if count != 0:
+    #                 plt.text(patch.get_x() + patch.get_width()/2, count, int(count),
+    #                 ha='center', va='bottom', fontsize=8)
+    # plt.xlabel('Depth at Tmax per Profile')
+    # plt.ylabel('Frequency')
+    # plt.title('Histogram of Depth at Tmax per Profile')
+    # plt.legend()
+    # # plt.savefig(f"plots/TmaxG{groupNum}")
+
+    # DZ:
+    dz = max_temp_depth - min_temp_depth
+    # plt.figure(figsize=(10, 6))
+    # counts, _, patches =plt.hist(dz, bins=70, alpha=0.5, color='red', 
+    #                                 label=f'Thickness of the AW thermocline in Group {groupNum},  total {len(dz)} observations')
+    # plt.axvline(np.median(dz), color='k', linestyle='dashed', linewidth=1)
+    # plt.text(np.median(dz), plt.ylim()[1]*0.9, f'Median: {np.median(dz):.2f}', va='top', ha='right')
+
+    # for count, patch in zip(counts, patches):
+    #             # omit 0 so the plot looks better
+    #             if count != 0:
+    #                 plt.text(patch.get_x() + patch.get_width()/2, count, int(count),
+    #                 ha='center', va='bottom', fontsize=8)
+    # plt.xlabel('Thickness of the AW thermocline')
+    # plt.ylabel('Frequency')
+    # plt.title('Histogram of Thickness of the AW thermocline per Profile')
+    # plt.legend()
+    # plt.savefig(f"plots/ThicknessG{groupNum}")
+
+    # T at the depth of the Tmin:
+    min_temp_depth = df.loc[idx_min_temp, 'temp'].values
+    # plt.figure(figsize=(10, 6))
+    # counts, _, patches =plt.hist(min_temp_depth, bins=70, alpha=0.5, color='red', 
+    #                                 label=f'Tmin in Group {groupNum},  total {len(min_temp_depth)} observations')
+    # plt.axvline(np.median(min_temp_depth), color='k', linestyle='dashed', linewidth=1)
+    # plt.text(np.median(min_temp_depth), plt.ylim()[1]*0.9, f'Median: {np.median(min_temp_depth):.2f}', va='top', ha='right')
+
+    # for count, patch in zip(counts, patches):
+    #             # omit 0 so the plot looks better
+    #             if count != 0:
+    #                 plt.text(patch.get_x() + patch.get_width()/2, count, int(count),
+    #                 ha='center', va='bottom', fontsize=8)
+    # plt.xlabel('Minimum Temperature')
+    # plt.ylabel('Frequency')
+    # plt.title('Histogram of Tmin per Profile')
+    # plt.legend()
+    # plt.savefig(f"plots/TminG{groupNum}")
+
 
 
 

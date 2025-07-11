@@ -1,4 +1,4 @@
-.PHONY: all clean plot
+.PHONY: all clean plot cleanplot
 
 all: 
 	make clean
@@ -12,3 +12,5 @@ clean:
 		rm -rf gridDataMat/*
 		rm -rf gridData/*
 # rm -rf goldData/*
+cleanplot:
+		rm -rf plots/*
