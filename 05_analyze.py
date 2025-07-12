@@ -52,6 +52,7 @@ def singleRead(full_path, ls, profile_num):
 
     [turner_angle, R_rho, _] = gsw.Turner_Rsubrho(salinity, temp, pres)
     turner_angle = gaussian_filter1d(turner_angle, sigma=80, mode="nearest")
+    R_rho = 1/(R_rho)
     R_rho = gaussian_filter1d(R_rho, sigma=80, mode="nearest")
     new_df['turner_angle'] = np.append(turner_angle, np.nan)
     new_df['R_rho'] = np.append(R_rho, np.nan)
