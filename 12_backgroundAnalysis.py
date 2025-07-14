@@ -172,31 +172,103 @@ def boxPlots(df):
     fig, axs = plt.subplots(n_rows, n_cols, figsize=(4 * n_cols, 4 * n_rows))
     axs = axs.flatten() 
 
-    all_depths = []  # To store depths for global min/max
-
     # First loop: Collect depths
-    for i in range(5):
-        df_copy = df[i].copy()
-        df_copy['year'] = df_copy['date'].apply(lambda d: d.year)
-        idx_min_temp = df_copy.groupby(['year','profileNum'])['temp'].idxmin()
-        min_temp_depth = df_copy.loc[idx_min_temp, 'depth'].values
-        all_depths.append(min_temp_depth)
+    # for i in range(5):
+    #     df_copy = df[i].copy()
+    #     df_copy['year'] = df_copy['date'].apply(lambda d: d.year)
+    #     idx_min_temp = df_copy.groupby(['year','profileNum'])['temp'].idxmin()
+    #     min_temp_depth = df_copy.loc[idx_min_temp, 'depth'].values
+    #     ax = axs[i]
+    #     ax.boxplot(min_temp_depth)
+    #     ax.set_title(f"Boxplot for depth at Tmin, group{i}")
+    #     ax.set_xlabel('Group Number')
+    #     ax.set_ylabel('Depth (m)')
+    #     ax.set_ylim(650, 0)  # Invert y-axis (depth increases downward)
 
-    # Compute global min and max
-    global_min_depth = min(np.nanmin(depths) for depths in all_depths)
-    global_max_depth = max(np.nanmax(depths) for depths in all_depths)
+    # plt.tight_layout()
+    # plt.savefig("plots/TminDepthBox")
 
-    # Second loop: Plot boxplots with same y-axis limits
-    for i in range(5):
-        ax = axs[i]
-        ax.boxplot(all_depths[i])
-        ax.set_title(f"Boxplot for depth at Tmin, group{i}")
-        ax.set_xlabel('Group Number')
-        ax.set_ylabel('Depth (m)')
-        ax.set_ylim(650, 0)  # Invert y-axis (depth increases downward)
+    # for i in range(5):
+    #     df_copy = df[i].copy()
+    #     df_copy['year'] = df_copy['date'].apply(lambda d: d.year)
+    #     idx_max_temp = df_copy.groupby(['year','profileNum'])['temp'].idxmax()
+    #     max_temp_depth = df_copy.loc[idx_max_temp, 'depth'].values
+    #     ax = axs[i]
+    #     ax.boxplot(max_temp_depth)
+    #     ax.set_title(f"Boxplot for depth at Tmax, group{i}")
+    #     ax.set_xlabel('Group Number')
+    #     ax.set_ylabel('Depth (m)')
+    #     ax.set_ylim(650, 300)  # Invert y-axis (depth increases downward)
 
-    plt.tight_layout()
-    plt.show()
+    # plt.tight_layout()
+    # plt.savefig("plots/TmaxDepthBox")   
+
+    # for i in range(5):
+    #     df_copy = df[i].copy()
+    #     df_copy['year'] = df_copy['date'].apply(lambda d: d.year)
+    #     idx_max_temp = df_copy.groupby(['year','profileNum'])['temp'].idxmax()
+    #     idx_min_temp = df_copy.groupby(['year','profileNum'])['temp'].idxmin()
+    #     min_temp_depth = df_copy.loc[idx_min_temp, 'depth'].values
+    #     max_temp_depth = df_copy.loc[idx_max_temp, 'depth'].values
+    #     dz = max_temp_depth - min_temp_depth
+    #     ax = axs[i]
+    #     ax.boxplot(dz)
+    #     ax.set_title(f"Boxplot for dZ, group{i}")
+    #     ax.set_xlabel('Group Number')
+    #     ax.set_ylabel('Thickness (m)')
+    #     ax.set_ylim(450, 0)  # Invert y-axis (depth increases downward)
+
+    # plt.tight_layout()
+    # plt.savefig("plots/ThicknessBox")  
+
+    # for i in range(5):
+    #     df_copy = df[i].copy()
+    #     df_copy['year'] = df_copy['date'].apply(lambda d: d.year)
+    #     idx_min_temp = df_copy.groupby(['year','profileNum'])['temp'].idxmin()
+    #     min_temp = df_copy.loc[idx_min_temp, 'temp'].values
+    #     ax = axs[i]
+    #     ax.boxplot(min_temp)
+    #     ax.set_title(f"Boxplot for Tmin, group{i}")
+    #     ax.set_xlabel('Group Number')
+    #     ax.set_ylabel('Temperature (Celcius)')
+    #     ax.set_ylim(2, -4)  # Invert y-axis (depth increases downward)
+
+    # plt.tight_layout()
+    # plt.savefig("plots/TminBox")  
+
+    # for i in range(5):
+    #     df_copy = df[i].copy()
+    #     df_copy['year'] = df_copy['date'].apply(lambda d: d.year)
+    #     idx_max_temp = df_copy.groupby(['year','profileNum'])['temp'].idxmax()
+    #     max_temp = df_copy.loc[idx_max_temp, 'temp'].values
+    #     ax = axs[i]
+    #     ax.boxplot(max_temp)
+    #     ax.set_title(f"Boxplot for Tmax, group{i}")
+    #     ax.set_xlabel('Group Number')
+    #     ax.set_ylabel('Temperature (Celcius)')
+    #     ax.set_ylim(2, 0)  # Invert y-axis (depth increases downward)
+
+    # plt.tight_layout()
+    # plt.savefig("plots/TmaxBox")  
+
+    # for i in range(5):
+    #     df_copy = df[i].copy()
+    #     df_copy['year'] = df_copy['date'].apply(lambda d: d.year)
+    #     idx_max_temp = df_copy.groupby(['year','profileNum'])['temp'].idxmax()
+    #     idx_min_temp = df_copy.groupby(['year','profileNum'])['temp'].idxmin()
+    #     min_temp = df_copy.loc[idx_min_temp, 'temp'].values
+    #     max_temp = df_copy.loc[idx_max_temp, 'temp'].values
+    #     dt = max_temp - min_temp
+    #     ax = axs[i]
+    #     ax.boxplot(dt)
+    #     ax.set_title(f"Boxplot for dT, group{i}")
+    #     ax.set_xlabel('Group Number')
+    #     ax.set_ylabel('Temperature (Celcius)')
+    #     ax.set_ylim(4, -1)  # Invert y-axis (depth increases downward)
+
+    # plt.tight_layout()
+    # plt.savefig("plots/dTBox")  
+
 
 
 boxPlots(groupedYears)
