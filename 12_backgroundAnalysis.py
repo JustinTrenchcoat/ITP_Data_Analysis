@@ -44,9 +44,9 @@ def dfGrouper():
         traceback.print_exc()
 #########################################################
 # Run this only once to save works:
-yearDF = dfGrouper()
-with open("grouped.pkl", 'wb') as f:
-    pickle.dump(yearDF,f)
+# yearDF = dfGrouper()
+# with open("grouped.pkl", 'wb') as f:
+#     pickle.dump(yearDF,f)
 #########################################################
 with open('grouped.pkl', 'rb') as f:
     groupedYears = pickle.load(f)
@@ -169,7 +169,7 @@ def boxPlots(df):
     n_cols = 5
     n_rows = 1
 
-    fig, axs = plt.subplots(n_rows, n_cols, figsize=(5 * n_cols, 4 * n_rows))
+    fig, axs = plt.subplots(n_rows, n_cols, figsize=(4 * n_cols, 4 * n_rows))
     axs = axs.flatten() 
 
     all_depths = []  # To store depths for global min/max
@@ -193,10 +193,10 @@ def boxPlots(df):
         ax.set_title(f"Boxplot for depth at Tmin, group{i}")
         ax.set_xlabel('Group Number')
         ax.set_ylabel('Depth (m)')
-        ax.set_ylim(global_max_depth, global_min_depth)  # Invert y-axis (depth increases downward)
+        ax.set_ylim(650, 0)  # Invert y-axis (depth increases downward)
 
     plt.tight_layout()
     plt.show()
 
 
-# boxPlots(groupedYears)
+boxPlots(groupedYears)
