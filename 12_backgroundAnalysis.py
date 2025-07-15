@@ -162,8 +162,8 @@ def singleGroupBulkPlot(df, groupNum):
     # histogramPlot(rho_bulk, groupNum, "Bulk-scale Density Ratio", "rho")
 ##########################################################################################################################################
 
-# for i in range(5):
-#      singleGroupBulkPlot(groupedYears[i], i)
+for i in range(5):
+     singleGroupBulkPlot(groupedYears[i], i)
 
 
 
@@ -233,9 +233,87 @@ def boxPlots(df):
         idx_min_temp = df.groupby(['year','profileNum'])['temp'].idxmin()
         min_sal = df.loc[idx_min_temp, "salinity"].values
         return min_sal
-    singleBoxplot(df, minSal, "Salinity at Minimum Temperature", "g/kg",(40,30), "TminSalBox")
+    # singleBoxplot(df, minSal, "Salinity at Minimum Temperature", "g/kg",(40,30), "TminSalBox")
+
+    def maxSal(df):
+        idx_max_temp = df.groupby(['year','profileNum'])['temp'].idxmax()
+        max_sal = df.loc[idx_max_temp, 'salinity'].values
+        return max_sal     
+    # singleBoxplot(df, maxSal, "Salinity at Maximum Temperature", "g/kg", (45, 30), "TmaxSalBox")  
+
+    def dS(df):
+        ds = maxSal(df) - minSal(df)
+        return ds
+    # singleBoxplot(df, dS, "Bulk-scale Salinity Change", "g/kg", (5,0), "dSBox")
+
+    def minRho(df):
+        idx_min_temp = df.groupby(['year','profileNum'])['temp'].idxmin()
+        idx_max_temp = df.groupby(['year','profileNum'])['temp'].idxmax()
+
+        min_temp_rho = df.loc[idx_min_temp, 'R_rho'].values
+        max_temp_rho = df.loc[idx_max_temp, 'R_rho'].values
+
+        mask = np.isfinite(max_temp_rho) & np.isfinite(min_temp_rho)
+        min_temp_rho_clean = min_temp_rho[mask]
+        return min_temp_rho_clean
+    # singleBoxplot(df, minRho, "Density Gradient at Tmin", "(g/kg)/m", (5,0), "TminRhoBox")
+
+    def maxRho(df):
+        idx_min_temp = df.groupby(['year','profileNum'])['temp'].idxmin()
+        idx_max_temp = df.groupby(['year','profileNum'])['temp'].idxmax()
+
+        min_temp_rho = df.loc[idx_min_temp, 'R_rho'].values
+        max_temp_rho = df.loc[idx_max_temp, 'R_rho'].values
+
+        mask = np.isfinite(max_temp_rho) & np.isfinite(min_temp_rho)
+        max_temp_rho_clean = max_temp_rho[mask]
+        return max_temp_rho_clean
+    # singleBoxplot(df, maxRho, "Density Gradient at Tmax", "(g/kg)/m", (5,0), "TmaxRhoBox")
+
+    def dRho(df):
+        idx_min_temp = df.groupby(['year','profileNum'])['temp'].idxmin()
+        idx_max_temp = df.groupby(['year','profileNum'])['temp'].idxmax()
+
+        min_temp_rho = df.loc[idx_min_temp, 'R_rho'].values
+        max_temp_rho = df.loc[idx_max_temp, 'R_rho'].values
+
+        mask = np.isfinite(max_temp_rho) & np.isfinite(min_temp_rho)
+        min_temp_rho_clean = min_temp_rho[mask]
+        max_temp_rho_clean = max_temp_rho[mask]
+
+        return max_temp_rho_clean - min_temp_rho_clean
+    # singleBoxplot(df, dRho, "Bulk-scale Density Ratio Change","(g/kg)/m", (5,0), "dRhoBox" )
+
+    def dTdZ(df):
+        return dT(df)/dZ(df)
+    # singleBoxplot(df, dTdZ, "Bulk-Scale Temperature Gradient", "Celcius/m", (1,-1),"dTdZBox")
+
+    def dSdZ(df):
+        return dS(df)/dZ(df)
+    # singleBoxplot(df, dSdZ, "Bulk-Scale Salinity Gradient", "(g/kg)/m", (1,-1), "dSdZBox")
+
+    def dRhodZ(df):
+        return dRho(df)/dZ(df)
+    # singleBoxplot(df, dRhodZ, "Bulk-Scale Density Ratio Gradient", "(g/kg)/m^2", (1,-1),"dRhodZBox")
+
+    def bulkRho(df):
+        # Bulk Rho:
+        beta = []
+        alpha = []
+        temps = [group.values for _, group in df.groupby(['year','profileNum'])['temp']]
+        sals = [group.values for _, group in df.groupby(['year','profileNum'])['salinity']]
+        pres = [group.values for _, group in df.groupby(['year','profileNum'])['pressure']]
+        
+        for i in range(len(temps)):
+            beta.append(np.mean(gsw.beta(sals[i], temps[i], pres[i])))
+            alpha.append(np.mean(gsw.alpha(sals[i], temps[i], pres[i])))
     
+        rho_bulk = np.log10((beta*dS(df))/(alpha*dT(df)))
+        return rho_bulk
+    # singleBoxplot(df,bulkRho, "Bulk-scale Density Ratio", "(g/kg)/m", (10,-10), "bulkRhoBox")
 
 
 
-# boxPlots(groupedYears)
+        
+
+boxPlots(groupedYears)
