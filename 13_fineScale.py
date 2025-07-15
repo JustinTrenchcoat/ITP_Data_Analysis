@@ -62,7 +62,7 @@ def singleGroupFinePlot(df, variable, title, xlabel, groupNum, filename, log = F
     # Boxplot:
     plt.figure(figsize=(10, 6))
     plt.boxplot(data)
-    plt.title(f"Boxplot of Fine Scale {title}, group{i}")
+    plt.title(f"Boxplot of Fine Scale {title}, group{groupNum}")
     plt.xlabel(f'{title} in year group {groupNum} ({xlabel})')
     plt.ylabel(f'{xlabel}')   
     plt.savefig(f"plots/FineBox{filename}G{groupNum}")

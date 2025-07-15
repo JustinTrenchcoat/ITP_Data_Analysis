@@ -13,4 +13,4 @@ clean:
 		rm -rf gridData/*
 # rm -rf goldData/*
 cleanplot:
-		rm -rf plots/*
+	find plots/ -type f ! -path "plots/Histograms/*" ! -path "plots/Boxplots/*" -delete
