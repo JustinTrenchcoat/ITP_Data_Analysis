@@ -11,12 +11,9 @@ import math
 import seaborn as sns
 
 '''
-FIRST FOR BULK SCALE PROPERTIES (i.e. properties over the scale of the AW thermocline as a whole; there is one bulk-scale property per profile)
-1. first the histogram of all estimates of property X for time period Y. 
-If easy to do, I suggest a grid of X rows and Y columns.  Y=5.  
-X to be determined below. Mark on each distribution the median value with a horizontal line.
-2. second a figure of X rows that show time series of “box and whisker plots” 
-that summarize the distributions for each time period and shows how these distributions vary over the 20-year record
+BULK SCALE PROPERTIES (i.e. properties over the scale of the AW thermocline as a whole; there is one bulk-scale property per profile)
+1. the histogram of all estimates of property X for time period Y. 
+2. a figure of X rows that show time series of “box and whisker plots” 
 '''
 ################################################################
 def dfGrouper():
