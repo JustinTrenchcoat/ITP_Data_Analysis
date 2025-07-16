@@ -265,10 +265,12 @@ def boxPlots(df):
         idx_max_temp = df.groupby(['year','profileNum'])['temp'].idxmax()
 
         max_temp_rho = df.loc[idx_max_temp, 'R_rho'].values
+        print(f"count: {len(max_temp_rho)}, range: {np.nanmin(max_temp_rho):.3f} to {np.nanmax(max_temp_rho):.3f}")
+
         if np.any(np.isnan(max_temp_rho)):
             print("Warning: max_temp_rho contains NaN values")
         return max_temp_rho
-    # singleBoxplot(df, maxRho, "Density Gradient at Tmax", "(g/kg)/m", (10,-10), "TmaxRhoBox")
+    singleBoxplot(df, maxRho, "Density Gradient at Tmax", "(g/kg)/m", (10,-10), "TmaxRhoBox")
 
     def dRho(df):
         idx_min_temp = df.groupby(['year','profileNum'])['temp'].idxmin()
@@ -282,7 +284,7 @@ def boxPlots(df):
         max_temp_rho_clean = max_temp_rho[mask]
 
         return max_temp_rho_clean - min_temp_rho_clean
-    singleBoxplot(df, dRho, "Bulk-scale Density Ratio Change","(g/kg)/m", (10,-10), "dRhoBox" )
+    # singleBoxplot(df, dRho, "Bulk-scale Density Ratio Change","(g/kg)/m", (10,-10), "dRhoBox" )
 
     def dTdZ(df):
         return dT(df)/dZ(df)
