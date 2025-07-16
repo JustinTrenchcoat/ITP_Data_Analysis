@@ -2,13 +2,10 @@ import pickle
 from helper import *
 import pandas as pd
 import matplotlib.pyplot as plt
-import netCDF4 as nc
 import numpy as np
 import matplotlib.colors as colors
 import matplotlib.dates as mdates
-from scipy.ndimage import gaussian_filter1d
 import math
-import seaborn as sns
 
 # set up file path
 full_path = r'D:\EOAS\ITP_Data_Analysis\datasets\itp112cormat\cor0001.mat'
@@ -182,15 +179,6 @@ def processDataHist(variable, year):
 
 # for year in years_list:
 #     processDataHist("dT/dZ", year)
-
-# depth of the Tmin
-# depth of the Tmax
-# value of the Tmin
-# value of the Tmax
-# value of the AW thermocline-scale temperature gradient: [Tmax-Tmin]/[depth of the Tmax - depth of the Tmin]
-# values of R_rho background 
-# (maybe the average value between Tmin and Tmax so you have only 1 per profile and thus the same number of entries as the plots above…)
-
 ###############################################################################################
 def overlapPlot(variable, yearStart, yearEnd):
     try:
@@ -397,11 +385,7 @@ def overlapPlot(variable, yearStart, yearEnd):
 
     except Exception as e:
         traceback.print_exc()
-
-
 # overlapPlot('n_sq', 2007, 2015)
-
-
 def profileChecker():
     try:
         with open("test.pkl", "rb") as f:
@@ -434,5 +418,49 @@ def profileChecker():
             
     except Exception as e:
         traceback.print_exc()
-
 # profileChecker()
+
+
+########################################################################################
+# map plot
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+import matplotlib.cm as cm
+
+with open('grouped.pkl', 'rb') as f:
+    groupedYears = pickle.load(f)
+
+# Assuming: df_list = [df0, df1, df2, df3, df4]
+# Each df should have columns: 'lat', 'lon'
+
+# Example: 5 sample groups (remove this block if you have your own data)
+
+
+# Pick 5 distinguishable colors
+group_colors = ['red', 'blue', 'green', 'orange', 'purple']
+
+# Set up map
+fig = plt.figure(figsize=(7, 7))
+ax = plt.axes(projection=ccrs.NorthPolarStereo())
+ax.set_extent([-155, -135, 74, 80], crs=ccrs.PlateCarree())
+
+# Add base map features
+ax.add_feature(cfeature.LAND, zorder=0)
+ax.coastlines()
+ax.gridlines(draw_labels=True)
+
+# Plot points for each group
+for i, df in enumerate(groupedYears):
+    ax.scatter(
+        df['lon'], df['lat'],
+        color=group_colors[i],
+        label=f'Group {i+1}',
+        s=10, alpha=0.7,
+        transform=ccrs.PlateCarree()
+    )
+
+# Legend
+plt.legend(loc='lower left')
+plt.title('Lat/Lon Points from 5 Groups')
+plt.tight_layout()
+plt.show()

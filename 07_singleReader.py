@@ -66,50 +66,54 @@ try:
 
     # extra lines for debugging#####################
     print(lat)
-    print("SA min/max:", np.min(salinity), np.max(salinity))
-    print("temp min/max:", np.min(temp), np.max(temp))
-    print("pres min/max:", np.min(pres), np.max(pres))
-    print("depth min/max", np.min(depth), np.max(depth))
-    [n_sq,p_mid] = gsw.Nsquared(salinity, temp, pres, lat)
-    print("n_sq min/max", np.min(n_sq), np.max(n_sq))
-    [turner_angle, R_rho, p_mid_2] = gsw.Turner_Rsubrho(salinity, temp, pres)
-    R_rho = 1/R_rho
-    print(np.array_equal(p_mid, p_mid_2))
-    print("rho min/max", np.min(R_rho), np.max(R_rho))
-    print("after conversion:")
-    print("############################")
-    salinity = gsw.SA_from_SP(salinity, pres, lon, lat)
-    temp = gsw.CT_from_t(salinity, temp, pres)
-    print("SA min/max:", np.min(salinity), np.max(salinity))
-    print(len(salinity))
-    print("temp min/max:", np.min(temp), np.max(temp))
-    [n_sq,p_mid] = gsw.Nsquared(salinity, temp, pres, lat)
-    print("n_sq min/max", np.min(n_sq), np.max(n_sq))
-    [turner_angle, R_rho, p_mid_2] = gsw.Turner_Rsubrho(salinity, temp, pres)
-    print("Tu min/max", np.min(turner_angle), np.max(turner_angle))
+#     print("SA min/max:", np.min(salinity), np.max(salinity))
+#     print("temp min/max:", np.min(temp), np.max(temp))
+#     print("pres min/max:", np.min(pres), np.max(pres))
+#     print("depth min/max", np.min(depth), np.max(depth))
+#     [n_sq,p_mid] = gsw.Nsquared(salinity, temp, pres, lat)
+#     print("n_sq min/max", np.min(n_sq), np.max(n_sq))
+#     [turner_angle, R_rho, p_mid_2] = gsw.Turner_Rsubrho(salinity, temp, pres)
+#     R_rho = 1/R_rho
+#     print(np.array_equal(p_mid, p_mid_2))
+#     print("rho min/max", np.min(R_rho), np.max(R_rho))
+#     print("after conversion:")
+#     print("############################")
+#     salinity = gsw.SA_from_SP(salinity, pres, lon, lat)
+#     temp = gsw.CT_from_t(salinity, temp, pres)
+#     print("SA min/max:", np.min(salinity), np.max(salinity))
+#     print(len(salinity))
+#     print("temp min/max:", np.min(temp), np.max(temp))
+#     [n_sq,p_mid] = gsw.Nsquared(salinity, temp, pres, lat)
+#     print("n_sq min/max", np.min(n_sq), np.max(n_sq))
+#     [turner_angle, R_rho, p_mid_2] = gsw.Turner_Rsubrho(salinity, temp, pres)
+#     print("Tu min/max", np.min(turner_angle), np.max(turner_angle))
 
-    print("p_mid min/max:", np.min(p_mid_2), np.max(p_mid_2))
-    indexPmin = np.argmin(p_mid_2)
-    indexPMax = np.argmax(p_mid_2)
-    R_rho_min = R_rho[indexPmin]
-    R_rho_max = R_rho[indexPMax]
-    print(f"Rho at PMin is {R_rho_min}, Rho at PMax is {R_rho_max}")
-    depth_mid = height(p_mid, lat)
+#     print("p_mid min/max:", np.min(p_mid_2), np.max(p_mid_2))
+#     indexPmin = np.argmin(p_mid_2)
+#     indexPMax = np.argmax(p_mid_2)
+#     R_rho_min = R_rho[indexPmin]
+#     R_rho_max = R_rho[indexPMax]
+#     print(f"Rho at PMin is {R_rho_min}, Rho at PMax is {R_rho_max}")
+#     depth_mid = height(p_mid, lat)
 
-    # R_rho = np.reciprocal(R_rho)
-    print(len(R_rho))
-    plot(R_rho, depth_mid)
-    print("rho min/max", np.min(R_rho), np.max(R_rho))
+#     # R_rho = np.reciprocal(R_rho)
+#     print(len(R_rho))
+#     # now R_rho is sal/temp 
+#     R_rho = np.reciprocal(R_rho)
+#     R_rho = np.where((R_rho > 0) & (R_rho < 100), R_rho, 0)
+#     print("1. rho min/max", np.min(R_rho), np.max(R_rho))
+#     plot(R_rho, depth_mid)
 
-    R_rho_interp = interp1d(depth_mid, R_rho,kind='linear', fill_value="extrapolate")
-    interpolated_R_rho = R_rho_interp(depth)
-    print("rho interp min/max", np.min(interpolated_R_rho), np.max(interpolated_R_rho))
-#########################
-    R_rho_smooth = gaussian_filter1d(interpolated_R_rho, sigma=40, mode='nearest')
-    # R_rho_smooth = np.reciprocal(R_rho_smooth)
-    print("rho smooth min/max", np.min(R_rho_smooth), np.max(R_rho_smooth))
+#     R_rho_interp = interp1d(depth_mid, R_rho,kind='linear', fill_value="extrapolate")
+#     interpolated_R_rho = R_rho_interp(depth)
+#     print("2. rho interp min/max", np.min(interpolated_R_rho), np.max(interpolated_R_rho))
+#     plot(interpolated_R_rho, depth)
+# #########################
+#     R_rho_smooth = gaussian_filter1d(interpolated_R_rho, sigma=80, mode='nearest')
+    
+#     print("3. rho smooth min/max", np.min(R_rho_smooth), np.max(R_rho_smooth))
 
-    plot(R_rho_smooth, depth)
+#     plot(R_rho_smooth, depth)
 
 
 

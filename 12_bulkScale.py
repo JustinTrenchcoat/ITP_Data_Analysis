@@ -124,14 +124,14 @@ def singleGroupBulkPlot(df, groupNum):
     max_temp_rho_clean = max_temp_rho[mask]
     min_temp_rho_clean = min_temp_rho[mask]
 
-    max_temp_rho_clean = np.log10(max_temp_rho_clean)
-    min_temp_rho_clean = np.log10(min_temp_rho_clean)
-    # histogramPlot(min_temp_rho_clean, groupNum, "Tmin Density Ratio", "TminRho")
-    # histogramPlot(max_temp_rho_clean, groupNum, "Tmax Density Ratio", "TmaxRho")
+    # max_temp_rho_clean = np.log10(max_temp_rho_clean)
+    # min_temp_rho_clean = np.log10(min_temp_rho_clean)
+    histogramPlot(min_temp_rho_clean, groupNum, "Tmin Density Ratio", "TminRho")
+    histogramPlot(max_temp_rho_clean, groupNum, "Tmax Density Ratio", "TmaxRho")
 
     # DRho:
     dRho = max_temp_rho_clean - min_temp_rho_clean
-    # histogramPlot(dRho, groupNum, "Bulk-scale Density Ratio Change", "dRho")
+    histogramPlot(dRho, groupNum, "Bulk-scale Density Ratio Change", "dRho")
 
     #dT/dZ:
     temp_gradient = dt/dz
@@ -143,7 +143,7 @@ def singleGroupBulkPlot(df, groupNum):
 
     dz_clean = dz[mask]
     rho_gradient = dRho/dz_clean
-    # histogramPlot(rho_gradient, groupNum, "Bulk-scale R_rho Gredient", "rhoGrad")
+    histogramPlot(rho_gradient, groupNum, "Bulk-scale R_rho Gredient", "rhoGrad")
 
     # Bulk Rho:
     beta = []
@@ -156,9 +156,9 @@ def singleGroupBulkPlot(df, groupNum):
         beta.append(np.mean(gsw.beta(sals[i], temps[i], pres[i])))
         alpha.append(np.mean(gsw.alpha(sals[i], temps[i], pres[i])))
     
-    rho_bulk = np.log10((beta*sal_gradient)/(alpha*temp_gradient))
+    rho_bulk = np.log10((beta*np.absolute(sal_gradient))/(alpha*np.absolute(temp_gradient)))
     rho_bulk = rho_bulk[np.isfinite(rho_bulk)]
-    # histogramPlot(rho_bulk, groupNum, "Bulk-scale Density Ratio", "rho")
+    histogramPlot(rho_bulk, groupNum, "Bulk-scale Density Ratio", "rho")
 ##########################################################################################################################################
 # for i in range(5):
 #      singleGroupBulkPlot(groupedYears[i], i)
@@ -203,7 +203,7 @@ def boxPlots(df):
         min_temp_depth = df.loc[idx_min_temp, 'depth'].values
         return min_temp_depth
          
-    singleBoxplot(df, TminD, "depth at Tmin", "Depth (m)", (300,100),"TminDepthBox")
+    singleBoxplot(df, TminD, "depth at Tmin", "Depth (m)", (275,75),"TminDepthBox")
 
     def TmaxD(df):
         idx_max_temp = df.groupby(['year','profileNum'])['temp'].idxmax()
@@ -254,19 +254,17 @@ def boxPlots(df):
         idx_min_temp = df.groupby(['year','profileNum'])['temp'].idxmin()
 
         min_temp_rho = df.loc[idx_min_temp, 'R_rho'].values
-        print(f"count: {len(min_temp_rho)}, range: {np.nanmin(min_temp_rho):.3f} to {np.nanmax(min_temp_rho):.3f}")
         
         return min_temp_rho
-    # singleBoxplot(df, minRho, "Density Gradient at Tmin", "(g/kg)/m", (10,-10), "TminRhoBox")
+    singleBoxplot(df, minRho, "Density Gradient at Tmin", "(g/kg)/m", (40,-5), "TminRhoBox")
 
     def maxRho(df):
         idx_max_temp = df.groupby(['year','profileNum'])['temp'].idxmax()
 
         max_temp_rho = df.loc[idx_max_temp, 'R_rho'].values
-        print(f"count: {len(max_temp_rho)}, range: {np.nanmin(max_temp_rho):.3f} to {np.nanmax(max_temp_rho):.3f}")
 
         return max_temp_rho
-    # singleBoxplot(df, maxRho, "Density Gradient at Tmax", "(g/kg)/m", (10,-10), "TmaxRhoBox")
+    singleBoxplot(df, maxRho, "Density Gradient at Tmax", "(g/kg)/m", (7.5,-2.5), "TmaxRhoBox")
 
     def dRho(df):
         idx_min_temp = df.groupby(['year','profileNum'])['temp'].idxmin()
@@ -280,7 +278,7 @@ def boxPlots(df):
         max_temp_rho_clean = max_temp_rho[mask]
 
         return max_temp_rho_clean - min_temp_rho_clean
-    # singleBoxplot(df, dRho, "Bulk-scale Density Ratio Change","(g/kg)/m", (10,-10), "dRhoBox" )
+    singleBoxplot(df, dRho, "Bulk-scale Density Ratio Change","(g/kg)/m", (10,-40), "dRhoBox" )
 
     def dTdZ(df):
         return dT(df)/dZ(df)
@@ -292,7 +290,7 @@ def boxPlots(df):
 
     def dRhodZ(df):
         return dRho(df)/dZ(df)
-    # singleBoxplot(df, dRhodZ, "Bulk-Scale Density Ratio Gradient", "(g/kg)/m^2", (2,-3),"dRhodZBox")
+    singleBoxplot(df, dRhodZ, "Bulk-Scale Density Ratio Gradient", "(g/kg)/m^2", (0.075,-0.2),"dRhodZBox")
 
     def bulkRho(df):
         # Bulk Rho:
@@ -306,11 +304,11 @@ def boxPlots(df):
         for i in range(len(temps)):
             beta.append(np.mean(gsw.beta(sals[i], temps[i], pres[i])))
             alpha.append(np.mean(gsw.alpha(sals[i], temps[i], pres[i])))
-    
-        rho_bulk = np.log10((beta*dS(df))/(alpha*dT(df)))
+        # added absolute to ensure log10 process is not broken
+        rho_bulk = np.log10((beta*np.absolute(dS(df)))/(alpha*np.absolute(dT(df))))
         rho_bulk = rho_bulk[np.isfinite(rho_bulk)]
         return rho_bulk
-    # singleBoxplot(df,bulkRho, "Bulk-scale Density Ratio", "(g/kg)/m", (1.35,0.8), "bulkRhoBox")
+    singleBoxplot(df,bulkRho, "Bulk-scale Density Ratio", "(g/kg)/m", (1.35,0.8), "bulkRhoBox")
 
 
 boxPlots(groupedYears)

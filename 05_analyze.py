@@ -52,20 +52,28 @@ def singleRead(full_path, ls, profile_num):
 
     [turner_angle, R_rho, p_mid] = gsw.Turner_Rsubrho(salinity, temp, pres)
     depth_mid = height(p_mid, lat)
-    turner_angle = gaussian_filter1d(turner_angle, sigma=80, mode="nearest")
-    R_rho = 1/(R_rho)
-    R_rho = gaussian_filter1d(R_rho, sigma=80, mode="nearest")
-    # fit the background properties to columns:
-    n_sq_interp = interp1d(depth_mid, n_sq,kind='linear', fill_value="extrapolate")
+    # New method from experiments, now R_rho is sal over temp:
+    R_rho = np.reciprocal(R_rho)
+    # filter out R_rho that is with in(0,100)
+    R_rho = np.where((R_rho > 0) & (R_rho < 100), R_rho, 0)
+
     R_rho_interp = interp1d(depth_mid, R_rho,kind='linear', fill_value="extrapolate")
     turner_angle_interp = interp1d(depth_mid, turner_angle,kind='linear', fill_value="extrapolate")
-    interpolated_n_sq = n_sq_interp(depth)
+    n_sq_interp = interp1d(depth_mid, n_sq,kind='linear', fill_value="extrapolate")
+
     interpolated_R_rho = R_rho_interp(depth)
+    interpolated_n_sq = n_sq_interp(depth)
     interpolated_turner = turner_angle_interp(depth)
 
-    new_df['n_sq'] = interpolated_n_sq
-    new_df['turner_angle'] = interpolated_turner
-    new_df['R_rho'] = interpolated_R_rho
+    turner_angle_smoothed = gaussian_filter1d(interpolated_turner, sigma=80, mode="nearest")
+    R_rho_smoothed = gaussian_filter1d(interpolated_R_rho, sigma=80, mode="nearest")
+    n_sq_smoothed = gaussian_filter1d(interpolated_n_sq, sigma=80, mode="nearest")
+    # fit the background properties to columns:
+
+
+    new_df['n_sq'] = n_sq_smoothed
+    new_df['turner_angle'] = turner_angle_smoothed
+    new_df['R_rho'] = R_rho_smoothed
 
     # sanity check
     assert len(new_df['turner_angle']) == len(depth), f"Wrong dimension"

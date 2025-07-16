@@ -31,7 +31,7 @@ log10(R_rho) inside the AW thermocline
 with open('grouped.pkl', 'rb') as f:
     groupedYears = pickle.load(f)
 
-
+#########################################################################################################################
 def singleGroupFinePlot(df, variable, title, xlabel, groupNum, filename, log = False):
     df['year'] = df['date'].apply(lambda d: d.year)
     # takes in the df, check every profile:
@@ -59,45 +59,34 @@ def singleGroupFinePlot(df, variable, title, xlabel, groupNum, filename, log = F
     plt.legend()
     plt.savefig(f"plots/fine/Histograms/{filename}G{groupNum}")
     plt.close()
-    # Boxplot:
-    plt.figure(figsize=(10, 6))
-    plt.boxplot(data)
-    plt.title(f"Boxplot of Fine Scale {title}, group{groupNum}")
-    plt.xlabel(f'{title} in year group {groupNum} ({xlabel})')
-    plt.ylabel(f'{xlabel}')   
-    plt.savefig(f"plots/fine/Boxplots/{filename}G{groupNum}")
-    plt.close()
+# T inside the AW thermocline:
+for i in range(5):
+    singleGroupFinePlot(groupedYears[i], 'temp', "Temperature", "Celcius", i, "Temp" )
 
-
-# # T inside the AW thermocline:
-# for i in range(5):
-#     singleGroupFinePlot(groupedYears[i], 'temp', "Temperature", "Celcius", i, "Temp" )
-
-# #  S inside the AW thermocline:
-# for i in range(5):
-#     singleGroupFinePlot(groupedYears[i], 'salinity', "Salinity", "g/kg", i, "Sal" )
+#  S inside the AW thermocline:
+for i in range(5):
+    singleGroupFinePlot(groupedYears[i], 'salinity', "Salinity", "g/kg", i, "Sal" )
 
 #  rho inside the AW thermocline:
 for i in range(5):
     singleGroupFinePlot(groupedYears[i], 'R_rho', "Density Ratio", " ", i, "Rho" )
 
-# #  dT/dZ inside the AW thermocline:
-# for i in range(5):
-#     singleGroupFinePlot(groupedYears[i], 'dT/dZ', "Temperature Gradient", "Celcius/m", i, "TempGradient" )
+#  dT/dZ inside the AW thermocline:
+for i in range(5):
+    singleGroupFinePlot(groupedYears[i], 'dT/dZ', "Temperature Gradient", "Celcius/m", i, "TempGradient" )
 
-# #  dS/dZ inside the AW thermocline:
-# for i in range(5):
-#     singleGroupFinePlot(groupedYears[i], 'dS/dZ', "Salinity Gradient", "g/kg/m", i, "SalGradient" )
+#  dS/dZ inside the AW thermocline:
+for i in range(5):
+    singleGroupFinePlot(groupedYears[i], 'dS/dZ', "Salinity Gradient", "g/kg/m", i, "SalGradient" )
 
-# # n_sq
-# for i in range(5):
-#     singleGroupFinePlot(groupedYears[i], 'n_sq', "N^2", " ", i, "NSq" )
+# n_sq
+for i in range(5):
+    singleGroupFinePlot(groupedYears[i], 'n_sq', "N^2", " ", i, "NSq" )
 
-# for i in range(5):
-#     singleGroupFinePlot(groupedYears[i], 'R_rho', "log10(Density Ratio)", " ", i, "RhoLog", log = True)
-
-# we need a singleErrorbarPlot(), and loop it in the below function
-def singleErrorBarPlot(df_list, variable,save_path=None):
+for i in range(5):
+    singleGroupFinePlot(groupedYears[i], 'R_rho', "log10(Density Ratio)", " ", i, "RhoLog", log = True)
+################################################################################################################################
+def singleErrorBarPlot(df_list, variable, path):
 
     for i, df_group in enumerate(df_list):
         print(f'-------Processing Group {i}------------------')
@@ -115,47 +104,66 @@ def singleErrorBarPlot(df_list, variable,save_path=None):
     plt.title(f"Comparison of {variable}")
     plt.ylabel('Depth')
     plt.legend()
-    plt.show()
-
-
     plt.tight_layout()
-    if save_path:
-        plt.savefig(f"plots/{save_path}")
+    plt.savefig(f"plots//fine/Errorplots/{path}")
+    plt.close()
+singleErrorBarPlot(groupedYears, "temp", "temp")
+singleErrorBarPlot(groupedYears, "salinity", "salinity")
+singleErrorBarPlot(groupedYears, "dT/dZ" , "dTdZ")
+singleErrorBarPlot(groupedYears, "dS/dZ", "dSdZ")
+singleErrorBarPlot(groupedYears, "n_sq", "nSq")
+singleErrorBarPlot(groupedYears, "R_rho", "rho")
+
+########################################################################################################################
+def singleBoxplot(df_list, variable, title_prefix, y_label, y_limits, filename, log=False):
+    all_values = []
+    all_groups = []
+    for i, df_group in enumerate(df_list):
+        print(f'-------Processing Group {i}------------------')
+        df_copy = df_group.copy()
+        df_copy['year'] = df_copy['date'].apply(lambda d: d.year)
+
+        values = df_copy[variable].values
+        if log:
+            values = np.log10(values)
+            values = values[np.isfinite(values)]
+        all_values.extend(values)
+        all_groups.extend([i] * len(values))  # i represents group number
+
+    # Plotting
+    plt.figure(figsize=(10, 6))
+    plt.boxplot(
+        [ [val for val, g in zip(all_values, all_groups) if g == i] for i in sorted(set(all_groups)) ],
+        labels=sorted(set(all_groups))
+    )
+
+    plt.title(f"Boxplot of Fine Scale {title_prefix}")
+    plt.xlabel(f'{title_prefix}')
+    plt.ylabel(f'{y_label}')   
+    plt.ylim(y_limits)
+    plt.savefig(f"plots/fine/Boxplots/{filename}")
+    plt.close()
+
+# T inside the AW thermocline:
+
+singleBoxplot(groupedYears, 'temp', "Temperature", "Celcius", (1, -1.5), "Temp" )
+
+# S inside the AW thermocline:
+singleBoxplot(groupedYears, 'salinity', "Salinity", "g/kg", (36,33.2), "Sal" )
+
+# rho inside the AW thermocline:
+singleBoxplot(groupedYears, 'R_rho', "Density Ratio", " ", (20,-10), "Rho" )
+
+#  dT/dZ inside the AW thermocline:
+singleBoxplot(groupedYears, 'dT/dZ', "Temperature Gradient", "Celcius/m", (0.03,0), "TempGradient" )
+
+#  dS/dZ inside the AW thermocline:
+singleBoxplot(groupedYears, 'dS/dZ', "Salinity Gradient", "g/kg/m", (0.02,-0.01), "SalGradient" )
+
+# n_sq
+singleBoxplot(groupedYears, 'n_sq', "N^2", " ", (0.0003,-0.0001), "NSq" )
+
+# log10 r_rho
+singleBoxplot(groupedYears, 'R_rho', "log10(Density Ratio)", " ", (2,0), "RhoLog", log = True)
 
 
-# singleErrorBarPlot(groupedYears, "temp")
-
-
-def overlapPlot(variable, yearStart, yearEnd):
-    try:
-        with open("test.pkl", "rb") as f:
-            df = pickle.load(f)
-            yearS_df = df[df['date'].apply(lambda d: d.year) == yearStart].copy()
-            yearE_df = df[df['date'].apply(lambda d: d.year) == yearEnd].copy()
-
-            # Group by depth and compute mean, std, and count
-            avgStart = yearS_df.groupby('depth')[variable].agg(["mean", "std", "count"])
-            avgEnd = yearE_df.groupby('depth')[variable].agg(["mean", "std", "count"])
-
-            # Monitor depths with large number of observations
-            
-            depthStart = avgStart.index.to_numpy()
-            meanStart = avgStart['mean'].to_numpy()
-            stdStart = avgStart['std'].to_numpy()
-
-            depthEnd = avgEnd.index.to_numpy()
-            meanEnd = avgEnd['mean'].to_numpy()
-            stdEnd = avgEnd['std'].to_numpy()
-
-            # # # Main plot: mean profiles
-            plt.errorbar(meanStart, depthStart, xerr=stdStart, fmt='-o', alpha=0.2, capsize=3, label=f'{yearStart}')
-            plt.errorbar(meanEnd, depthEnd, xerr=stdEnd, fmt='-o', alpha=0.2, capsize=3, label=f'{yearEnd}')
-            plt.gca().invert_yaxis()  
-            plt.xlabel(f'Average {variable}')
-            plt.title(f"Comparison of {variable} between {yearStart} and {yearEnd}")
-            plt.ylabel('Depth')
-            plt.legend()
-            plt.show()
-
-    except Exception as e:
-        traceback.print_exc()
