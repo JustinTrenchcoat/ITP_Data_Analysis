@@ -40,7 +40,7 @@ def dfGrouper():
     except Exception as e:
         traceback.print_exc()
 #########################################################
-# Run this only once to save works:
+# # Run this only once to save works:
 # yearDF = dfGrouper()
 # with open("grouped.pkl", 'wb') as f:
 #     pickle.dump(yearDF,f)
@@ -68,7 +68,7 @@ def histogramPlot(data, groupNum, description, filename):
     plt.ylabel('Frequency')
     plt.title(f'Histogram of {description} per Profile')
     plt.legend()
-    plt.savefig(f"plots/Histograms/{filename}G{groupNum}")
+    plt.savefig(f"plots/bulk/Histograms/{filename}G{groupNum}")
 ##########################################################################################################################################
 def singleGroupBulkPlot(df, groupNum):
     print(f'-------Processing Group{groupNum}------------------')
@@ -80,39 +80,39 @@ def singleGroupBulkPlot(df, groupNum):
     
     # depth at Tmin:
     min_temp_depth = df.loc[idx_min_temp, 'depth'].values
-    histogramPlot(min_temp_depth, groupNum, "Depth at Tmin", "TminDepth")
+    # histogramPlot(min_temp_depth, groupNum, "Depth at Tmin", "TminDepth")
 
     # depth at Tmax:
     max_temp_depth = df.loc[idx_max_temp, 'depth'].values
-    histogramPlot(max_temp_depth, groupNum,"Depth at Tmax", "TmaxDepth" )
+    # histogramPlot(max_temp_depth, groupNum,"Depth at Tmax", "TmaxDepth" )
 
     # DZ:
     dz = max_temp_depth - min_temp_depth
-    histogramPlot(dz, groupNum, "Thickness of the AW thermocline", "Thickness")
+    # histogramPlot(dz, groupNum, "Thickness of the AW thermocline", "Thickness")
 
     # T at the depth of the Tmin:
     min_temp = df.loc[idx_min_temp, 'temp'].values
-    histogramPlot(min_temp, groupNum, "Minimum Temperature", "Tmin" )
+    # histogramPlot(min_temp, groupNum, "Minimum Temperature", "Tmin" )
 
     # T at the depth of the Tmax:
     max_temp = df.loc[idx_max_temp, 'temp'].values
-    histogramPlot(max_temp, groupNum, "Maximum Temperature", "Tmax")
+    # histogramPlot(max_temp, groupNum, "Maximum Temperature", "Tmax")
 
     # DT:
     dt = max_temp - min_temp
-    histogramPlot(dt, groupNum, "Bulk-scale temperature change", "dT")   
+    # histogramPlot(dt, groupNum, "Bulk-scale temperature change", "dT")   
 
     # Salinity at Tmin:
     min_temp_sal = df.loc[idx_min_temp, 'salinity'].values
-    histogramPlot(min_temp_sal, groupNum, "Salinity at Tmin", "TminSal")
+    # histogramPlot(min_temp_sal, groupNum, "Salinity at Tmin", "TminSal")
 
     #Salinity at Tmin:
     max_temp_sal = df.loc[idx_max_temp, 'salinity'].values
-    histogramPlot(max_temp_sal, groupNum, "Salinity at Tmax", "TmaxSal")
+    # histogramPlot(max_temp_sal, groupNum, "Salinity at Tmax", "TmaxSal")
 
     # bulk-scale salinity change over the scale of the AW thermocline
     ds = max_temp_sal-min_temp_sal
-    histogramPlot(ds, groupNum, "Bulk-scale Salinity Change", "dS")     
+    # histogramPlot(ds, groupNum, "Bulk-scale Salinity Change", "dS")     
 
 
     # rho at Tmin:
@@ -134,15 +134,15 @@ def singleGroupBulkPlot(df, groupNum):
 
     #dT/dZ:
     temp_gradient = dt/dz
-    histogramPlot(temp_gradient, groupNum, "Bulk-scale Temperature Gredient", "tempGrad")
+    # histogramPlot(temp_gradient, groupNum, "Bulk-scale Temperature Gredient", "tempGrad")
 
 
     sal_gradient = ds/dz
-    histogramPlot(sal_gradient, groupNum, "Bulk-scale Salinity Gredient", "salGrad")  
+    # histogramPlot(sal_gradient, groupNum, "Bulk-scale Salinity Gredient", "salGrad")  
 
     dz_clean = dz[mask]
     rho_gradient = dRho/dz_clean
-    histogramPlot(rho_gradient, groupNum, "Bulk-scale R_rho Gredient", "rhoGrad")
+    # histogramPlot(rho_gradient, groupNum, "Bulk-scale R_rho Gredient", "rhoGrad")
 
     # Bulk Rho:
     beta = []
@@ -157,7 +157,7 @@ def singleGroupBulkPlot(df, groupNum):
     
     rho_bulk = np.log10((beta*sal_gradient)/(alpha*temp_gradient))
     rho_bulk = rho_bulk[np.isfinite(rho_bulk)]
-    histogramPlot(rho_bulk, groupNum, "Bulk-scale Density Ratio", "rho")
+    # histogramPlot(rho_bulk, groupNum, "Bulk-scale Density Ratio", "rho")
 ##########################################################################################################################################
 # for i in range(5):
 #      singleGroupBulkPlot(groupedYears[i], i)
@@ -165,10 +165,9 @@ def singleGroupBulkPlot(df, groupNum):
 
 
 def singleBoxplot(df_list, compute_depth_fn, title_prefix, y_label, y_limits, save_path):
-    n_cols = 5
-    n_rows = 1
-    fig, axs = plt.subplots(n_rows, n_cols, figsize=(4 * n_cols, 4 * n_rows))
-    axs = axs.flatten() 
+
+    all_values = []
+    all_groups = []
 
     for i, df_group in enumerate(df_list):
         print(f'-------Processing Group {i}------------------')
@@ -176,17 +175,24 @@ def singleBoxplot(df_list, compute_depth_fn, title_prefix, y_label, y_limits, sa
         df_copy['year'] = df_copy['date'].apply(lambda d: d.year)
 
         values = compute_depth_fn(df_copy)
+        all_values.extend(values)
+        all_groups.extend([i] * len(values))  # i represents group number
 
-        ax = axs[i]
-        ax.boxplot(values)
-        ax.set_title(f"Boxplot for {title_prefix}, group{i}")
-        ax.set_xlabel('Group Number')
-        ax.set_ylabel(f'{y_label}')
-        ax.set_ylim(y_limits)
+    # Plotting
+    plt.figure(figsize=(8, 6))
+    plt.boxplot(
+        [ [val for val, g in zip(all_values, all_groups) if g == i] for i in sorted(set(all_groups)) ],
+        labels=sorted(set(all_groups))
+    )
 
+    plt.title(f"Boxplot of {title_prefix} by Group")
+    plt.xlabel('Group Number')
+    plt.ylabel(y_label)
+    plt.ylim(y_limits)
     plt.tight_layout()
-    plt.savefig(f"plots/Boxplots/{save_path}")
+    plt.savefig(f"plots/bulk/Boxplots/{save_path}")
     plt.close()
+
 
 
 def boxPlots(df):
@@ -196,76 +202,73 @@ def boxPlots(df):
         min_temp_depth = df.loc[idx_min_temp, 'depth'].values
         return min_temp_depth
          
-    singleBoxplot(df, TminD, "depth at Tmin", "Depth (m)", (650,0),"TminDepthBox")
+    # singleBoxplot(df, TminD, "depth at Tmin", "Depth (m)", (300,100),"TminDepthBox")
 
     def TmaxD(df):
         idx_max_temp = df.groupby(['year','profileNum'])['temp'].idxmax()
         max_temp_depth = df.loc[idx_max_temp, 'depth'].values
         return max_temp_depth
-    singleBoxplot(df, TmaxD, "depth at Tmax","Depth (m)", (650,300), "TmaxDepthBox")
+    # singleBoxplot(df, TmaxD, "depth at Tmax","Depth (m)", (575,325), "TmaxDepthBox")
 
     def dZ(df):
         dz = TmaxD(df) - TminD(df)
         return dz
-    singleBoxplot(df, dZ, "Thickness of Thermocline", "Thickness (m)", (450,0), "ThicknessBox")
+    # singleBoxplot(df, dZ, "Thickness of Thermocline", "Thickness (m)", (375,150), "ThicknessBox")
 
     def minTemp(df):
         idx_min_temp = df.groupby(['year','profileNum'])['temp'].idxmin()
         min_temp = df.loc[idx_min_temp, 'temp'].values
         return min_temp
-    singleBoxplot(df, minTemp, "Minimum Temperature", "Celcius",(2,-4), "TminBox")
+    # singleBoxplot(df, minTemp, "Minimum Temperature", "Celcius",(-1,-1.75), "TminBox")
 
     def maxTemp(df):
          idx_max_temp = df.groupby(['year','profileNum'])['temp'].idxmax()
          max_temp = df.loc[idx_max_temp, 'temp'].values
          return max_temp
-    singleBoxplot(df, maxTemp, "Maximum Temperature", "Celcius", (2,0), "TmaxBox")
+    # singleBoxplot(df, maxTemp, "Maximum Temperature", "Celcius", (1.25,0.5), "TmaxBox")
 
     def dT(df):
         dt = maxTemp(df) - minTemp(df)
         return dt
-    singleBoxplot(df, dT, "Bulk-scale temperature change", "Celcius", (4,-1), "dTBox")
+    # singleBoxplot(df, dT, "Bulk-scale temperature change", "Celcius", (3,2), "dTBox")
 
     def minSal(df):
         idx_min_temp = df.groupby(['year','profileNum'])['temp'].idxmin()
         min_sal = df.loc[idx_min_temp, "salinity"].values
         return min_sal
-    singleBoxplot(df, minSal, "Salinity at Minimum Temperature", "g/kg",(40,30), "TminSalBox")
+    # singleBoxplot(df, minSal, "Salinity at Minimum Temperature", "g/kg",(35,31), "TminSalBox")
 
     def maxSal(df):
         idx_max_temp = df.groupby(['year','profileNum'])['temp'].idxmax()
         max_sal = df.loc[idx_max_temp, 'salinity'].values
         return max_sal     
-    singleBoxplot(df, maxSal, "Salinity at Maximum Temperature", "g/kg", (45, 30), "TmaxSalBox")  
+    # singleBoxplot(df, maxSal, "Salinity at Maximum Temperature", "g/kg", (35.20, 34.9), "TmaxSalBox")  
 
     def dS(df):
         ds = maxSal(df) - minSal(df)
         return ds
-    singleBoxplot(df, dS, "Bulk-scale Salinity Change", "g/kg", (5,0), "dSBox")
+    # singleBoxplot(df, dS, "Bulk-scale Salinity Change", "g/kg", (3.25,0.5), "dSBox")
 
     def minRho(df):
         idx_min_temp = df.groupby(['year','profileNum'])['temp'].idxmin()
-        idx_max_temp = df.groupby(['year','profileNum'])['temp'].idxmax()
 
         min_temp_rho = df.loc[idx_min_temp, 'R_rho'].values
-        max_temp_rho = df.loc[idx_max_temp, 'R_rho'].values
+        print(f"count: {len(min_temp_rho)}, range: {np.nanmin(min_temp_rho):.3f} to {np.nanmax(min_temp_rho):.3f}")
 
-        mask = np.isfinite(max_temp_rho) & np.isfinite(min_temp_rho)
-        min_temp_rho_clean = min_temp_rho[mask]
-        return min_temp_rho_clean
-    singleBoxplot(df, minRho, "Density Gradient at Tmin", "(g/kg)/m", (5,0), "TminRhoBox")
+        if np.any(np.isnan(min_temp_rho)):
+            print("Warning: min_temp_rho contains NaN values")
+        
+        return min_temp_rho
+    singleBoxplot(df, minRho, "Density Gradient at Tmin", "(g/kg)/m", (10,-10), "TminRhoBox")
 
     def maxRho(df):
-        idx_min_temp = df.groupby(['year','profileNum'])['temp'].idxmin()
         idx_max_temp = df.groupby(['year','profileNum'])['temp'].idxmax()
 
-        min_temp_rho = df.loc[idx_min_temp, 'R_rho'].values
         max_temp_rho = df.loc[idx_max_temp, 'R_rho'].values
-
-        mask = np.isfinite(max_temp_rho) & np.isfinite(min_temp_rho)
-        max_temp_rho_clean = max_temp_rho[mask]
-        return max_temp_rho_clean
-    singleBoxplot(df, maxRho, "Density Gradient at Tmax", "(g/kg)/m", (5,0), "TmaxRhoBox")
+        if np.any(np.isnan(max_temp_rho)):
+            print("Warning: max_temp_rho contains NaN values")
+        return max_temp_rho
+    # singleBoxplot(df, maxRho, "Density Gradient at Tmax", "(g/kg)/m", (10,-10), "TmaxRhoBox")
 
     def dRho(df):
         idx_min_temp = df.groupby(['year','profileNum'])['temp'].idxmin()
@@ -279,19 +282,19 @@ def boxPlots(df):
         max_temp_rho_clean = max_temp_rho[mask]
 
         return max_temp_rho_clean - min_temp_rho_clean
-    singleBoxplot(df, dRho, "Bulk-scale Density Ratio Change","(g/kg)/m", (5,0), "dRhoBox" )
+    singleBoxplot(df, dRho, "Bulk-scale Density Ratio Change","(g/kg)/m", (10,-10), "dRhoBox" )
 
     def dTdZ(df):
         return dT(df)/dZ(df)
-    singleBoxplot(df, dTdZ, "Bulk-Scale Temperature Gradient", "Celcius/m", (1,-1),"dTdZBox")
+    # singleBoxplot(df, dTdZ, "Bulk-Scale Temperature Gradient", "Celcius/m", (0.02,0),"dTdZBox")
 
     def dSdZ(df):
         return dS(df)/dZ(df)
-    singleBoxplot(df, dSdZ, "Bulk-Scale Salinity Gradient", "(g/kg)/m", (1,-1), "dSdZBox")
+    # singleBoxplot(df, dSdZ, "Bulk-Scale Salinity Gradient", "(g/kg)/m", (0.02,0), "dSdZBox")
 
     def dRhodZ(df):
         return dRho(df)/dZ(df)
-    singleBoxplot(df, dRhodZ, "Bulk-Scale Density Ratio Gradient", "(g/kg)/m^2", (1,-1),"dRhodZBox")
+    # singleBoxplot(df, dRhodZ, "Bulk-Scale Density Ratio Gradient", "(g/kg)/m^2", (2,-3),"dRhodZBox")
 
     def bulkRho(df):
         # Bulk Rho:
@@ -309,7 +312,7 @@ def boxPlots(df):
         rho_bulk = np.log10((beta*dS(df))/(alpha*dT(df)))
         rho_bulk = rho_bulk[np.isfinite(rho_bulk)]
         return rho_bulk
-    singleBoxplot(df,bulkRho, "Bulk-scale Density Ratio", "(g/kg)/m", (2,-1), "bulkRhoBox")
+    # singleBoxplot(df,bulkRho, "Bulk-scale Density Ratio", "(g/kg)/m", (1.35,0.8), "bulkRhoBox")
 
 
 boxPlots(groupedYears)

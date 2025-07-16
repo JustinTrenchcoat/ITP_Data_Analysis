@@ -12,5 +12,7 @@ clean:
 		rm -rf gridDataMat/*
 		rm -rf gridData/*
 # rm -rf goldData/*
+
 cleanplot:
-	find plots/ -type f ! -path "plots/Histograms/*" ! -path "plots/Boxplots/*" -delete
+	rm -rf plots/bulk/Histograms/*
+	rm -rf plots/bulk/Boxplots/*

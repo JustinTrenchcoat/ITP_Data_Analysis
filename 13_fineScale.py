@@ -57,7 +57,7 @@ def singleGroupFinePlot(df, variable, title, xlabel, groupNum, filename, log = F
     plt.ylabel(f'Frequency')
     plt.title(f'Histogram of Fine Scale {title}')
     plt.legend()
-    plt.savefig(f"plots/FineHist{filename}G{groupNum}")
+    plt.savefig(f"plots/fine/Histograms/{filename}G{groupNum}")
     plt.close()
     # Boxplot:
     plt.figure(figsize=(10, 6))
@@ -65,7 +65,7 @@ def singleGroupFinePlot(df, variable, title, xlabel, groupNum, filename, log = F
     plt.title(f"Boxplot of Fine Scale {title}, group{groupNum}")
     plt.xlabel(f'{title} in year group {groupNum} ({xlabel})')
     plt.ylabel(f'{xlabel}')   
-    plt.savefig(f"plots/FineBox{filename}G{groupNum}")
+    plt.savefig(f"plots/fine/Boxplots/{filename}G{groupNum}")
     plt.close()
 
 
@@ -77,9 +77,9 @@ def singleGroupFinePlot(df, variable, title, xlabel, groupNum, filename, log = F
 # for i in range(5):
 #     singleGroupFinePlot(groupedYears[i], 'salinity', "Salinity", "g/kg", i, "Sal" )
 
-# #  rho inside the AW thermocline:
-# for i in range(5):
-#     singleGroupFinePlot(groupedYears[i], 'R_rho', "Density Ratio", " ", i, "Rho" )
+#  rho inside the AW thermocline:
+for i in range(5):
+    singleGroupFinePlot(groupedYears[i], 'R_rho', "Density Ratio", " ", i, "Rho" )
 
 # #  dT/dZ inside the AW thermocline:
 # for i in range(5):
@@ -123,7 +123,7 @@ def singleErrorBarPlot(df_list, variable,save_path=None):
         plt.savefig(f"plots/{save_path}")
 
 
-singleErrorBarPlot(groupedYears, "temp")
+# singleErrorBarPlot(groupedYears, "temp")
 
 
 def overlapPlot(variable, yearStart, yearEnd):

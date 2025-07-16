@@ -9,6 +9,8 @@ from scipy.io import loadmat
 import gsw
 from tqdm import tqdm
 from helper import *
+from scipy.interpolate import interp1d
+
 
 def singleRead(full_path, ls, profile_num):
     data = loadmat(full_path)
@@ -47,15 +49,23 @@ def singleRead(full_path, ls, profile_num):
     new_df['dS/dZ'] = gaussian_filter1d(np.gradient(salinity, depth),sigma=80, mode='nearest')
 
     n_sq = gaussian_filter1d(gsw.Nsquared(salinity, temp, pres, lat)[0], sigma=80,mode="nearest")
-    n_sq_padded = np.append(n_sq, np.nan)
-    new_df['n_sq'] = n_sq_padded
 
-    [turner_angle, R_rho, _] = gsw.Turner_Rsubrho(salinity, temp, pres)
+    [turner_angle, R_rho, p_mid] = gsw.Turner_Rsubrho(salinity, temp, pres)
+    depth_mid = height(p_mid, lat)
     turner_angle = gaussian_filter1d(turner_angle, sigma=80, mode="nearest")
     R_rho = 1/(R_rho)
     R_rho = gaussian_filter1d(R_rho, sigma=80, mode="nearest")
-    new_df['turner_angle'] = np.append(turner_angle, np.nan)
-    new_df['R_rho'] = np.append(R_rho, np.nan)
+    # fit the background properties to columns:
+    n_sq_interp = interp1d(depth_mid, n_sq,kind='linear', fill_value="extrapolate")
+    R_rho_interp = interp1d(depth_mid, R_rho,kind='linear', fill_value="extrapolate")
+    turner_angle_interp = interp1d(depth_mid, turner_angle,kind='linear', fill_value="extrapolate")
+    interpolated_n_sq = n_sq_interp(depth)
+    interpolated_R_rho = R_rho_interp(depth)
+    interpolated_turner = turner_angle_interp(depth)
+
+    new_df['n_sq'] = interpolated_n_sq
+    new_df['turner_angle'] = interpolated_turner
+    new_df['R_rho'] = interpolated_R_rho
 
     # sanity check
     assert len(new_df['turner_angle']) == len(depth), f"Wrong dimension"
