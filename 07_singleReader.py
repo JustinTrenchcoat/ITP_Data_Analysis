@@ -89,15 +89,27 @@ try:
     print("Tu min/max", np.min(turner_angle), np.max(turner_angle))
 
     print("p_mid min/max:", np.min(p_mid_2), np.max(p_mid_2))
+    indexPmin = np.argmin(p_mid_2)
+    indexPMax = np.argmax(p_mid_2)
+    R_rho_min = R_rho[indexPmin]
+    R_rho_max = R_rho[indexPMax]
+    print(f"Rho at PMin is {R_rho_min}, Rho at PMax is {R_rho_max}")
+    depth_mid = height(p_mid, lat)
+
     # R_rho = np.reciprocal(R_rho)
     print(len(R_rho))
+    plot(R_rho, depth_mid)
     print("rho min/max", np.min(R_rho), np.max(R_rho))
 
-    depth_mid = height(p_mid, lat)
     R_rho_interp = interp1d(depth_mid, R_rho,kind='linear', fill_value="extrapolate")
     interpolated_R_rho = R_rho_interp(depth)
-    interpolated_R_rho = np.reciprocal(interpolated_R_rho)
-    plot(interpolated_R_rho, depth)
+    print("rho interp min/max", np.min(interpolated_R_rho), np.max(interpolated_R_rho))
+#########################
+    R_rho_smooth = gaussian_filter1d(interpolated_R_rho, sigma=40, mode='nearest')
+    # R_rho_smooth = np.reciprocal(R_rho_smooth)
+    print("rho smooth min/max", np.min(R_rho_smooth), np.max(R_rho_smooth))
+
+    plot(R_rho_smooth, depth)
 
 
 

@@ -16,3 +16,5 @@ clean:
 cleanplot:
 	rm -rf plots/bulk/Histograms/*
 	rm -rf plots/bulk/Boxplots/*
+	rm -rf plots/fine/Histograms/*
+	rm -rf plots/fine/Boxplots/*
