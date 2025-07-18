@@ -51,7 +51,7 @@ with open('grouped.pkl', 'rb') as f:
 '''
 Tiny Helper function(s?) for saving space
 '''
-
+############################################################################################################################################
 def histogramPlot(data, groupNum, description, filename):
     plt.figure(figsize=(10, 6))
     counts, _, patches =plt.hist(data, bins=70, alpha=0.5, color='red', 
@@ -73,11 +73,10 @@ def histogramPlot(data, groupNum, description, filename):
 ##########################################################################################################################################
 def singleGroupBulkPlot(df, groupNum):
     print(f'-------Processing Group{groupNum}------------------')
-    df['year'] = df['date'].apply(lambda d: d.year)
     # index min temp for every profile in every year:
-    idx_min_temp = df.groupby(['year','profileNum'])['temp'].idxmin()
+    idx_min_temp = df.groupby(['date','profileNum'])['temp'].idxmin()
     # index max temp for every profile in every year
-    idx_max_temp = df.groupby(['year','profileNum'])['temp'].idxmax()
+    idx_max_temp = df.groupby(['date','profileNum'])['temp'].idxmax()
     
     # depth at Tmin:
     min_temp_depth = df.loc[idx_min_temp, 'depth'].values
@@ -148,9 +147,9 @@ def singleGroupBulkPlot(df, groupNum):
     # Bulk Rho:
     beta = []
     alpha = []
-    temps = [group.values for _, group in df.groupby(['year','profileNum'])['temp']]
-    sals = [group.values for _, group in df.groupby(['year','profileNum'])['salinity']]
-    pres = [group.values for _, group in df.groupby(['year','profileNum'])['pressure']]
+    temps = [group.values for _, group in df.groupby(['date','profileNum'])['temp']]
+    sals = [group.values for _, group in df.groupby(['date','profileNum'])['salinity']]
+    pres = [group.values for _, group in df.groupby(['date','profileNum'])['pressure']]
 
     for i in range(len(temps)):
         beta.append(np.mean(gsw.beta(sals[i], temps[i], pres[i])))
@@ -159,12 +158,9 @@ def singleGroupBulkPlot(df, groupNum):
     rho_bulk = np.log10((beta*np.absolute(sal_gradient))/(alpha*np.absolute(temp_gradient)))
     rho_bulk = rho_bulk[np.isfinite(rho_bulk)]
     histogramPlot(rho_bulk, groupNum, "Bulk-scale Density Ratio", "rho")
-##########################################################################################################################################
-# for i in range(5):
-#      singleGroupBulkPlot(groupedYears[i], i)
-
-
-
+for i in range(5):
+     singleGroupBulkPlot(groupedYears[i], i)
+#############################################################################################################################################
 def singleBoxplot(df_list, compute_depth_fn, title_prefix, y_label, y_limits, save_path):
 
     all_values = []
@@ -173,8 +169,6 @@ def singleBoxplot(df_list, compute_depth_fn, title_prefix, y_label, y_limits, sa
     for i, df_group in enumerate(df_list):
         print(f'-------Processing Group {i}------------------')
         df_copy = df_group.copy()
-        df_copy['year'] = df_copy['date'].apply(lambda d: d.year)
-
         values = compute_depth_fn(df_copy)
         all_values.extend(values)
         all_groups.extend([i] * len(values))  # i represents group number
@@ -193,20 +187,18 @@ def singleBoxplot(df_list, compute_depth_fn, title_prefix, y_label, y_limits, sa
     plt.tight_layout()
     plt.savefig(f"plots/bulk/Boxplots/{save_path}")
     plt.close()
-
-
-
+#######################################################################################################################
 def boxPlots(df):
     # First loop: Collect depths
     def TminD(df):
-        idx_min_temp = df.groupby(['year','profileNum'])['temp'].idxmin()
+        idx_min_temp = df.groupby(['date','profileNum'])['temp'].idxmin()
         min_temp_depth = df.loc[idx_min_temp, 'depth'].values
         return min_temp_depth
          
     singleBoxplot(df, TminD, "depth at Tmin", "Depth (m)", (275,75),"TminDepthBox")
 
     def TmaxD(df):
-        idx_max_temp = df.groupby(['year','profileNum'])['temp'].idxmax()
+        idx_max_temp = df.groupby(['date','profileNum'])['temp'].idxmax()
         max_temp_depth = df.loc[idx_max_temp, 'depth'].values
         return max_temp_depth
     singleBoxplot(df, TmaxD, "depth at Tmax","Depth (m)", (575,325), "TmaxDepthBox")
@@ -217,13 +209,13 @@ def boxPlots(df):
     singleBoxplot(df, dZ, "Thickness of Thermocline", "Thickness (m)", (375,150), "ThicknessBox")
 
     def minTemp(df):
-        idx_min_temp = df.groupby(['year','profileNum'])['temp'].idxmin()
+        idx_min_temp = df.groupby(['date','profileNum'])['temp'].idxmin()
         min_temp = df.loc[idx_min_temp, 'temp'].values
         return min_temp
     singleBoxplot(df, minTemp, "Minimum Temperature", "Celcius",(-1.3,-1.7), "TminBox")
 
     def maxTemp(df):
-         idx_max_temp = df.groupby(['year','profileNum'])['temp'].idxmax()
+         idx_max_temp = df.groupby(['date','profileNum'])['temp'].idxmax()
          max_temp = df.loc[idx_max_temp, 'temp'].values
          return max_temp
     singleBoxplot(df, maxTemp, "Maximum Temperature", "Celcius", (1.15,0.55), "TmaxBox")
@@ -234,13 +226,13 @@ def boxPlots(df):
     singleBoxplot(df, dT, "Bulk-scale temperature change", "Celcius", (2.7,2), "dTBox")
 
     def minSal(df):
-        idx_min_temp = df.groupby(['year','profileNum'])['temp'].idxmin()
+        idx_min_temp = df.groupby(['date','profileNum'])['temp'].idxmin()
         min_sal = df.loc[idx_min_temp, "salinity"].values
         return min_sal
     singleBoxplot(df, minSal, "Salinity at Minimum Temperature", "g/kg",(34.3,31.75), "TminSalBox")
 
     def maxSal(df):
-        idx_max_temp = df.groupby(['year','profileNum'])['temp'].idxmax()
+        idx_max_temp = df.groupby(['date','profileNum'])['temp'].idxmax()
         max_sal = df.loc[idx_max_temp, 'salinity'].values
         return max_sal     
     singleBoxplot(df, maxSal, "Salinity at Maximum Temperature", "g/kg", (35.04, 34.96), "TmaxSalBox")  
@@ -251,7 +243,7 @@ def boxPlots(df):
     singleBoxplot(df, dS, "Bulk-scale Salinity Change", "g/kg", (3.25,0.75), "dSBox")
 
     def minRho(df):
-        idx_min_temp = df.groupby(['year','profileNum'])['temp'].idxmin()
+        idx_min_temp = df.groupby(['date','profileNum'])['temp'].idxmin()
 
         min_temp_rho = df.loc[idx_min_temp, 'R_rho'].values
         
@@ -259,7 +251,7 @@ def boxPlots(df):
     singleBoxplot(df, minRho, "Density Gradient at Tmin", "(g/kg)/m", (40,-5), "TminRhoBox")
 
     def maxRho(df):
-        idx_max_temp = df.groupby(['year','profileNum'])['temp'].idxmax()
+        idx_max_temp = df.groupby(['date','profileNum'])['temp'].idxmax()
 
         max_temp_rho = df.loc[idx_max_temp, 'R_rho'].values
 
@@ -267,8 +259,8 @@ def boxPlots(df):
     singleBoxplot(df, maxRho, "Density Gradient at Tmax", "(g/kg)/m", (7.5,-2.5), "TmaxRhoBox")
 
     def dRho(df):
-        idx_min_temp = df.groupby(['year','profileNum'])['temp'].idxmin()
-        idx_max_temp = df.groupby(['year','profileNum'])['temp'].idxmax()
+        idx_min_temp = df.groupby(['date','profileNum'])['temp'].idxmin()
+        idx_max_temp = df.groupby(['date','profileNum'])['temp'].idxmax()
 
         min_temp_rho = df.loc[idx_min_temp, 'R_rho'].values
         max_temp_rho = df.loc[idx_max_temp, 'R_rho'].values
@@ -296,10 +288,10 @@ def boxPlots(df):
         # Bulk Rho:
         beta = []
         alpha = []
-        temps = [group.values for _, group in df.groupby(['year','profileNum'])['temp']]
+        temps = [group.values for _, group in df.groupby(['date','profileNum'])['temp']]
         # print(f"# of profiles:{len(temps)}")
-        sals = [group.values for _, group in df.groupby(['year','profileNum'])['salinity']]
-        pres = [group.values for _, group in df.groupby(['year','profileNum'])['pressure']]
+        sals = [group.values for _, group in df.groupby(['date','profileNum'])['salinity']]
+        pres = [group.values for _, group in df.groupby(['date','profileNum'])['pressure']]
         
         for i in range(len(temps)):
             beta.append(np.mean(gsw.beta(sals[i], temps[i], pres[i])))
@@ -312,3 +304,13 @@ def boxPlots(df):
 
 
 boxPlots(groupedYears)
+
+
+# def tester(df, groupNum):
+#     print(f'-------Processing Group{groupNum}------------------')
+#     df['year'] = df['date'].apply(lambda d: d.year)
+#     # index min temp for every profile in every year:
+#     idx_min_temp = df.groupby(['date','profileNum'])['temp'].idxmin()
+#     print(len(idx_min_temp))
+# for i in range(5):
+#      tester(groupedYears[i], i)
