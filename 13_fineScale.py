@@ -9,28 +9,16 @@ import matplotlib.dates as mdates
 from scipy.ndimage import gaussian_filter1d
 import math
 import seaborn as sns
-
 '''
  1. histogram of all estimates of property Z for time period Y.  If easy to do, I suggest a grid of Z rows and Y columns.  Y=5.  
  Z to be determined below. Mark on each distribution the median value with a horizontal line.
  2. a figure of X rows that show time series of “box and whisker plots” 
  3. overlapping Y=5 vertical mean profiles with STD envelopes vertical profiles: 1 for each X. 
  Make the 5 different profiles different colours and add a legend that explains which colour corresponds to which time period.
-
- X:
- T inside the AW thermocline
-S inside the AW thermocline
-rho inside the AW thermocline
-dT/dz inside the AW thermocline
-dS/dz inside the AW thermocline
-N^2 inside the AW thermocline
-log10(R_rho) inside the AW thermocline
 '''
-
 # read file:
 with open('grouped.pkl', 'rb') as f:
     groupedYears = pickle.load(f)
-
 #########################################################################################################################
 def singleGroupFinePlot(df, variable, title, xlabel, groupNum, filename, log = False):
     # takes in the df, check every profile:
@@ -61,32 +49,25 @@ def singleGroupFinePlot(df, variable, title, xlabel, groupNum, filename, log = F
 # # T inside the AW thermocline:
 # for i in range(5):
 #     singleGroupFinePlot(groupedYears[i], 'temp', "Temperature", "Celcius", i, "Temp" )
-
 # #  S inside the AW thermocline:
 # for i in range(5):
 #     singleGroupFinePlot(groupedYears[i], 'salinity', "Salinity", "g/kg", i, "Sal" )
-
 # #  rho inside the AW thermocline:
 # for i in range(5):
 #     singleGroupFinePlot(groupedYears[i], 'R_rho', "Density Ratio", " ", i, "Rho" )
-
 # #  dT/dZ inside the AW thermocline:
 # for i in range(5):
 #     singleGroupFinePlot(groupedYears[i], 'dT/dZ', "Temperature Gradient", "Celcius/m", i, "TempGradient" )
-
 # #  dS/dZ inside the AW thermocline:
 # for i in range(5):
 #     singleGroupFinePlot(groupedYears[i], 'dS/dZ', "Salinity Gradient", "g/kg/m", i, "SalGradient" )
-
 # # n_sq
 # for i in range(5):
 #     singleGroupFinePlot(groupedYears[i], 'n_sq', "N^2", " ", i, "NSq" )
-
 # for i in range(5):
 #     singleGroupFinePlot(groupedYears[i], 'R_rho', "log10(Density Ratio)", " ", i, "RhoLog", log = True)
 ################################################################################################################################
 def singleErrorBarPlot(df_list, variable, path):
-
     for i, df_group in enumerate(df_list):
         print(f'-------Processing Group {i}------------------')
         df_copy = df_group.copy()
@@ -97,14 +78,15 @@ def singleErrorBarPlot(df_list, variable, path):
         mean = avg['mean'].to_numpy()
         std = avg['std'].to_numpy()
         plt.errorbar(mean, depth, xerr=std, fmt='-o', alpha=0.1, capsize=3, label=f'Group {i}')
-
+    
     plt.gca().invert_yaxis()  
     plt.xlabel(f'Average {variable}')
     plt.title(f"Comparison of {variable}")
     plt.ylabel('Depth')
     plt.legend()
     plt.tight_layout()
-    plt.savefig(f"plots//fine/Errorplots/{path}")
+    # plt.savefig(f"plots//fine/Errorplots/{path}")
+    plt.show()
     plt.close()
 # singleErrorBarPlot(groupedYears, "temp", "temp")
 # singleErrorBarPlot(groupedYears, "salinity", "salinity")
@@ -113,9 +95,6 @@ def singleErrorBarPlot(df_list, variable, path):
 # singleErrorBarPlot(groupedYears, "n_sq", "nSq")
 # singleErrorBarPlot(groupedYears, "R_rho", "rho")
 ##########################################################################################################################
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 
@@ -172,12 +151,7 @@ def distributionPlot(df_list, path):
     # plt.savefig(f"plots//fine/Errorplots/{path}")
     plt.show()
     plt.close()
-
-
-
 # distributionPlot(groupedYears, "disPlot")
-
-
 ########################################################################################################################
 def singleBoxplot(df_list, variable, title_prefix, y_label, y_limits, filename, log=False):
     all_values = []
@@ -207,26 +181,25 @@ def singleBoxplot(df_list, variable, title_prefix, y_label, y_limits, filename, 
     plt.savefig(f"plots/fine/Boxplots/{filename}")
     plt.close()
 
-# # T inside the AW thermocline:
+# T inside the AW thermocline:
+singleBoxplot(groupedYears, 'temp', "Temperature", "Celcius", (-1.5,1), "Temp" )
 
-# singleBoxplot(groupedYears, 'temp', "Temperature", "Celcius", (1, -1.5), "Temp" )
+# S inside the AW thermocline:
+singleBoxplot(groupedYears, 'salinity', "Salinity", "g/kg", (33.2,36), "Sal" )
 
-# # S inside the AW thermocline:
-# singleBoxplot(groupedYears, 'salinity', "Salinity", "g/kg", (36,33.2), "Sal" )
+# rho inside the AW thermocline:
+singleBoxplot(groupedYears, 'R_rho', "Density Ratio", " ", (-10,20), "Rho" )
 
-# # rho inside the AW thermocline:
-# singleBoxplot(groupedYears, 'R_rho', "Density Ratio", " ", (20,-10), "Rho" )
+#  dT/dZ inside the AW thermocline:
+singleBoxplot(groupedYears, 'dT/dZ', "Temperature Gradient", "Celcius/m", (0,0.03), "TempGradient" )
 
-# #  dT/dZ inside the AW thermocline:
-# singleBoxplot(groupedYears, 'dT/dZ', "Temperature Gradient", "Celcius/m", (0.03,0), "TempGradient" )
+#  dS/dZ inside the AW thermocline:
+singleBoxplot(groupedYears, 'dS/dZ', "Salinity Gradient", "g/kg/m", (-0.01,0.02), "SalGradient" )
 
-# #  dS/dZ inside the AW thermocline:
-# singleBoxplot(groupedYears, 'dS/dZ', "Salinity Gradient", "g/kg/m", (0.02,-0.01), "SalGradient" )
+# n_sq
+singleBoxplot(groupedYears, 'n_sq', "N^2", " ", (-0.0001,0.0003), "NSq" )
 
-# # n_sq
-# singleBoxplot(groupedYears, 'n_sq', "N^2", " ", (0.0003,-0.0001), "NSq" )
-
-# # log10 r_rho
-# singleBoxplot(groupedYears, 'R_rho', "log10(Density Ratio)", " ", (2,0), "RhoLog", log = True)
+# log10 r_rho
+singleBoxplot(groupedYears, 'R_rho', "log10(Density Ratio)", " ", (0,2), "RhoLog", log = True)
 
 

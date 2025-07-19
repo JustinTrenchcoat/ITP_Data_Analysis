@@ -500,6 +500,6 @@ def plot_density_map(df, groupNum, bins=50, log_scale=True,cmap='Spectral_r'):
     plt.show()
 
 
-for i in range (5):
-    df = simpleDF(groupedYears[i])
-    plot_density_map(df, i)
+# for i in range (5):
+#     df = simpleDF(groupedYears[i])
+#     plot_density_map(df, i)

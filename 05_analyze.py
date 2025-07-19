@@ -12,7 +12,7 @@ from helper import *
 from scipy.interpolate import interp1d
 
 
-def singleRead(full_path, ls, profile_num):
+def singleRead(full_path, ls, profile_num,sys_num):
     data = loadmat(full_path)
     
     # Adjust according to actual variable names in your .mat file
@@ -80,6 +80,7 @@ def singleRead(full_path, ls, profile_num):
 
     # Add profile number column here
     new_df['profileNum'] = profile_num
+    new_df["systemNum"] = sys_num
 
     ls.append(new_df)
     return ls
@@ -97,6 +98,13 @@ for folder_name in sorted(os.listdir(datasets_dir)):
         continue  # skip non-folders
 
     print(f"\nProcessing folder: {folder_name}")
+
+    # Extract profile number from filename
+    match = re.search(r'(\d+)', folder_name)
+    if match:
+        system_num = int(match.group(1))
+    else:
+        system_num = None  # Or raise an error if mandatory
 
     # Get all .mat files
     all_mat_files = sorted([f for f in os.listdir(folder_path) if f.endswith('.mat')])
@@ -116,7 +124,7 @@ for folder_name in sorted(os.listdir(datasets_dir)):
                     profile_num = None  # Or raise an error if mandatory
 
                 # Pass profile number to singleRead
-                df_list = singleRead(full_path, df_list, profile_num)
+                df_list = singleRead(full_path, df_list, profile_num,system_num)
 
                 for warning in w:
                     if (issubclass(warning.category, RuntimeWarning) and
