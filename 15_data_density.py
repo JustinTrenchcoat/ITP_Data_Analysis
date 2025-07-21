@@ -93,7 +93,126 @@ def plot_density_map(df, groupNum, bins=50, log_scale=False,cmap='Spectral_r'):
     plt.close()
 
 
+# for i in range (5):
+#     df = simpleDF(groupedYears[i])
+#     print(f"processing group{i}")
+#     plot_density_map(df, i)
+
+
+
+def dataDistribution(df, groupNum):
+    df_with_counts = df.copy()
+    df_with_counts['year'] = df_with_counts['date'].apply(lambda d: d.year)
+    
+    df_with_counts = (
+        df_with_counts.groupby(["year", "systemNum", "profileNum"])
+        .size()
+        .reset_index(name='count')
+    )
+    years = df_with_counts['year'].unique()
+    counts = []
+    for year in years:
+        counts.append(len(df_with_counts[df_with_counts["year"]==year]))
+    
+    print(np.sum(counts))
+    years = years.astype(str)
+
+
+    # Plot
+    fig, ax = plt.subplots()
+    bar_colors = ['tab:red', 'tab:blue', 'tab:green', 'tab:orange'] 
+    bar_colors = bar_colors[:len(years)] 
+    
+    bars = ax.bar(years, counts, color=bar_colors)
+
+    # Add count labels on top of bars
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2, height + 5, str(height),
+                ha='center', va='bottom', fontsize=9)
+
+    ax.set_ylabel('Number of profiles')
+    ax.set_title(f'Number of profiles per year, Group {groupNum}')
+    ax.set_xlabel('Year')
+    ax.set_ylim(0, max(counts)*1.1)
+    plt.savefig(f"plots/heatmap/ProfileNumG{groupNum}")
+    # plt.show()
+    plt.close()
+
+
+
+# for i in range (5):
+#     print(f"processing group{i}")
+#     dataDistribution(groupedYears[i], i)
+
+
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+import numpy as np
+import pandas as pd
+
+def dataTrace(df, groupNum, cmap='Spectral_r'):
+    """
+    Plot trajectory of ITP systems colored by year on a map.
+    Assumes input df has: systemNum, profileNum, year, lon, lat
+    """
+    df_with_counts = df.copy()
+    df_with_counts['year'] = df_with_counts['date'].apply(lambda d: d.year)
+
+    # Determine map center
+    central_longitude = np.median(df_with_counts['lon'])
+    central_latitude = np.median(df_with_counts['lat'])
+
+    # Lambert Conformal Projection
+    projection = ccrs.LambertConformal(
+        central_longitude=central_longitude,
+        central_latitude=central_latitude
+    )
+
+    # Prepare figure and axes
+    fig = plt.figure(figsize=(8, 6))
+    ax = plt.axes(projection=projection)
+    ax.set_extent([-160, -130, 72, 81], crs=ccrs.PlateCarree())
+    ax.coastlines(resolution='50m', linewidth=0.6)
+    ax.add_feature(cfeature.BORDERS, linewidth=0.4)
+    ax.add_feature(cfeature.LAND, zorder=0, facecolor='lightgray')
+
+    # Get unique years and assign a colormap
+    years = sorted(df_with_counts['year'].unique())
+    norm = plt.Normalize(min(years), max(years))
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+
+    # Plot each trajectory
+    for system in df_with_counts['systemNum'].unique():
+        sub = df_with_counts[df_with_counts['systemNum'] == system].sort_values(['year', 'profileNum'])
+
+        ax.plot(
+            sub['lon'], sub['lat'],
+            transform=ccrs.PlateCarree(),
+            color=sm.to_rgba(sub['year'].iloc[0]),
+            linewidth=1.2,
+            label=f'ITP {system}' if system == df_with_counts['systemNum'].unique()[0] else None  # avoid legend spam
+        )
+
+    # Add gridlines
+    gl = ax.gridlines(draw_labels=True, linestyle='--', linewidth=0.5)
+    gl.top_labels = True
+    gl.right_labels = False
+
+    # Add colorbar
+    cbar = plt.colorbar(sm, ax=ax, orientation='vertical', shrink=0.7, pad=0.05)
+    cbar.set_label('Year')
+
+    # Title and save
+    plt.title(f'Trajectory of ITP Systems (Colored by Year), Group {groupNum}')
+    plt.tight_layout()
+    # plt.savefig(f"plots/trajectory/TrajectoryG{groupNum}")
+    plt.show()
+    plt.close()
+
+
+
 for i in range (5):
-    df = simpleDF(groupedYears[i])
     print(f"processing group{i}")
-    plot_density_map(df, i)
+    dataTrace(groupedYears[i], i)
