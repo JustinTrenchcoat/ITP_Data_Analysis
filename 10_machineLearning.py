@@ -104,7 +104,7 @@ X_train_enc, y_train, X_test_enc, y_test, preprocessor = preprocess_features(
 )
 ##############################################################################################
 # Model Fitting Part
-# Feature Importance Analysis via statsmodels (with correct alignment)
+# Feature Importance Analysis via statsmodels
 feature_names = preprocessor.get_feature_names_out()
 
 # Add intercept manually
@@ -161,7 +161,7 @@ plt.show()
 # print(f"75th Percentile (Q3): {np.percentile(resid_pearson, 75)}")
 # print(f"IQR           : {np.percentile(resid_pearson, 75) - np.percentile(resid_pearson, 25)}")
 
-#     # Plot the histogram
+# Plot the histogram
 # plt.figure(figsize=(10, 6))
 # plt.hist(resid_pearson, bins=50, edgecolor='black')  # adjust bin count or bin edges here
 # plt.title(f"Histogram of Pearson Residual")
