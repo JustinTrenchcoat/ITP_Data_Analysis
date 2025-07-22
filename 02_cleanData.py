@@ -20,7 +20,7 @@
 # te_cor           temperature (C) at thermistor after lags applied 
 
 '''
-This script will go through the rawData folder created by 01_pullData.py and extract data that satisfies out requirement. 
+This script will go through the rawData folder created by 01_pullData.py and extract data that satisfies our requirement. 
 In this case, the requirement would be:
 1. The data is collected in the Beaufort Gyre (Start latitude between 73N to 81N, start longitude between 160 W to 130W)
 2. The data has measurement of depth that is at least 2 meters deeper than the AW Temperature Maximum(200m below water)
@@ -34,8 +34,6 @@ Similarly, some profiles would contain NaN as end dates and times.
 
 
 '''
-
-
 import h5py
 import numpy as np
 import os
@@ -104,7 +102,8 @@ for folder_name in sorted(os.listdir(datasets_dir)):
                 depth_index_temp_max_idx = np.argmax(te_adj[depth_index])
                 # temp_max_depth_idx is the index value of depth, for the depth with max temperature below 200 m
                 temp_max_depth_idx = depth_index[depth_index_temp_max_idx]
-                # temp_max_depth is the value of depth at the max value of te_cor values that are under 200m
+                # temp_max_depth is the value of depth at the max value of te_cor values that are under 250m, 
+                # since pacific water can't be deeper than that.
                 temp_max_depth = depth[temp_max_depth_idx]
                 max_deep = (temp_max_depth >= 250)
 
@@ -112,9 +111,9 @@ for folder_name in sorted(os.listdir(datasets_dir)):
                 # the greatest depth measurement has to be 10 m deeper than temp_max_depth
                 deep_enough = (dep_max >= temp_max_depth+10)
 
-                # if the depth of temp_max beyond 200m, then it is good profile:
+                # if it fulfills all three criteria, then it is good profile:
                 if (deep_enough and is_Beaufort and max_deep):
-                    # --- COPY GOOD FILE TO goldData ---
+                    # COPY GOOD FILE TO goldData
                     dest_folder = os.path.join(golden_dir, folder_name)
                     os.makedirs(dest_folder, exist_ok=True)
                     dest_path = os.path.join(dest_folder, filename)
@@ -125,7 +124,8 @@ for folder_name in sorted(os.listdir(datasets_dir)):
         except Exception:
             bad_profile.append(filename)
 
-    # Count bad profiles
+# quick check for bad profiles
 print(f"there are in total {len(bad_profile)} bad profiles")
+# sanity checks for those gold-standard data
 checkField(golden_dir)
 countData(golden_dir)

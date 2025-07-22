@@ -18,7 +18,7 @@ with open('grouped.pkl', 'rb') as f:
 # Group and count
 def simpleDF(df):
     df_with_counts = (
-        df.groupby(['lat', 'lon'])
+        df.groupby(['lat', 'lon', "systemNum", "profileNum"])
         .size()
         .reset_index(name='count')
     )

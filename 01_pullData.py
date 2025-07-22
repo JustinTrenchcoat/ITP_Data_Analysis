@@ -38,16 +38,13 @@ for itp_num in tqdm(range(1, 144), desc="Downloading"):
                 zip_ref.extractall(extract_folder)
             print(f"Extracted to: {extract_folder}")
 
-            # Optionally delete the zip file after extraction
+            # delete the zip file after extraction
             os.remove(zip_path)
-
         else:
             print(f"Not found or failed to download: {url}")
             failList.append(f"Not found or failed to download: {url}")
 
-
     except Exception as e:
         print(f"Error processing ITP {itp_num}: {e}")
-
-
+# a quick list for you to check what went wrong
 print(failList)
