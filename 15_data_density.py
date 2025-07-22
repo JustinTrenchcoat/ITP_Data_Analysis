@@ -6,7 +6,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.dates as mdates
+import matplotlib
 import math
+import cartopy.crs as ccrs
 #################################################################################################
 # data density plot
 
@@ -26,10 +28,7 @@ def simpleDF(df):
 group_zero = simpleDF(groupedYears[0])
 
 # print(group_zero.head())
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
+
 def plot_density_map(df, groupNum, bins=50, log_scale=False,cmap='Spectral_r'):
     """
     Plots a density map of observations using lat/lon and count.
@@ -146,72 +145,71 @@ def dataDistribution(df, groupNum):
 #     dataDistribution(groupedYears[i], i)
 
 
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-import numpy as np
-import pandas as pd
-
-def dataTrace(df, groupNum, cmap='Spectral_r'):
-    """
-    Plot trajectory of ITP systems colored by year on a map.
-    Assumes input df has: systemNum, profileNum, year, lon, lat
-    """
+def traceDF(df):
     df_with_counts = df.copy()
     df_with_counts['year'] = df_with_counts['date'].apply(lambda d: d.year)
+    df_with_counts = (
+        df_with_counts.groupby(["lat", "lon", "year", "systemNum", "profileNum"])
+        .size()
+        .reset_index(name='count')
+        )
+    df_with_counts['count'] = 1
+    return df_with_counts
 
-    # Determine map center
-    central_longitude = np.median(df_with_counts['lon'])
-    central_latitude = np.median(df_with_counts['lat'])
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+import matplotlib.cm as cm
 
-    # Lambert Conformal Projection
-    projection = ccrs.LambertConformal(
-        central_longitude=central_longitude,
-        central_latitude=central_latitude
-    )
+def dataTrace(df, groupNum, log_scale=False, cmap='Set1'):
+    """
+    Plots a density scatter map of observations using lat/lon and count,
+    colored by discrete years.
+    """
+    df = traceDF(df)
+    central_longitude = np.median(df['lon'])
+    central_latitude = np.median(df["lat"])
 
-    # Prepare figure and axes
-    fig = plt.figure(figsize=(8, 6))
+    projection = ccrs.LambertConformal(central_longitude=central_longitude, central_latitude=central_latitude)
+
+    fig = plt.figure(figsize=(7, 7))
     ax = plt.axes(projection=projection)
     ax.set_extent([-160, -130, 72, 81], crs=ccrs.PlateCarree())
-    ax.coastlines(resolution='50m', linewidth=0.6)
-    ax.add_feature(cfeature.BORDERS, linewidth=0.4)
-    ax.add_feature(cfeature.LAND, zorder=0, facecolor='lightgray')
 
-    # Get unique years and assign a colormap
-    years = sorted(df_with_counts['year'].unique())
-    norm = plt.Normalize(min(years), max(years))
-    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    ax.coastlines(resolution='50m', linewidth=0.5)
+    # ax.add_feature(cfeature.BORDERS, linewidth=0.5)
+    # ax.add_feature(cfeature.LAND, facecolor='lightgray')
+    # ax.add_feature(cfeature.OCEAN, facecolor='white')
 
-    # Plot each trajectory
-    for system in df_with_counts['systemNum'].unique():
-        sub = df_with_counts[df_with_counts['systemNum'] == system].sort_values(['year', 'profileNum'])
+    # Prepare color map
+    unique_years = sorted(df['year'].unique())
+    n_years = len(unique_years)
+    colors = matplotlib.colormaps['Set1'].resampled(n_years)
 
-        ax.plot(
-            sub['lon'], sub['lat'],
+    # Plot each year separately
+    for i, year in enumerate(unique_years):
+        subset = df[df['year'] == year]
+        sizes = 15
+        ax.scatter(
+            subset['lon'], subset['lat'],
             transform=ccrs.PlateCarree(),
-            color=sm.to_rgba(sub['year'].iloc[0]),
-            linewidth=1.2,
-            label=f'ITP {system}' if system == df_with_counts['systemNum'].unique()[0] else None  # avoid legend spam
+            color=colors(i),
+            label=str(year),
+            s=sizes,
+            alpha=1,
+            edgecolor='k',
+            linewidth=0.2
         )
 
-    # Add gridlines
     gl = ax.gridlines(draw_labels=True, linestyle='--', linewidth=0.5)
     gl.top_labels = True
     gl.right_labels = False
 
-    # Add colorbar
-    cbar = plt.colorbar(sm, ax=ax, orientation='vertical', shrink=0.7, pad=0.05)
-    cbar.set_label('Year')
-
-    # Title and save
-    plt.title(f'Trajectory of ITP Systems (Colored by Year), Group {groupNum}')
+    ax.legend(title="Year", loc="lower left", fontsize="small")
+    plt.title(f'Profile Distribution by Year, Group {groupNum}, N = {len(df)}')
     plt.tight_layout()
-    # plt.savefig(f"plots/trajectory/TrajectoryG{groupNum}")
-    plt.show()
+    # plt.show()
+    plt.savefig(f"plots/heatmap/dataTraceG{groupNum}")
     plt.close()
-
-
 
 for i in range (5):
     print(f"processing group{i}")
