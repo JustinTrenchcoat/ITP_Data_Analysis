@@ -5,16 +5,34 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.colors as colors
 import matplotlib.dates as mdates
+from matplotlib.patches import Patch
 import math
+from matplotlib.colors import LinearSegmentedColormap
+
 
 
 with open('grouped.pkl', 'rb') as f:
     groupedYears = pickle.load(f)
 
 
+colorscale = LinearSegmentedColormap.from_list("year_trend", [
+    "#4575b4",  # blue
+    "#91bfdb",
+    "#e0f3f8",
+    "#fee090",
+    "#fc8d59",
+    "#d73027"   # red-orange
+])
+
+
+years = ["2004-2007", '2008-2011', '2012-2015', '2016-2019', '2020-2023']
+colors = colorscale(np.linspace(0, 1, len(years)))
+
+temp_min_idx = []
+temp_max_idx = []
+
 # making mean, mean+std, mean-std for each group,
 def vertPlot(df_list, variable, path, type):
-    color_list = ["r","y", "g", "b","k"]
     for i, df_group in enumerate(df_list):
         print(f'-------Processing Group {i}------------------')
         df_copy = df_group.copy()
@@ -30,15 +48,19 @@ def vertPlot(df_list, variable, path, type):
         std = avg['std'].to_numpy()
         std = std[count_mask]
 
+        if variable == "temp":
+            temp_min_idx.append(mean.argmin())
+            temp_max_idx.append(mean.argmax())
+
         # print(depth[mean.argmin()])
         if type == "origin":
-            plt.scatter(mean, depth, label = f"Group {i}", color = color_list[i], s=1,edgecolors='none')
-            plt.axhline(depth[mean.argmin()], color=color_list[i], linestyle='--')
-            plt.axhline(depth[mean.argmax()], color=color_list[i], linestyle='--')
+            plt.scatter(mean, depth, label = f"Group {i}", color = colors[i], s=1,edgecolors='none')
+            plt.axhline(depth[temp_max_idx[i]], color=colors[i], linestyle='--')
+            plt.axhline(depth[temp_min_idx[i]], color=colors[i], linestyle='--')
         elif type == "plus":
-            plt.scatter(mean+std, depth, alpha=0.1,label = f"Group {i}", color = color_list[i])
+            plt.scatter(mean+std, depth, alpha=0.1,label = f"Group {i}", color = colors[i])
         else:
-            plt.scatter(mean-std,depth, alpha=0.1,label = f"Group {i}", color = color_list[i])
+            plt.scatter(mean-std,depth, alpha=0.1,label = f"Group {i}", color = colors[i])
 
     plt.gca().invert_yaxis()
     if type == "origin":
@@ -52,18 +74,56 @@ def vertPlot(df_list, variable, path, type):
             plt.title(f"Average of {variable}-std")
 
     plt.ylabel('Depth')
-    # plt.legend()
+    # # Legend: color squares instead of dots
+    # legend_patches = [
+    #     Patch(facecolor=colors[i], edgecolor='black', label=str(years[i]))
+    #     for i in range(len(years))
+    # ]   
+
+    # plt.legend(handles=legend_patches, title='Year')    
     plt.tight_layout()
-    # plt.savefig(f"plots/fine/vertPlot/{path}{type}")
+    plt.savefig(f"plots/fine/vertPlot/{path}{type}")
     plt.show()
     plt.close()
 
+def plot_legend_only(years, colors, filename, legend_title="Year"):
+    fig, ax = plt.subplots()
+
+    # Create legend handles
+    legend_patches = [
+        Patch(facecolor=colors[i], edgecolor='black', label=str(years[i]))
+        for i in range(len(years))
+    ]
+
+    # Place the legend in center of new figure
+    legend = ax.legend(
+        handles=legend_patches,
+        title=legend_title,
+        loc='center',
+        frameon=False,
+        fontsize=12,
+        title_fontsize=13
+    )
+
+    # Hide axes for clean legend-only figure
+    ax.axis('off')
+    
+    # Resize figure to fit legend
+    fig.set_size_inches(2.5, len(years) * 0.35 + 1)
+    plt.savefig(f"plots/fine/vertPlot/{filename}")
+    plt.show()
+    plt.close()
+
+
 vertPlot(groupedYears, "temp", "temp", "origin")
-# vertPlot(groupedYears, "salinity", "sal", "minus")
-# vertPlot(groupedYears, "dT/dZ" , "dTdZ", "minus")
-# vertPlot(groupedYears, "dS/dZ", "dSdZ", "minus")
-# vertPlot(groupedYears, "n_sq", "nSq", "minus")
-# vertPlot(groupedYears, "R_rho", "rho", "minus")
+plot_legend_only(years, colors, "legend")
+vertPlot(groupedYears, "turner_angle", "turner", "origin")
+vertPlot(groupedYears, "salinity", "sal", "origin")
+vertPlot(groupedYears, "dT/dZ" , "dTdZ", "origin")
+vertPlot(groupedYears, "dS/dZ", "dSdZ", "origin")
+vertPlot(groupedYears, "n_sq", "nSq", "origin")
+vertPlot(groupedYears, "R_rho", "rho", "origin")
+
 
 # def vertPlot(df_list, variable, path, type):
 #     color_list = ["r","y", "g", "b","k"]

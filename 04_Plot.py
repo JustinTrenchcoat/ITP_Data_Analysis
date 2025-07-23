@@ -418,7 +418,7 @@ def profileChecker():
             
     except Exception as e:
         traceback.print_exc()
-# profileChecker()
+profileChecker()
 #################################################################################################
 # data density plot
 
