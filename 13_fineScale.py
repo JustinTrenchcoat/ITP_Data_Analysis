@@ -54,7 +54,7 @@ def singleGroupFinePlot(df, variable, title, xlabel, groupNum, filename, log = F
 #     singleGroupFinePlot(groupedYears[i], 'salinity', "Salinity", "g/kg", i, "Sal" )
 # #  rho inside the AW thermocline:
 # for i in range(5):
-#     singleGroupFinePlot(groupedYears[i], 'R_rho', "Density Ratio", " ", i, "Rho" )
+#     singleGroupFinePlot(groupedYears[i], 'R_rho', "Stability Ratio", " ", i, "Rho" )
 # #  dT/dZ inside the AW thermocline:
 # for i in range(5):
 #     singleGroupFinePlot(groupedYears[i], 'dT/dZ', "Temperature Gradient", "Celcius/m", i, "TempGradient" )
@@ -65,7 +65,7 @@ def singleGroupFinePlot(df, variable, title, xlabel, groupNum, filename, log = F
 # for i in range(5):
 #     singleGroupFinePlot(groupedYears[i], 'n_sq', "N^2", " ", i, "NSq" )
 # for i in range(5):
-#     singleGroupFinePlot(groupedYears[i], 'R_rho', "log10(Density Ratio)", " ", i, "RhoLog", log = True)
+#     singleGroupFinePlot(groupedYears[i], 'R_rho', "log10(Stability Ratio)", " ", i, "RhoLog", log = True)
 ################################################################################################################################
 def singleErrorBarPlot(df_list, variable, path):
     for i, df_group in enumerate(df_list):
@@ -175,31 +175,31 @@ def singleBoxplot(df_list, variable, title_prefix, y_label, y_limits, filename, 
     )
 
     plt.title(f"Boxplot of Fine Scale {title_prefix}")
-    plt.xlabel(f'{title_prefix}')
+    plt.xlabel("Group")
     plt.ylabel(f'{y_label}')   
     plt.ylim(y_limits)
     plt.savefig(f"plots/fine/Boxplots/{filename}")
     plt.close()
 
-# T inside the AW thermocline:
-singleBoxplot(groupedYears, 'temp', "Temperature", "Celcius", (-1.5,1), "Temp" )
+# # T inside the AW thermocline:
+# singleBoxplot(groupedYears, 'temp', "Temperature", "Celcius", (-1.5,1), "Temp" )
 
-# S inside the AW thermocline:
-singleBoxplot(groupedYears, 'salinity', "Salinity", "g/kg", (33.2,36), "Sal" )
+# # S inside the AW thermocline:
+# singleBoxplot(groupedYears, 'salinity', "Salinity", "g/kg", (33.2,36), "Sal" )
 
 # rho inside the AW thermocline:
-singleBoxplot(groupedYears, 'R_rho', "Density Ratio", " ", (-10,20), "Rho" )
+singleBoxplot(groupedYears, 'R_rho', "Stability Ratio", " ", (-10,20), "Rho" )
 
-#  dT/dZ inside the AW thermocline:
-singleBoxplot(groupedYears, 'dT/dZ', "Temperature Gradient", "Celcius/m", (0,0.03), "TempGradient" )
+# #  dT/dZ inside the AW thermocline:
+# singleBoxplot(groupedYears, 'dT/dZ', "Temperature Gradient", "Celcius/m", (0,0.03), "TempGradient" )
 
-#  dS/dZ inside the AW thermocline:
-singleBoxplot(groupedYears, 'dS/dZ', "Salinity Gradient", "g/kg/m", (-0.01,0.02), "SalGradient" )
+# #  dS/dZ inside the AW thermocline:
+# singleBoxplot(groupedYears, 'dS/dZ', "Salinity Gradient", "g/kg/m", (-0.01,0.02), "SalGradient" )
 
-# n_sq
-singleBoxplot(groupedYears, 'n_sq', "N^2", " ", (-0.0001,0.0003), "NSq" )
+# # n_sq
+# singleBoxplot(groupedYears, 'n_sq', "N^2", " ", (-0.0001,0.0003), "NSq" )
 
 # log10 r_rho
-singleBoxplot(groupedYears, 'R_rho', "log10(Density Ratio)", " ", (0,2), "RhoLog", log = True)
+singleBoxplot(groupedYears, 'R_rho', "log10(Stability Ratio)", " ", (0,2), "RhoLog", log = True)
 
 
