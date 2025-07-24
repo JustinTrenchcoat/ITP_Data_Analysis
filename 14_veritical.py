@@ -54,7 +54,7 @@ def vertPlot(df_list, variable, path, type):
 
         # print(depth[mean.argmin()])
         if type == "origin":
-            plt.scatter(mean, depth, label = f"Group {i}", color = colors[i], s=1,edgecolors='none')
+            plt.scatter(mean, depth, label = f"Group {i}", color = colors[i], s=5,edgecolors='none')
             plt.axhline(depth[temp_max_idx[i]], color=colors[i], linestyle='--')
             plt.axhline(depth[temp_min_idx[i]], color=colors[i], linestyle='--')
         elif type == "plus":
@@ -82,7 +82,7 @@ def vertPlot(df_list, variable, path, type):
 
     # plt.legend(handles=legend_patches, title='Year')    
     plt.tight_layout()
-    plt.savefig(f"plots/fine/vertPlot/{path}{type}")
+    # plt.savefig(f"plots/fine/vertPlot/{path}{type}")
     plt.show()
     plt.close()
 
@@ -110,7 +110,7 @@ def plot_legend_only(years, colors, filename, legend_title="Year"):
     
     # Resize figure to fit legend
     fig.set_size_inches(2.5, len(years) * 0.35 + 1)
-    plt.savefig(f"plots/fine/vertPlot/{filename}")
+    # plt.savefig(f"plots/fine/vertPlot/{filename}")
     plt.show()
     plt.close()
 

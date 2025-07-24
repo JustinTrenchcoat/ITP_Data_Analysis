@@ -90,15 +90,12 @@ def plot_density_map(df, groupNum, bins=50, log_scale=False,cmap='Spectral_r'):
     plt.savefig(f"plots/heatmap/ProfileG{groupNum}")
     # plt.show()
     plt.close()
-
-
+##############################################
 # for i in range (5):
 #     df = simpleDF(groupedYears[i])
 #     print(f"processing group{i}")
 #     plot_density_map(df, i)
-
-
-
+#########################################################################################################################
 def dataDistribution(df, groupNum):
     df_with_counts = df.copy()
     df_with_counts['year'] = df_with_counts['date'].apply(lambda d: d.year)
@@ -137,14 +134,12 @@ def dataDistribution(df, groupNum):
     plt.savefig(f"plots/heatmap/ProfileNumG{groupNum}")
     # plt.show()
     plt.close()
-
-
-
+#########################################################################
 # for i in range (5):
 #     print(f"processing group{i}")
 #     dataDistribution(groupedYears[i], i)
 
-
+##################################################################################################################
 def traceDF(df):
     df_with_counts = df.copy()
     df_with_counts['year'] = df_with_counts['date'].apply(lambda d: d.year)

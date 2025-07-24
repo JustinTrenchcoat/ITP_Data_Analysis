@@ -390,25 +390,31 @@ def profileChecker():
     try:
         with open("test.pkl", "rb") as f:
             df = pickle.load(f)
-            years = df['date'].apply(lambda d: d.year).unique()
-            years_sorted = np.sort(years)
-            print(years_sorted)
-            
-            year_counts = []
-            for year in years_sorted:
-                year_df = df[df['date'].apply(lambda d: d.year) == year].copy()
-                profiles = year_df['profileNum'].unique()
-                print(f'year {year} has {len(profiles)} profiles')
-                year_counts.append(len(profiles))
+            df_with_counts = df.copy()
+            df_with_counts['year'] = df_with_counts['date'].apply(lambda d: d.year)
+    
+            df_with_counts = (
+                df_with_counts.groupby(["year", "systemNum", "profileNum"])
+                .size()
+            .reset_index(name='count')
+            )
+            years = df_with_counts['year'].unique().sort()
+            print(years)
+            counts = []
+            for year in years:
+                counts.append(len(df_with_counts[df_with_counts["year"]==year]))
+    
+            print(np.sum(counts))
+            years = years.astype(str)
             
             # Bar plot with notations
             fig, ax = plt.subplots(figsize=(10, 6))
-            bars = ax.bar(years_sorted, year_counts, edgecolor='black')
+            bars = ax.bar(years, counts, edgecolor='black')
             ax.set_title("Number of Profiles per Year")
             ax.set_xlabel("Year")
             ax.set_ylabel("Number of Profiles")
             ax.grid(axis='y', linestyle='--', alpha=0.7)
-            ax.set_xticks(years_sorted)
+            ax.set_xticks(years)
             
             # Add count labels above each bar
             ax.bar_label(bars, padding=3)
@@ -420,86 +426,3 @@ def profileChecker():
         traceback.print_exc()
 profileChecker()
 #################################################################################################
-# data density plot
-
-with open('grouped.pkl', 'rb') as f:
-    groupedYears = pickle.load(f)
-
-# Group and count
-def simpleDF(df):
-    df_with_counts = (
-        df.groupby(['date', 'profileNum', 'lat', 'lon'])
-        .size()
-        .reset_index(name='count')
-    )
-    df_with_counts['year'] = df_with_counts['date'].apply(lambda d: d.year)
-    return df_with_counts
-
-group_zero = simpleDF(groupedYears[0])
-
-# print(group_zero.head())
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-def plot_density_map(df, groupNum, bins=50, log_scale=True,cmap='Spectral_r'):
-    """
-    Plots a density map of observations using lat/lon and count.
-    Rotates polar projection to center over your data region.
-    """
-    # Determine central meridian if not given
-
-    central_longitude = np.median(df['lon'])
-    central_latitude = np.median(df["lat"])
-
-    # Define projection centered on your data
-    projection = ccrs.LambertConformal(central_longitude=central_longitude, central_latitude=central_latitude)
-
-    # Bin edges
-    # lon_bins = np.linspace(df['lon'].min(), df['lon'].max(), bins if isinstance(bins, int) else bins[0])
-    lon_bins = np.linspace(-160, -130, bins)
-
-    lat_bins = np.linspace(73, 81, bins)
-
-    # Prepare weights
-    values = df["count"].values
-    if log_scale:
-        values = np.where(values > 0, np.log10(values), 0)
-
-    # 2D histogram
-    hist, lon_edges, lat_edges = np.histogram2d(
-        df['lon'], df["lat"], bins=[lon_bins, lat_bins], weights=values
-    )
-
-    # Grid centers
-    lon_centers = 0.5 * (lon_edges[:-1] + lon_edges[1:])
-    lat_centers = 0.5 * (lat_edges[:-1] + lat_edges[1:])
-    lon_grid, lat_grid = np.meshgrid(lon_centers, lat_centers)
-
-    # Plot
-    fig = plt.figure(figsize=(6, 6))
-    ax = plt.axes(projection=projection)
-    ax.set_extent([df['lon'].min(), df['lon'].max(),
-                   df["lat"].min(), df["lat"].max()], crs=ccrs.PlateCarree())
-
-    ax.coastlines(resolution='50m', linewidth=0.5)
-
-    pcm = ax.pcolormesh(lon_grid, lat_grid, hist.T, cmap=cmap, shading='auto',
-                        transform=ccrs.PlateCarree())
-
-    cbar = plt.colorbar(pcm, ax=ax, shrink=0.7, pad=0.05)
-    cbar.set_label("Log10 Number of Observations" if log_scale else "Number of Observations")
-
-    gl = ax.gridlines(draw_labels=True, linestyle='--', linewidth=0.5)
-    gl.top_labels = True
-    gl.right_labels = False
-
-    plt.title(f'Observation Density Map (Log10 Count) of group {groupNum}')
-    plt.tight_layout()
-    plt.savefig(f"plots/heatmap/G{groupNum}")
-    plt.show()
-
-
-# for i in range (5):
-#     df = simpleDF(groupedYears[i])
-#     plot_density_map(df, i)
