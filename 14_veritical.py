@@ -18,8 +18,7 @@ with open('grouped.pkl', 'rb') as f:
 colorscale = LinearSegmentedColormap.from_list("year_trend", [
     "#4575b4",  # blue
     "#91bfdb",
-    "#e0f3f8",
-    "#fee090",
+    "#12F012",
     "#fc8d59",
     "#d73027"   # red-orange
 ])
@@ -115,52 +114,36 @@ def plot_legend_only(years, colors, filename, legend_title="Year"):
     plt.close()
 
 
-vertPlot(groupedYears, "temp", "temp", "origin")
-plot_legend_only(years, colors, "legend")
-vertPlot(groupedYears, "turner_angle", "turner", "origin")
-vertPlot(groupedYears, "salinity", "sal", "origin")
-vertPlot(groupedYears, "dT/dZ" , "dTdZ", "origin")
-vertPlot(groupedYears, "dS/dZ", "dSdZ", "origin")
-vertPlot(groupedYears, "n_sq", "nSq", "origin")
-vertPlot(groupedYears, "R_rho", "rho", "origin")
+# vertPlot(groupedYears, "temp", "temp", "origin")
+# plot_legend_only(years, colors, "legend")
+# vertPlot(groupedYears, "turner_angle", "turner", "origin")
+# vertPlot(groupedYears, "salinity", "sal", "origin")
+# vertPlot(groupedYears, "dT/dZ" , "dTdZ", "origin")
+# vertPlot(groupedYears, "dS/dZ", "dSdZ", "origin")
+# vertPlot(groupedYears, "n_sq", "nSq", "origin")
+# vertPlot(groupedYears, "R_rho", "rho", "origin")
 
 
-# def vertPlot(df_list, variable, path, type):
-#     color_list = ["r","y", "g", "b","k"]
+def seasonSelect(df_list, monthRange):
+    print(f'seasonSelect: working...\nSelecting fom month {monthRange}')
+    new_list = []
+    for i, df_group in enumerate(df_list):
+        print(f'-------Processing Group {i}------------------')
+        df_copy = df_group.copy()
+        df_copy['month'] = df_copy['date'].apply(lambda d: d.month)
+        df_select = df_copy[df_copy['month'].isin(monthRange)].copy()
+        new_list.append(df_select)
+        # print(df_select.head())
+    return new_list
 
-#     df_copy = df_list.copy()
-#     # df_copy['year'] = df_copy['date'].apply(lambda d: d.year)
-#     avg = df_copy.groupby('depth')[variable].agg(["mean", "std", "count"])
-            
-#     depth = avg.index.to_numpy()
-#     mean = avg['mean'].to_numpy()
-#     std = avg['std'].to_numpy()
-#     if type == "origin":
-#         plt.scatter(mean, depth, label = f"Group", color = color_list[0])
-#     elif type == "plus":
-#         plt.scatter(mean+std, depth, alpha=0.1,label = f"Group", color = color_list[0])
-#     else:
-#         plt.scatter(mean-std,depth, alpha=0.1,label = f"Group", color = color_list[0])
+# winter:
+winterlist = seasonSelect(groupedYears, [12,1,2])
 
-#     plt.gca().invert_yaxis()
-#     if type == "origin":
-#             plt.xlabel(f'Average {variable}')
-#             plt.title(f"Average of {variable}")
-#     elif type == "plus":
-#             plt.xlabel(f'Average {variable}+1 standard deviation')
-#             plt.title(f"Average of {variable}+std")
-#     else:
-#             plt.xlabel(f'Average {variable}-1 standard deviation')
-#             plt.title(f"Average of {variable}-std")
+# summer:
+summerList = seasonSelect(groupedYears, [6,7,8])
 
-#     plt.ylabel('Depth')
-#     plt.legend()
-#     plt.tight_layout()
-#     # plt.savefig(f"plots/fine/vertPlot/{path}{type}")
-#     plt.show()
-#     plt.close()
+trickPlot = [winterlist[4], summerList[4]]
 
-# testyear = groupedYears[3].copy()
-# testyear['year'] = testyear['date'].apply(lambda d: d.year)
-# testyear = testyear[testyear["year"]==2017]
-# vertPlot(testyear, "dT/dZ" , "dTdZ", "minus")
+vertPlot(trickPlot, "temp", "temp", "origin")
+
+vertPlot(trickPlot, "R_rho", "rho", "origin")

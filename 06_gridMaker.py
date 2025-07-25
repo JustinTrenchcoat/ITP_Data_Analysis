@@ -186,6 +186,8 @@ def makeMatGrid(full_path, file_name, folder_name):
         T_Max_Depth = depths_sorted[temp_max_depth_idx]
 
         # look up from T_Max, find the T_min between (100, T_Max_depth)
+        # the problem being that some of the "Tmin" is at the Pacific water range, hence:
+        
         # select only from Tmin (above 400m?)to 5+Tmax for interpolation:
         # surface_index is all indeces of depth array who's above T_Max and below 100m 
         surface_index = np.where((depths_sorted >= 100) & (depths_sorted <= T_Max_Depth))[0]
