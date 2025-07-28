@@ -25,8 +25,7 @@ def simpleDF(df):
     df_with_counts['count'] = 1
     return df_with_counts
 
-group_zero = simpleDF(groupedYears[0])
-
+# group_zero = simpleDF(groupedYears[0])
 # print(group_zero.head())
 
 def plot_density_map(df, groupNum, bins=50, log_scale=False,cmap='Spectral_r'):
@@ -64,7 +63,7 @@ def plot_density_map(df, groupNum, bins=50, log_scale=False,cmap='Spectral_r'):
     lon_grid, lat_grid = np.meshgrid(lon_centers, lat_centers)
 
     # Plot
-    fig = plt.figure(figsize=(6, 6))
+    fig = plt.figure(figsize=(10, 10))
     ax = plt.axes(projection=projection)
     # ax.set_extent([df['lon'].min(), df['lon'].max(),
     #                df["lat"].min(), df["lat"].max()], crs=ccrs.PlateCarree())
@@ -90,11 +89,11 @@ def plot_density_map(df, groupNum, bins=50, log_scale=False,cmap='Spectral_r'):
     plt.savefig(f"plots/heatmap/ProfileG{groupNum}")
     # plt.show()
     plt.close()
-##############################################
-# for i in range (5):
-#     df = simpleDF(groupedYears[i])
-#     print(f"processing group{i}")
-#     plot_density_map(df, i)
+#########################################################################################################################
+for i in range (5):
+    df = simpleDF(groupedYears[i])
+    print(f"processing group{i+1}")
+    plot_density_map(df, i+1)
 #########################################################################################################################
 def dataDistribution(df, groupNum):
     df_with_counts = df.copy()
@@ -136,10 +135,10 @@ def dataDistribution(df, groupNum):
     plt.close()
 #########################################################################
 # for i in range (5):
-#     print(f"processing group{i}")
-#     dataDistribution(groupedYears[i], i)
-
+#     print(f"processing group{i+1}")
+#     dataDistribution(groupedYears[i], i+1)
 ##################################################################################################################
+# ITP system trace:
 def traceDF(df):
     df_with_counts = df.copy()
     df_with_counts['year'] = df_with_counts['date'].apply(lambda d: d.year)
@@ -166,7 +165,7 @@ def dataTrace(df, groupNum, log_scale=False, cmap='Set1'):
 
     projection = ccrs.LambertConformal(central_longitude=central_longitude, central_latitude=central_latitude)
 
-    fig = plt.figure(figsize=(7, 7))
+    fig = plt.figure(figsize=(10, 10))
     ax = plt.axes(projection=projection)
     ax.set_extent([-160, -130, 72, 81], crs=ccrs.PlateCarree())
 
@@ -207,5 +206,5 @@ def dataTrace(df, groupNum, log_scale=False, cmap='Set1'):
     plt.close()
 
 for i in range (5):
-    print(f"processing group{i}")
-    dataTrace(groupedYears[i], i)
+    print(f"Tracing group{i+1}")
+    dataTrace(groupedYears[i], i+1)

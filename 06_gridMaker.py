@@ -187,10 +187,10 @@ def makeMatGrid(full_path, file_name, folder_name):
 
         # look up from T_Max, find the T_min between (100, T_Max_depth)
         # the problem being that some of the "Tmin" is at the Pacific water range, hence:
-        
+        # we raise the depth bar to 120, T_Max-depth
         # select only from Tmin (above 400m?)to 5+Tmax for interpolation:
         # surface_index is all indeces of depth array who's above T_Max and below 100m 
-        surface_index = np.where((depths_sorted >= 100) & (depths_sorted <= T_Max_Depth))[0]
+        surface_index = np.where((depths_sorted >= 120) & (depths_sorted <= T_Max_Depth))[0]
         temp_min_idx = np.argmin(temperatures_sorted[surface_index])
         temp_min_depth_idx = surface_index[temp_min_idx]
 
@@ -278,11 +278,13 @@ def makeMatGrid(full_path, file_name, folder_name):
 
 
 
-
+# # make csv files 
 # traverse_datasets(datasets_dir, makeGrid)
 # with open("errorDF.txt", "w") as bad_file:
 #     for file in error_list:
 #         bad_file.write(f"{file}\n")
+
+# make .mat files
 traverse_datasets(datasets_dir, makeMatGrid)
 with open("mat_error.txt", "w") as bad_file:
     for file in mat_error_list:

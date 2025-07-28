@@ -40,13 +40,13 @@ def dfGrouper():
     except Exception as e:
         traceback.print_exc()
 #########################################################
-# # Run this only once to save works:
+# Run this only once to save works:
 # yearDF = dfGrouper()
 # with open("grouped.pkl", 'wb') as f:
 #     pickle.dump(yearDF,f)
 #########################################################
-with open('grouped.pkl', 'rb') as f:
-    groupedYears = pickle.load(f)
+# with open('grouped.pkl', 'rb') as f:
+#     groupedYears = pickle.load(f)
 '''
 Tiny Helper function(s?) for saving space
 '''
@@ -302,7 +302,7 @@ def boxPlots(df):
     singleBoxplot(df,bulkRho, "Bulk-scale Stability Ratio", "", (0.8,1.35), "bulkRhoBox")
 
 
-boxPlots(groupedYears)
+# boxPlots(groupedYears)
 
 
 # def tester(df, groupNum):

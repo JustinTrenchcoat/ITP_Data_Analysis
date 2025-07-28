@@ -81,8 +81,8 @@ def vertPlot(df_list, variable, path, type):
 
     # plt.legend(handles=legend_patches, title='Year')    
     plt.tight_layout()
-    # plt.savefig(f"plots/fine/vertPlot/{path}{type}")
-    plt.show()
+    plt.savefig(f"plots/fine/vertPlot/{path}{type}")
+    # plt.show()
     plt.close()
 
 def plot_legend_only(years, colors, filename, legend_title="Year"):
@@ -109,13 +109,13 @@ def plot_legend_only(years, colors, filename, legend_title="Year"):
     
     # Resize figure to fit legend
     fig.set_size_inches(2.5, len(years) * 0.35 + 1)
-    # plt.savefig(f"plots/fine/vertPlot/{filename}")
+    plt.savefig(f"plots/fine/vertPlot/{filename}")
     plt.show()
     plt.close()
 
 
 # vertPlot(groupedYears, "temp", "temp", "origin")
-# plot_legend_only(years, colors, "legend")
+plot_legend_only(years, colors, "legend")
 # vertPlot(groupedYears, "turner_angle", "turner", "origin")
 # vertPlot(groupedYears, "salinity", "sal", "origin")
 # vertPlot(groupedYears, "dT/dZ" , "dTdZ", "origin")
@@ -124,26 +124,26 @@ def plot_legend_only(years, colors, filename, legend_title="Year"):
 # vertPlot(groupedYears, "R_rho", "rho", "origin")
 
 
-def seasonSelect(df_list, monthRange):
-    print(f'seasonSelect: working...\nSelecting fom month {monthRange}')
-    new_list = []
-    for i, df_group in enumerate(df_list):
-        print(f'-------Processing Group {i}------------------')
-        df_copy = df_group.copy()
-        df_copy['month'] = df_copy['date'].apply(lambda d: d.month)
-        df_select = df_copy[df_copy['month'].isin(monthRange)].copy()
-        new_list.append(df_select)
-        # print(df_select.head())
-    return new_list
+# def seasonSelect(df_list, monthRange):
+#     print(f'seasonSelect: working...\nSelecting for month {monthRange}')
+#     new_list = []
+#     for i, df_group in enumerate(df_list):
+#         print(f'-------Processing Group {i}------------------')
+#         df_copy = df_group.copy()
+#         df_copy['month'] = df_copy['date'].apply(lambda d: d.month)
+#         df_select = df_copy[df_copy['month'].isin(monthRange)].copy()
+#         new_list.append(df_select)
+#         # print(df_select.head())
+#     return new_list
 
-# winter:
-winterlist = seasonSelect(groupedYears, [12,1,2])
+# # winter:
+# winterlist = seasonSelect(groupedYears, [12,1,2])
 
-# summer:
-summerList = seasonSelect(groupedYears, [6,7,8])
+# # summer:
+# summerList = seasonSelect(groupedYears, [6,7,8])
 
-trickPlot = [winterlist[4], summerList[4]]
+# trickPlot = [winterlist[4], summerList[4]]
 
-vertPlot(trickPlot, "temp", "temp", "origin")
+# vertPlot(trickPlot, "temp", "temp", "origin")
 
-vertPlot(trickPlot, "R_rho", "rho", "origin")
+# vertPlot(trickPlot, "R_rho", "rho", "origin")
