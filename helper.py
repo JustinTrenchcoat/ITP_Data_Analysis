@@ -7,6 +7,9 @@ import traceback
 import h5py
 import matplotlib.pyplot as plt
 
+class SkipItem(Exception):
+    pass
+
 
 # convert pressure to height
 def height(pressure, latitude):
@@ -58,7 +61,7 @@ def checkField(datasets_dir):
 
 
 # filter through all files in dataset
-def traverse_datasets(datasets_dir, func):
+def traverse_datasets(datasets_dir, func, errorFunc):
     """
     Traverse through the dataset folders and apply the given function 'func' to each .mat file.
 
@@ -83,9 +86,12 @@ def traverse_datasets(datasets_dir, func):
             try:
                 func(full_path, file_name, folder_name)
 
+            except SkipItem:
+                continue
             except Exception as e:
-                print(f"Error processing file: {file_name}")
-                traceback.print_exc()
+                # print(f"Error processing file: {file_name}")
+                # traceback.print_exc()
+                errorFunc(file_name)
 
 
 

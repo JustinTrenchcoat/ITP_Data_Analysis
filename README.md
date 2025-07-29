@@ -164,3 +164,9 @@ How to use:
 - 14
 - 15
 - 04
+---------------------------------------------------------
+2025/07/29:
+Might as well start cleaning up the work:
+List of cleaned and documented scripts
+`01_pullData.py` cleaned and documented
+`02_cleanData.py` cleaned and documented

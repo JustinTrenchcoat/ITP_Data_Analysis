@@ -77,6 +77,9 @@ def singleErrorBarPlot(df_list, variable, path):
         depth = avg.index.to_numpy()
         mean = avg['mean'].to_numpy()
         std = avg['std'].to_numpy()
+        count = avg['count'].to_numpy()
+        # print(count)
+        std = std/(np.sqrt(count))
         plt.errorbar(mean, depth, xerr=std, fmt='-o', alpha=0.1, capsize=3, label=f'Group {i}')
     
     plt.gca().invert_yaxis()  
@@ -88,12 +91,12 @@ def singleErrorBarPlot(df_list, variable, path):
     # plt.savefig(f"plots//fine/Errorplots/{path}")
     plt.show()
     plt.close()
-# singleErrorBarPlot(groupedYears, "temp", "temp")
-# singleErrorBarPlot(groupedYears, "salinity", "salinity")
-# singleErrorBarPlot(groupedYears, "dT/dZ" , "dTdZ")
-# singleErrorBarPlot(groupedYears, "dS/dZ", "dSdZ")
-# singleErrorBarPlot(groupedYears, "n_sq", "nSq")
-# singleErrorBarPlot(groupedYears, "R_rho", "rho")
+singleErrorBarPlot(groupedYears, "temp", "temp")
+singleErrorBarPlot(groupedYears, "salinity", "salinity")
+singleErrorBarPlot(groupedYears, "dT/dZ" , "dTdZ")
+singleErrorBarPlot(groupedYears, "dS/dZ", "dSdZ")
+singleErrorBarPlot(groupedYears, "n_sq", "nSq")
+singleErrorBarPlot(groupedYears, "R_rho", "rho")
 ##########################################################################################################################
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors

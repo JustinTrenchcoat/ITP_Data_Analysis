@@ -5,16 +5,18 @@ import requests
 import zipfile
 from tqdm import tqdm
 
-# Base URL pattern
+# Base URL 
 base_url = "https://scienceweb.whoi.edu/itp/data/itpsys{0}/itp{0}cormat.zip"
 
 failList = []
 # Base directory and datasets directory
 base_dir = os.getcwd()
-datasets_dir = os.path.join(base_dir, "rawData")
+# you can change this to whatever you call it but keep it constant in other scripts
+rawDataDir = "rawData"
+datasets_dir = os.path.join(base_dir, rawDataDir)
 os.makedirs(datasets_dir, exist_ok=True)
 
-# Loop over ITP numbers
+# Loop over ITP numbers (ITP #1 to ITP #144). This range might change as time goes, so please check the website before punching in the range
 for itp_num in tqdm(range(1, 144), desc="Downloading"):
     url = base_url.format(itp_num)
     zip_filename = f"itp{itp_num}cormat.zip"

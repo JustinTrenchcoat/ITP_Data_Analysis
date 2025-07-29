@@ -272,7 +272,8 @@ def dataTrace(df, log_scale=False, cmap='Set1'):
          ax.scatter(
             df['lon'], df['lat'],
             transform=ccrs.PlateCarree(),
-            color=colors[i],
+            color = 'k',
+            # color=colors[i],
             label=str(i),
             s=sizes,
             alpha=1,
@@ -284,11 +285,11 @@ def dataTrace(df, log_scale=False, cmap='Set1'):
     gl.top_labels = True
     gl.right_labels = False
 
-    ax.legend(title="Year", loc="lower left", fontsize="small")
-    plt.title(f'Profile Distribution by Group')
+    # ax.legend(title="Year", loc="lower left", fontsize="small")
+    plt.title(f'Profile Distribution')
     plt.tight_layout()
     # plt.show()
-    plt.savefig(f"plots/heatmap/dataTraceTotal")
+    plt.savefig(f"plots/heatmap/dataTraceTotalBW")
     plt.close()
 
 dataTrace(groupedYears)

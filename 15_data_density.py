@@ -177,7 +177,8 @@ def dataTrace(df, groupNum, log_scale=False, cmap='Set1'):
     # Prepare color map
     unique_years = sorted(df['year'].unique())
     n_years = len(unique_years)
-    colors = matplotlib.colormaps['Set1'].resampled(n_years)
+    colors = 'b'
+    # matplotlib.colormaps['Set1'].resampled(n_years)
 
     # Plot each year separately
     for i, year in enumerate(unique_years):
@@ -186,7 +187,7 @@ def dataTrace(df, groupNum, log_scale=False, cmap='Set1'):
         ax.scatter(
             subset['lon'], subset['lat'],
             transform=ccrs.PlateCarree(),
-            color=colors(i),
+            color='b',
             label=str(year),
             s=sizes,
             alpha=1,
@@ -201,8 +202,8 @@ def dataTrace(df, groupNum, log_scale=False, cmap='Set1'):
     ax.legend(title="Year", loc="lower left", fontsize="small")
     plt.title(f'Profile Distribution by Year, Group {groupNum}, N = {len(df)}')
     plt.tight_layout()
-    # plt.show()
-    plt.savefig(f"plots/heatmap/dataTraceG{groupNum}")
+    plt.show()
+    # plt.savefig(f"plots/heatmap/dataTraceG{groupNum}")
     plt.close()
 
 for i in range (5):

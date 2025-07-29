@@ -11,31 +11,86 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.compose import make_column_transformer
 from sklearn.impute import SimpleImputer
 import statsmodels.api as sm
+import pickle
+from scipy.cluster.hierarchy import (
+    average,
+    complete,
+    dendrogram,
+    fcluster,
+    single,
+    ward,
+)
+
+with open('grouped.pkl', 'rb') as f:
+    groupedYears = pickle.load(f)
+
+firstDF = groupedYears[0]
+testDF = firstDF[firstDF["systemNum"] == 13]
+testDF = testDF[testDF["profileNum"] == 1].copy()
+print(testDF.head())
+testDF = testDF[["depth", "dT/dZ"]]
+print(testDF.head())
+
+X = StandardScaler().fit_transform(testDF)
+# X = testDF.copy()
+# linkage_array = ward(X)
 
 
-final_df = pd.read_pickle("final.pkl")
+from sklearn.cluster import DBSCAN, HDBSCAN
+from sklearn.datasets import make_blobs
 
-experiment_df = final_df[final_df['itpNum'].isin([62, 64,65,68,69])].copy()
+
+def plot(X, labels, probabilities=None, parameters=None, ground_truth=False, ax=None):
+    if ax is None:
+        _, ax = plt.subplots(figsize=(10, 4))
+    labels = labels if labels is not None else np.ones(X.shape[0])
+    probabilities = probabilities if probabilities is not None else np.ones(X.shape[0])
+    # Black removed and is used for noise instead.
+    unique_labels = set(labels)
+    colors = [plt.cm.Spectral(each) for each in np.linspace(0, 1, len(unique_labels))]
+    # The probability of a point belonging to its labeled cluster determines
+    # the size of its marker
+    proba_map = {idx: probabilities[idx] for idx in range(len(labels))}
+    for k, col in zip(unique_labels, colors):
+        if k == -1:
+            # Black used for noise.
+            col = [0, 0, 0, 1]
+
+        class_index = (labels == k).nonzero()[0]
+
+        for ci in class_index:
+            ax.plot(
+                X[ci, 0],
+                X[ci, 1],
+                "x" if k == -1 else "o",
+                markerfacecolor=tuple(col),
+                markeredgecolor="k",
+                markersize=4 if k == -1 else 1 + 5 * proba_map[ci],
+            )
+    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+    preamble = "True" if ground_truth else "Estimated"
+    title = f"{preamble} number of clusters: {n_clusters_}"
+    if parameters is not None:
+        parameters_str = ", ".join(f"{k}={v}" for k, v in parameters.items())
+        title += f" | {parameters_str}"
+    ax.set_title(title)
+    plt.tight_layout()
 
 
-import matplotlib.pyplot as plt
-import numpy as np
 
-def plotHelper(x, y, xlabel, ylabel, third):
-    plt.figure(figsize=(8, 6))
-    
-    categories = third.unique()
-    cmap = plt.get_cmap('tab10')  # You can change colormap if needed
-    
-    for idx, cat in enumerate(categories):
-        mask = (third == cat)
-        plt.scatter(x[mask], y[mask], s=10, label=str(cat), color=cmap(idx))
-    
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.title(f"{xlabel} vs {ylabel} Colored by mask_sc")
-    plt.legend(title="mask_sc")
-    plt.show()
+# centers = [[1, 1], [-1, -1], [1.5, -1.5]]
+# X, labels_true = make_blobs(
+#     n_samples=750, centers=centers, cluster_std=[0.4, 0.1, 0.75], random_state=0
+# )
+# plot(X, labels=labels_true, ground_truth=True)
+# plt.show()
+# plt.close()
 
-# Example usage:
-plotHelper(experiment_df['n_sq'], experiment_df['R_rho'], "N_sq", "R_rho", experiment_df['mask_sc'])
+fig, axes = plt.subplots(3, 1, figsize=(10, 12))
+dbs = DBSCAN(eps=0.05)
+for idx, scale in enumerate([0.01, 1, 3]):
+    dbs.fit(X * scale)
+    if scale == 1:
+        plot(X * scale, dbs.labels_, parameters={"scale": scale, "eps": 0.01}, ax=axes[idx])
+plt.show()
+plt.close()
