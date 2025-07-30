@@ -86,6 +86,10 @@ def vertPlot(df_list, variable, path, type):
             plt.title(f"Average of {variable}-std")
 
     plt.ylabel('Depth')
+    if variable == "R_rho":
+        plt.axvline(x=1, color = 'k',linestyle='dashdot')
+        plt.axvline(x=10, color = 'k',linestyle='dashdot')
+        
     # # Legend: color squares instead of dots
     # legend_patches = [
     #     Patch(facecolor=colors[i], edgecolor='black', label=str(years[i]))
@@ -94,8 +98,8 @@ def vertPlot(df_list, variable, path, type):
 
     # plt.legend(handles=legend_patches, title='Year')    
     plt.tight_layout()
-    plt.savefig(f"plots/fine/vertPlot/{path}{type}")
-    # plt.show()
+    plt.savefig(f"plots/presentPlot/{path}{type}")
+    plt.show()
     plt.close()
 ##################################################################################################################
 # # legend plot
@@ -123,19 +127,19 @@ def plot_legend_only(years, colors, filename, legend_title="Year"):
     
     # Resize figure to fit legend
     fig.set_size_inches(2.5, len(years) * 0.35 + 1)
-    plt.savefig(f"plots/fine/vertPlot/{filename}")
+    plt.savefig(f"plots/presentPlot/{filename}")
     plt.show()
     plt.close()
 
 
-# vertPlot(groupedYears, "temp", "temp", "origin")
+vertPlot(groupedYears, "temp", "temp", "origin")
 # plot_legend_only(years, colors, "legend")
 # vertPlot(groupedYears, "turner_angle", "turner", "origin")
 # vertPlot(groupedYears, "salinity", "sal", "origin")
 # vertPlot(groupedYears, "dT/dZ" , "dTdZ", "origin")
 # vertPlot(groupedYears, "dS/dZ", "dSdZ", "origin")
 # vertPlot(groupedYears, "n_sq", "nSq", "origin")
-# vertPlot(groupedYears, "R_rho", "rho", "origin")
+vertPlot(groupedYears, "R_rho", "rho", "origin")
 ################################################################################################################
 # # season comparison:
 # def seasonSelect(df_list, monthRange):
@@ -191,16 +195,18 @@ def profileChecker():
             fig, ax = plt.subplots(figsize=(10, 6))
             bars = ax.bar(years, counts, edgecolor='black')
             ax.set_title("Number of Profiles per Year")
-            ax.set_xlabel("Year")
-            ax.set_ylabel("Number of Profiles")
+            ax.set_xlabel("Year",fontsize=14)
+            ax.set_ylabel("Number of Profiles",fontsize=14)
             ax.grid(axis='y', linestyle='--', alpha=0.7)
-            ax.set_xticks(years)
+            ax.set_xticks(years[::4])
+            ax.set_xticklabels(years[::4], rotation=45)
             
             # Add count labels above each bar
-            ax.bar_label(bars, padding=3)
-            
+            ax.bar_label(bars, padding=3,fontsize=14)
+            plt.savefig(f"plots/presentPlot/yearProfNum")
             plt.tight_layout()
             plt.show()
+            plt.close()
             
     except Exception as e:
         traceback.print_exc()
@@ -220,18 +226,20 @@ def groupChecker(df):
         groupList = ['1', '2', '3', '4', '5']
         # Bar plot with notations
         fig, ax = plt.subplots(figsize=(10, 6))
-        bars = ax.bar(['1', '2', '3', '4', '5'], counts, edgecolor='black')
-        ax.set_title("Number of Profiles per Group")
-        ax.set_xlabel("Group")
-        ax.set_ylabel("Number of Profiles")
+        bars = ax.bar(['1', '2', '3', '4', '5'], counts, edgecolor='black', color = colors)
+        ax.set_title("Number of Profiles per Group", fontsize=14)
+        ax.set_xlabel("Group", fontsize=14)
+        ax.set_ylabel("Number of Profiles", fontsize=14)
         ax.grid(axis='y', linestyle='--', alpha=0.7)
         ax.set_xticks(groupList)
             
         # Add count labels above each bar
-        ax.bar_label(bars, padding=3)
+        ax.bar_label(bars, padding=3, fontsize=14)
             
         plt.tight_layout()
+        plt.savefig(f"plots/presentPlot/groupProfNum")
         plt.show()
+        plt.close()
             
     except Exception as e:
         traceback.print_exc()
@@ -251,7 +259,7 @@ def traceDF(df):
     df_with_counts['count'] = 1
     return df_with_counts
 
-def dataTrace(df, log_scale=False, cmap='Set1'):
+def dataTrace(df):
     """
     Plots a density scatter map of observations using lat/lon and count,
     colored by discrete years.
@@ -272,8 +280,8 @@ def dataTrace(df, log_scale=False, cmap='Set1'):
          ax.scatter(
             df['lon'], df['lat'],
             transform=ccrs.PlateCarree(),
-            color = 'k',
-            # color=colors[i],
+            # color = 'grey',
+            color=colors[i],
             label=str(i),
             s=sizes,
             alpha=1,
@@ -288,8 +296,9 @@ def dataTrace(df, log_scale=False, cmap='Set1'):
     # ax.legend(title="Year", loc="lower left", fontsize="small")
     plt.title(f'Profile Distribution')
     plt.tight_layout()
-    # plt.show()
-    plt.savefig(f"plots/heatmap/dataTraceTotalBW")
+    # plt.savefig(f"plots/presentPlot/dataTraceTotalBW")
+    plt.savefig(f"plots/presentPlot/dataTraceTotal")
+    plt.show()
     plt.close()
 
-dataTrace(groupedYears)
+# dataTrace(groupedYears)
