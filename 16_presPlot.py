@@ -41,6 +41,7 @@ colors = colorscale(np.linspace(0, 1, len(years)))
 
 temp_min_idx = []
 temp_max_idx = []
+nsq_max = []
 
 #######################################################################################################################
 # making mean, mean+std, mean-std for each group,
@@ -63,6 +64,13 @@ def vertPlot(df_list, variable, path, type):
         if variable == "temp":
             temp_min_idx.append(mean.argmin())
             temp_max_idx.append(mean.argmax())
+        if variable == "n_sq":
+             nsq_max.append(mean.argmax())
+
+        
+        if variable in ("R_rho","dT/dZ","dS/dZ"):
+            plt.axhline(depth[nsq_max[i]], color='k', linestyle='dotted')
+        
 
         # print(depth[mean.argmin()])
         if type == "origin":
@@ -74,10 +82,22 @@ def vertPlot(df_list, variable, path, type):
         else:
             plt.scatter(mean-std,depth, alpha=0.1,label = f"Group {i}", color = colors[i])
 
+
+
     plt.gca().invert_yaxis()
     if type == "origin":
-            plt.xlabel(f'Average {variable}')
-            plt.title(f"Average of {variable}")
+        if variable == "temp":
+            plt.xlabel('average temperature (\u00B0C)',fontsize=18)
+        elif variable == "salinity":
+            plt.xlabel('average salinity (g/kg)',fontsize=18)
+        elif variable == "dT/dZ":
+            plt.xlabel("average temperature gradient (\u00B0C/m)",fontsize=18)
+        elif variable == "dS/dZ":
+            plt.xlabel("average salinity gradient((g/kg)/m)",fontsize=18)
+        elif variable == "R_rho":
+            plt.xlabel("average density gredient ratio",fontsize=18) 
+        else:
+            plt.xlabel(f"average {variable}",fontsize=18)           
     elif type == "plus":
             plt.xlabel(f'Average {variable}+1 standard deviation')
             plt.title(f"Average of {variable}+std")
@@ -85,18 +105,17 @@ def vertPlot(df_list, variable, path, type):
             plt.xlabel(f'Average {variable}-1 standard deviation')
             plt.title(f"Average of {variable}-std")
 
-    plt.ylabel('Depth')
+    plt.ylabel('depth (m)',fontsize=18)
     if variable == "R_rho":
         plt.axvline(x=1, color = 'k',linestyle='dashdot')
         plt.axvline(x=10, color = 'k',linestyle='dashdot')
+
         
     # # Legend: color squares instead of dots
     # legend_patches = [
     #     Patch(facecolor=colors[i], edgecolor='black', label=str(years[i]))
     #     for i in range(len(years))
     # ]   
-
-    # plt.legend(handles=legend_patches, title='Year')    
     plt.tight_layout()
     plt.savefig(f"plots/presentPlot/{path}{type}")
     plt.show()
@@ -135,10 +154,10 @@ def plot_legend_only(years, colors, filename, legend_title="Year"):
 vertPlot(groupedYears, "temp", "temp", "origin")
 # plot_legend_only(years, colors, "legend")
 # vertPlot(groupedYears, "turner_angle", "turner", "origin")
-# vertPlot(groupedYears, "salinity", "sal", "origin")
-# vertPlot(groupedYears, "dT/dZ" , "dTdZ", "origin")
-# vertPlot(groupedYears, "dS/dZ", "dSdZ", "origin")
-# vertPlot(groupedYears, "n_sq", "nSq", "origin")
+vertPlot(groupedYears, "salinity", "sal", "origin")
+vertPlot(groupedYears, "n_sq", "nSq", "origin")
+vertPlot(groupedYears, "dT/dZ" , "dTdZ", "origin")
+vertPlot(groupedYears, "dS/dZ", "dSdZ", "origin")
 vertPlot(groupedYears, "R_rho", "rho", "origin")
 ################################################################################################################
 # # season comparison:
