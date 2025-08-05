@@ -122,7 +122,8 @@ def countData(datasets_dir):
     print(f"\nTotal number of remaining profiles: {total_profiles}")
     print(f"\nTotal number of ITP systems: {total_itps}")
     
-def helPlot(x, y):
+# quick simple plot to inspect variables
+def simplePlot(x, y):
     plt.plot(x, y, marker='o',linestyle='dashed',linewidth=2, markersize=12)
     plt.xlabel("test x")
     plt.ylabel("test y")
@@ -133,7 +134,7 @@ def helPlot(x, y):
     plt.xticks(rotation=45)
     plt.show()
 
-
+# quick function for inspecting variables
 def printBasicStat(column):
     # Basic statistics
     print(f"Statistical Summary of {column}:")

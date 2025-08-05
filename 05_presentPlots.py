@@ -45,7 +45,7 @@ nsq_max = []
 
 #######################################################################################################################
 # making mean, mean+std, mean-std for each group,
-def vertPlot(df_list, variable, path, type):
+def verticalPlot(df_list, variable, xlabel, path, type):
     for i, df_group in enumerate(df_list):
         print(f'-------Processing Group {i}------------------')
         df_copy = df_group.copy()
@@ -84,26 +84,14 @@ def vertPlot(df_list, variable, path, type):
 
     plt.gca().invert_yaxis()
     if type == "origin":
-        if variable == "temp":
-            plt.xlabel('average temperature (\u00B0C)',fontsize=18)
-        elif variable == "salinity":
-            plt.xlabel('average salinity (g/kg)',fontsize=18)
-        elif variable == "dT/dZ":
-            plt.xlabel("average temperature gradient (\u00B0C/m)",fontsize=18)
-        elif variable == "dS/dZ":
-            plt.xlabel("average salinity gradient((g/kg)/m)",fontsize=18)
-        elif variable == "R_rho":
-            plt.xlabel("average density gredient ratio",fontsize=18) 
-        else:
-            plt.xlabel(f"average {variable}",fontsize=18)           
+        plt.xlabel(f"average {xlabel}", fontsize=18)       
     elif type == "plus":
-            plt.xlabel(f'Average {variable}+1 standard deviation')
-            plt.title(f"Average of {variable}+std")
+            plt.xlabel(f'Average {xlabel}+1 standard deviation')
     else:
-            plt.xlabel(f'Average {variable}-1 standard deviation')
-            plt.title(f"Average of {variable}-std")
+            plt.xlabel(f'Average {xlabel}-1 standard deviation')
 
     plt.ylabel('depth (m)',fontsize=18)
+    # plot the r_rho range for staircase susceptable region
     if variable == "R_rho":
         plt.axvline(x=1, color = 'k',linestyle='dashdot')
         plt.axvline(x=10, color = 'k',linestyle='dashdot')
@@ -114,7 +102,7 @@ def vertPlot(df_list, variable, path, type):
     plt.close()
 ##################################################################################################################
 # legend plot
-def plot_legend_only(years, colors, filename, legend_title="Year"):
+def legendPlot(years, colors, filename, legend_title="Year"):
     fig, ax = plt.subplots()
 
     # Create legend handles
@@ -143,14 +131,14 @@ def plot_legend_only(years, colors, filename, legend_title="Year"):
     plt.close()
 
 
-vertPlot(groupedYears, "temp", "temp", "origin")
-# plot_legend_only(years, colors, "legend")
-# vertPlot(groupedYears, "turner_angle", "turner", "origin")
-vertPlot(groupedYears, "salinity", "sal", "origin")
-vertPlot(groupedYears, "n_sq", "nSq", "origin")
-vertPlot(groupedYears, "dT/dZ" , "dTdZ", "origin")
-vertPlot(groupedYears, "dS/dZ", "dSdZ", "origin")
-vertPlot(groupedYears, "R_rho", "rho", "origin")
+verticalPlot(groupedYears, "temp", "temperature (\u00B0C)","temp", "origin")
+legendPlot(years, colors, "legend")
+verticalPlot(groupedYears, "turner_angle", "turner", "origin")
+verticalPlot(groupedYears, "salinity", "salinity (g/kg)","sal", "origin")
+verticalPlot(groupedYears, "n_sq", "nSq", "origin")
+verticalPlot(groupedYears, "dT/dZ" , " temperature gradient (\u00B0C/m)", "dTdZ", "origin")
+verticalPlot(groupedYears, "dS/dZ","salinity gradient((g/kg)/m)" ,"dSdZ", "origin")
+verticalPlot(groupedYears, "R_rho", "density gredient ratio", "rho", "origin")
 ################################################################################################################
 # # season comparison:
 # def seasonSelect(df_list, monthRange):
