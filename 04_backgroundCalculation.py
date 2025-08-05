@@ -11,11 +11,12 @@ from tqdm import tqdm
 from helper import *
 from scipy.interpolate import interp1d
 
-
+# reads .mat files in the gridDataMat folder, calculate background properties,
+# and save them into a .pkl file for further analysis
 def singleRead(full_path, ls, profile_num,sys_num):
     data = loadmat(full_path)
     
-    # Adjust according to actual variable names in your .mat file
+    # subject to changes in variable names in .mat file
     depth = data['Depth'].squeeze()
     lat = data['lat'].squeeze()
     lon = data['lon'].squeeze()
@@ -30,7 +31,7 @@ def singleRead(full_path, ls, profile_num,sys_num):
     assert not np.isnan(salinity).any(), "salinity contains NaN values"
     assert not np.isnan(pres).any(), "pres contains NaN values"
 
-    # extra lines for debugging#####################
+    # convert salinity and temperature to absolute salinity and conservative temperature
     salinity = gsw.SA_from_SP(salinity, pres, lon, lat)
     temp = gsw.CT_from_t(salinity, temp, pres)
     ###############################################################
@@ -52,11 +53,12 @@ def singleRead(full_path, ls, profile_num,sys_num):
 
     [turner_angle, R_rho, p_mid] = gsw.Turner_Rsubrho(salinity, temp, pres)
     depth_mid = height(p_mid, lat)
-    # New method from experiments, now R_rho is sal over temp:
+    # R_rho in gsw routine is temp over sal, but what we need is sal over temp:
     R_rho = np.reciprocal(R_rho)
     # filter out R_rho that is with in(0,100)
     R_rho = np.where((R_rho > 0) & (R_rho < 100), R_rho, 0)
 
+    # make grid given p_mid, then re-fit it into depth grid.
     R_rho_interp = interp1d(depth_mid, R_rho,kind='linear', fill_value="extrapolate")
     turner_angle_interp = interp1d(depth_mid, turner_angle,kind='linear', fill_value="extrapolate")
     n_sq_interp = interp1d(depth_mid, n_sq,kind='linear', fill_value="extrapolate")
@@ -65,6 +67,7 @@ def singleRead(full_path, ls, profile_num,sys_num):
     interpolated_n_sq = n_sq_interp(depth)
     interpolated_turner = turner_angle_interp(depth)
 
+    # smooth the noisy dataset, sigma set to 80 to ensure that the smoothing "window" is about 20m, subject to change
     turner_angle_smoothed = gaussian_filter1d(interpolated_turner, sigma=80, mode="nearest")
     R_rho_smoothed = gaussian_filter1d(interpolated_R_rho, sigma=80, mode="nearest")
     n_sq_smoothed = gaussian_filter1d(interpolated_n_sq, sigma=80, mode="nearest")
@@ -121,7 +124,7 @@ for folder_name in sorted(os.listdir(datasets_dir)):
                 if match:
                     profile_num = int(match.group(1))
                 else:
-                    profile_num = None  # Or raise an error if mandatory
+                    profile_num = None 
 
                 # Pass profile number to singleRead
                 df_list = singleRead(full_path, df_list, profile_num,system_num)
@@ -130,11 +133,14 @@ for folder_name in sorted(os.listdir(datasets_dir)):
                     if (issubclass(warning.category, RuntimeWarning) and
                         "invalid value encountered in ct_from_t" in str(warning.message)):
                         print(f"RuntimeWarning in file: {file_name}")
+                    elif (issubclass(warning.category, RuntimeWarning) and
+                        "invalid value encountered in sa_from_sp" in str(warning.message)):
+                        print(f"RuntimeWarning in file: {file_name}")
 
         except Exception as e:
             print(f"Error processing file: {file_name}")
             traceback.print_exc()
-
+            
+# concat all dataframe to save disk space
 final_df = pd.concat(df_list, ignore_index=True)
 final_df.to_pickle("test.pkl")
-#######################################################

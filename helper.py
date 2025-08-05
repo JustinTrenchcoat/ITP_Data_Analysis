@@ -61,7 +61,7 @@ def checkField(datasets_dir):
 
 
 # filter through all files in dataset
-def traverse_datasets(datasets_dir, func, errorFunc):
+def traverse_datasets(datasets_dir, func, errorFunc = None):
     """
     Traverse through the dataset folders and apply the given function 'func' to each .mat file.
 

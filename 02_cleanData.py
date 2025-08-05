@@ -2,14 +2,12 @@
 This script will go through the rawData folder created by 01_pullData.py and extract data that satisfies our requirement. 
 In this case, the requirement would be:
 1. The data is collected in the Beaufort Gyre (Start latitude between 73N to 81N, start longitude between 160 W to 130W)
-2. The data has measurement of depth that is at least 10 meters deeper than the AW Temperature Maximum(200m below water)
+2. The data has measurement of depth that is at least 10 meters deeper than the AW Temperature Maximum and 200m below surface
 
 The new dataset would be stored in the goldData folder, organized by itp number.
 
 for each profile, there will be NaN values for the salinity and other measurements, made to replace the bad values.
-This script will not delete it, but hoping that later scripts are able to omit the NaN values
-
-Similarly, some profiles would contain NaN as end dates and times.
+This script will filter them: any observation with NaN values in any of the measurement will be filtered.
 '''
 import h5py
 import numpy as np
@@ -21,7 +19,7 @@ from helper import *
 # Path to datasets folder
 datasets_dir = 'rawData'
 golden_dir = 'goldData'
-
+#############################################################################################################
 bad_profile = []
 def checkFile(full_path, filename, folder_name):
     with h5py.File(full_path, 'r') as f:
@@ -88,7 +86,7 @@ def errorFunc(filename):
     bad_profile.append(filename)
 
 traverse_datasets(datasets_dir, checkFile, errorFunc)
-
+###########################################################################################################
 # In case some thing goes wrong run this
 def cleanData():
     # Loop over every itp*cormat folder
@@ -169,6 +167,8 @@ def cleanData():
                 bad_profile.append(filename)
 
 # cleanData()
+#######################################################################################################
+
 # quick check for bad profiles
 # print(f"there are in total {len(bad_profile)} bad profiles")
 # # sanity checks for those gold-standard data

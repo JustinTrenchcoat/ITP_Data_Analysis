@@ -82,8 +82,6 @@ def vertPlot(df_list, variable, path, type):
         else:
             plt.scatter(mean-std,depth, alpha=0.1,label = f"Group {i}", color = colors[i])
 
-
-
     plt.gca().invert_yaxis()
     if type == "origin":
         if variable == "temp":
@@ -110,18 +108,12 @@ def vertPlot(df_list, variable, path, type):
         plt.axvline(x=1, color = 'k',linestyle='dashdot')
         plt.axvline(x=10, color = 'k',linestyle='dashdot')
 
-        
-    # # Legend: color squares instead of dots
-    # legend_patches = [
-    #     Patch(facecolor=colors[i], edgecolor='black', label=str(years[i]))
-    #     for i in range(len(years))
-    # ]   
     plt.tight_layout()
     plt.savefig(f"plots/presentPlot/{path}{type}")
     plt.show()
     plt.close()
 ##################################################################################################################
-# # legend plot
+# legend plot
 def plot_legend_only(years, colors, filename, legend_title="Year"):
     fig, ax = plt.subplots()
 

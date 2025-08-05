@@ -154,7 +154,7 @@ This is my experiment field for ITP data analysis project from UBC WLIURA 2025 S
 - ROC curve shows that the current performance (with weighted class) is not as good as expected. To raise the TPR to 80%, the false positive rate would have to be raised to beyond 20%
 ---------------------------------
 2025/07/28:
-How to use:
+Steps of running everything to make plots:
 - 01
 - 02
 - 06
@@ -170,3 +170,6 @@ Might as well start cleaning up the work:
 List of cleaned and documented scripts
 `01_pullData.py` cleaned and documented
 `02_cleanData.py` cleaned and documented
+`06_gridMaker.py` cleaned and documented, changed to `03_gridMaker.py`
+`05_analyze.py` cleaned and documented, changed to `04_backgroundCalculation.py`
+`16_presPlot.py` cleaned and documented, changed to `05_presentPlots.py`
