@@ -2,6 +2,12 @@
 
 This project is under the research project `S25 WLIURA - Undergraduate Research Asst Arctic Oceanography` with Dr. Stephanie Waterman from University of British Columbia as supervisor. This repository aims to utilize Ice-Tethered Profiler (ITP) data to explore the backgound properties of the Arctic Ocean Atlantic Water Thermocline, discover its relation with staircase structure dynamics, and eventually acheive the parameterization of microstructure-level mechanism. 
 
+# For future Ocean users:
+run
+`git pull origin main` to obtain the latest update of this repository
+
+
+
 ## Repository Structures
 - root
     1. Data folders:
@@ -20,8 +26,19 @@ This project is under the research project `S25 WLIURA - Undergraduate Research 
         - `06_singleReader.py`
         - `helper.py` 
     3. README.md
-
-    
+    4. MATLAB script folder, the helper functions are not organized into separate folders for better calling:
+        - `01_pullData.m`
+        - `02_cleanData.m`
+        - `03_gridMaker.m`
+        - `04_backgroundCalculation.m`
+        - `05_presentPlots.m` 
+        - `06_singleReader.m`
+        - `checkField.m` 
+        - `countData.m` 
+        - `height.m` 
+        - `pressure.m`
+        - `read_var.m`
+        - `traverse_dataset.m`    
 
 ## List of scripts and their funcionalities:
 | Script Name          | Functionalities |
