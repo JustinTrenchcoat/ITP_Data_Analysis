@@ -131,14 +131,14 @@ def legendPlot(years, colors, filename, legend_title="Year"):
     plt.close()
 
 
-verticalPlot(groupedYears, "temp", "temperature (\u00B0C)","temp", "origin")
-legendPlot(years, colors, "legend")
-verticalPlot(groupedYears, "turner_angle", "turner", "origin")
-verticalPlot(groupedYears, "salinity", "salinity (g/kg)","sal", "origin")
-verticalPlot(groupedYears, "n_sq", "nSq", "origin")
-verticalPlot(groupedYears, "dT/dZ" , " temperature gradient (\u00B0C/m)", "dTdZ", "origin")
-verticalPlot(groupedYears, "dS/dZ","salinity gradient((g/kg)/m)" ,"dSdZ", "origin")
-verticalPlot(groupedYears, "R_rho", "density gredient ratio", "rho", "origin")
+# verticalPlot(groupedYears, "temp", "temperature (\u00B0C)","temp", "origin")
+# legendPlot(years, colors, "legend")
+# verticalPlot(groupedYears, "turner_angle", "turner", "origin")
+# verticalPlot(groupedYears, "salinity", "salinity (g/kg)","sal", "origin")
+# verticalPlot(groupedYears, "n_sq", "nSq", "origin")
+# verticalPlot(groupedYears, "dT/dZ" , " temperature gradient (\u00B0C/m)", "dTdZ", "origin")
+# verticalPlot(groupedYears, "dS/dZ","salinity gradient((g/kg)/m)" ,"dSdZ", "origin")
+# verticalPlot(groupedYears, "R_rho", "density gredient ratio", "rho", "origin")
 ################################################################################################################
 # # season comparison:
 # def seasonSelect(df_list, monthRange):
@@ -301,3 +301,50 @@ def dataTrace(df):
     plt.close()
 
 # dataTrace(groupedYears)
+######################################################################################################################
+def verticalPlotSpecial(df_list, x,y, xlabel, ylabel):
+    for i, df_group in enumerate(df_list):
+        print(f'-------Processing Group {i}------------------')
+        df_copy = df_group.copy()
+        # df_copy['year'] = df_copy['date'].apply(lambda d: d.year)
+        avg_x = df_copy.groupby('depth')[x].agg(["mean", "std", "count"])
+        count_x  = avg_x['count'].to_numpy()
+        count_mask_x = count_x > 50
+
+        avg_y = df_copy.groupby('depth')[y].agg(["mean", "std", "count"])
+        count_y  = avg_y['count'].to_numpy()
+        count_mask_y = count_y > 50
+            
+        # depth = avg.index.to_numpy()
+        # depth = depth[count_mask]
+        mean_x = avg_x['mean'].to_numpy()
+        mean_x = mean_x[count_mask_x]
+
+        mean_y = avg_y['mean'].to_numpy()
+        mean_y = mean_y[count_mask_y]
+        # std = avg['std'].to_numpy()
+        # std = std[count_mask]
+
+        # if variable == "temp":
+        #     temp_min_idx.append(mean.argmin())
+        #     temp_max_idx.append(mean.argmax())
+        # if variable == "n_sq":
+        #      nsq_max.append(mean.argmax())
+
+        
+        # if variable in ("R_rho","dT/dZ","dS/dZ"):
+        #     plt.axhline(depth[nsq_max[i]], color='k', linestyle='dotted')
+        
+
+        # print(depth[mean.argmin()])
+
+        plt.scatter(mean_x, mean_y, label = f"Group {i}", color = colors[i], s=5,edgecolors='none')
+
+    plt.xlabel(f"average {xlabel}", fontsize=18)       
+    plt.ylabel(f'{ylabel}',fontsize=18)
+    plt.tight_layout()
+    # plt.savefig(f"plots/presentPlot/{path}{type}")
+    plt.show()
+    # plt.close()
+
+verticalPlotSpecial(groupedYears, "dT/dZ" , "dS/dZ", "temperature gradient", "salinity gradient")
