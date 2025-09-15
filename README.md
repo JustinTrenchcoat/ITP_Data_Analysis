@@ -210,3 +210,14 @@ List of cleaned and documented scripts
 `06_gridMaker.py` cleaned and documented, changed to `03_gridMaker.py`
 `05_analyze.py` cleaned and documented, changed to `04_backgroundCalculation.py`
 `16_presPlot.py` cleaned and documented, changed to `05_presentPlots.py`
+-------------------------------------------------------------
+2025/09/15:
+Possible improvements:
+- a data inspector for user to check distribution and some rough-level feature of the dataset
+- a classfier for identifying staircases
+- customizable functions for user in:
+    - obtaining the data
+    - cleaning the data
+    - processing the data
+- a good visualizer for better UI
+
