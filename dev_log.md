@@ -170,4 +170,5 @@ Things to do during Holiday:
 - go through other code to see if any can be shortened or simplified
 - improve `06_singleReader.py`
 - organize the folder
-- try spectral clustering on the dataset, think about a distance function rather than euclidian distance
+- try spectral clustering on the dataset, think about a distance function other than euclidian distance
+- make an EDA script to check what can be done for clustering
