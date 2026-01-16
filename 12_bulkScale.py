@@ -2,7 +2,7 @@ import pickle
 from helper import *
 import pandas as pd
 import matplotlib.pyplot as plt
-import netCDF4 as nc
+# import netCDF4 as nc
 import numpy as np
 import matplotlib.colors as colors
 import matplotlib.dates as mdates

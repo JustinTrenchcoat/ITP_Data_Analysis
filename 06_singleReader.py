@@ -34,6 +34,7 @@ try:
     simplePlot(temp, depth)
     printBasicStat(depth)
 
+
 except Exception as e:
     print(f"Error processing file: {full_path}")
     traceback.print_exc()

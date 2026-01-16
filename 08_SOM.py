@@ -1,4 +1,4 @@
-from minisom import MiniSom
+# from minisom import MiniSom
 import numpy as np
 import matplotlib.pyplot as plt
 import h5py
