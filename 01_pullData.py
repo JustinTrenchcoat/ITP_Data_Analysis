@@ -1,5 +1,10 @@
-# this script downloads all level 3 high-resolution data
-# in the .mat format into a new folder called datasets
+'''
+This code will pull level 3 high resolution datasets from the WHOI site and save to folder named rawData. 
+In the rawData folder, the dataset would be organzied by itp system number, 
+and the subfolders are organzed by observation number
+
+
+'''
 import os
 import requests
 import zipfile
@@ -16,7 +21,8 @@ rawDataDir = "rawData"
 datasets_dir = os.path.join(base_dir, rawDataDir)
 os.makedirs(datasets_dir, exist_ok=True)
 
-# Loop over ITP numbers (ITP #1 to ITP #144). This range might change as time goes, so please check the website before punching in the range
+# Loop over ITP numbers (ITP #1 to ITP #144). This range might change as time goes, 
+# so please check the website before punching in the range
 for itp_num in tqdm(range(1, 144), desc="Downloading"):
     url = base_url.format(itp_num)
     zip_filename = f"itp{itp_num}cormat.zip"

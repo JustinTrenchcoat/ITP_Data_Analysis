@@ -1,3 +1,9 @@
+'''
+This file is for calculating the backgroud properties of water column.
+It will calculate temperature gradient, salinity gradient, N squared, turner angle and R_rho.
+the overall framework would be saved into "test.pkl"
+'''
+
 import os
 import re
 import warnings

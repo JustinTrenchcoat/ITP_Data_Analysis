@@ -172,3 +172,6 @@ Things to do during Holiday:
 - organize the folder
 - try spectral clustering on the dataset, think about a distance function other than euclidian distance
 - make an EDA script to check what can be done for clustering
+---
+2026/01/17:
+- simplified `03_gridMaker.py`, removed redundant code
